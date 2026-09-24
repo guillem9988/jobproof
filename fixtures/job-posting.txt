@@ -1,0 +1,9 @@
+Junior product engineer — fictional role
+Required: Python API development.
+Required: Authorization tests.
+Preferred: PostgreSQL experience.
+Required: Security implementation.
+Preferred: Production deployment with Docker.
+Required: Three years of professional experience.
+Required: Communication with stakeholders.
+Preferred: React interface development.

@@ -1,0 +1,105 @@
+export type Status =
+  | "supported"
+  | "partial"
+  | "not_evidenced"
+  | "not_verifiable_from_code";
+export type Requirement = {
+  id: string;
+  text: string;
+  quote: string;
+  offset: number | null;
+  category: string;
+  priority: "required" | "preferred" | "unspecified";
+  verifiability: "code" | "limited" | "external";
+  reviewed: boolean;
+  provenance: "manual" | "extracted";
+  selected: boolean;
+};
+export type Evidence = {
+  chunk_id: string;
+  quote: string;
+  relation: string;
+  path: string;
+  start: number;
+  end: number;
+  type: string;
+  snapshot_id: string;
+  url: string | null;
+  source_text: string;
+  source_start: number;
+};
+export type Assessment = {
+  id: string;
+  requirement: Requirement;
+  status: Status;
+  explanation: string;
+  limitations: string[];
+  evidence: Evidence[];
+  original: { status: Status };
+  invalid_citations: unknown[];
+  reviews: { reason: string; status: Status; created_at: string }[];
+};
+export type Snapshot = {
+  id: string;
+  project_id: string;
+  sha: string;
+  status: string;
+  partial: boolean;
+  file_count: number;
+  bytes: number;
+  discarded: { path: string; reason: string }[];
+  demo: boolean;
+};
+export type Project = {
+  id: string;
+  name: string;
+  url: string;
+  contribution: string;
+  demo: boolean;
+};
+export type Job = {
+  id: string;
+  title: string;
+  company: string;
+  canonical_text: string;
+  requirements: Requirement[];
+  requirements_version: number;
+  demo: boolean;
+};
+export type Task = {
+  type: "import" | "extraction" | "analysis";
+  id: string;
+  status: string;
+  stage: string;
+  analysis_id?: string;
+  result?: string;
+  error?: { message: string };
+};
+export type Analysis = {
+  id: string;
+  title: string;
+  mode: string;
+  status: string;
+  created_at: string;
+  model: string;
+  requirements_version: number;
+  pipeline_version: string;
+  warnings: string[];
+  snapshots: Snapshot[];
+  requirements: Requirement[];
+  usage?: { calls: number; input_tokens: number; output_tokens: number };
+  preparation?: {
+    questions: string[];
+    technical_points: string[];
+    decisions: string[];
+    honest_limitations: string[];
+    personal_prompts: string[];
+    recommendations: {
+      requirement_id: string;
+      gap: string;
+      action: string;
+      observable_result: string;
+      effort_estimate: string;
+    }[];
+  };
+};

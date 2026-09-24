@@ -1,0 +1,268 @@
+{
+  "provider": "demo",
+  "split": "validation",
+  "cases": 16,
+  "interpretation": "Deterministic pipeline regression only; NOT LLM quality.",
+  "retrieval_hit_at_5": {
+    "hits": 5,
+    "eligible_cases": 5
+  },
+  "citation_validity": {
+    "valid": 5,
+    "total": 5
+  },
+  "confusion_expected_rows_predicted_columns": {
+    "supported": {
+      "supported": 3,
+      "partial": 0,
+      "not_evidenced": 1,
+      "not_verifiable_from_code": 0
+    },
+    "partial": {
+      "supported": 0,
+      "partial": 1,
+      "not_evidenced": 0,
+      "not_verifiable_from_code": 0
+    },
+    "not_evidenced": {
+      "supported": 0,
+      "partial": 1,
+      "not_evidenced": 7,
+      "not_verifiable_from_code": 0
+    },
+    "not_verifiable_from_code": {
+      "supported": 0,
+      "partial": 0,
+      "not_evidenced": 0,
+      "not_verifiable_from_code": 3
+    }
+  },
+  "false_supported": 0,
+  "total_seconds": 0.046025749998079846,
+  "results": [
+    {
+      "id": "case-09",
+      "expected": "not_evidenced",
+      "actual": "not_evidenced",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 0.00040845799958333373,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-10",
+      "expected": "not_evidenced",
+      "actual": "not_evidenced",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 1.7374997696606442e-05,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-11",
+      "expected": "not_evidenced",
+      "actual": "not_evidenced",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 1.4334000297822058e-05,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-12",
+      "expected": "not_evidenced",
+      "actual": "not_evidenced",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 1.1874999472638592e-05,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-13",
+      "expected": "not_evidenced",
+      "actual": "not_evidenced",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 1.8165999790653586e-05,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-14",
+      "expected": "not_verifiable_from_code",
+      "actual": "not_verifiable_from_code",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 1.1583000741666183e-05,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-15",
+      "expected": "not_verifiable_from_code",
+      "actual": "not_verifiable_from_code",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 1.2125001376261935e-05,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-16",
+      "expected": "supported",
+      "actual": "supported",
+      "relevant_retrieved": true,
+      "valid_citations": 1,
+      "invalid_citations": 0,
+      "seconds": 0.00012445799802662805,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-17",
+      "expected": "not_evidenced",
+      "actual": "not_evidenced",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 2.2165997506817803e-05,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-18",
+      "expected": "supported",
+      "actual": "supported",
+      "relevant_retrieved": true,
+      "valid_citations": 1,
+      "invalid_citations": 0,
+      "seconds": 0.00011666600039461628,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-19",
+      "expected": "partial",
+      "actual": "partial",
+      "relevant_retrieved": true,
+      "valid_citations": 1,
+      "invalid_citations": 0,
+      "seconds": 0.00013154200132703409,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-20",
+      "expected": "not_evidenced",
+      "actual": "partial",
+      "relevant_retrieved": null,
+      "valid_citations": 1,
+      "invalid_citations": 0,
+      "seconds": 0.00012008300109300762,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-21",
+      "expected": "not_verifiable_from_code",
+      "actual": "not_verifiable_from_code",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 8.374998287763447e-06,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-22",
+      "expected": "not_evidenced",
+      "actual": "not_evidenced",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 9.333001798950136e-06,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-23",
+      "expected": "supported",
+      "actual": "not_evidenced",
+      "relevant_retrieved": true,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 1.67500002135057e-05,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-24",
+      "expected": "supported",
+      "actual": "supported",
+      "relevant_retrieved": true,
+      "valid_citations": 1,
+      "invalid_citations": 0,
+      "seconds": 0.00011433300096541643,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    }
+  ]
+}

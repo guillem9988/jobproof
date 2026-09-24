@@ -1,0 +1,492 @@
+{
+  "provider": "demo",
+  "split": "all",
+  "cases": 32,
+  "interpretation": "Deterministic pipeline regression only; NOT LLM quality.",
+  "retrieval_hit_at_5": {
+    "hits": 15,
+    "eligible_cases": 16
+  },
+  "citation_validity": {
+    "valid": 12,
+    "total": 12
+  },
+  "confusion_expected_rows_predicted_columns": {
+    "supported": {
+      "supported": 7,
+      "partial": 0,
+      "not_evidenced": 4,
+      "not_verifiable_from_code": 0
+    },
+    "partial": {
+      "supported": 0,
+      "partial": 3,
+      "not_evidenced": 2,
+      "not_verifiable_from_code": 0
+    },
+    "not_evidenced": {
+      "supported": 0,
+      "partial": 1,
+      "not_evidenced": 9,
+      "not_verifiable_from_code": 0
+    },
+    "not_verifiable_from_code": {
+      "supported": 0,
+      "partial": 0,
+      "not_evidenced": 0,
+      "not_verifiable_from_code": 6
+    }
+  },
+  "false_supported": 0,
+  "total_seconds": 0.09348641600081464,
+  "results": [
+    {
+      "id": "case-01",
+      "expected": "supported",
+      "actual": "supported",
+      "relevant_retrieved": true,
+      "valid_citations": 2,
+      "invalid_citations": 0,
+      "seconds": 0.0004306660011934582,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-02",
+      "expected": "supported",
+      "actual": "supported",
+      "relevant_retrieved": true,
+      "valid_citations": 1,
+      "invalid_citations": 0,
+      "seconds": 0.00016691699784132652,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-03",
+      "expected": "not_evidenced",
+      "actual": "not_evidenced",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 2.9915998311480507e-05,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-04",
+      "expected": "partial",
+      "actual": "partial",
+      "relevant_retrieved": true,
+      "valid_citations": 1,
+      "invalid_citations": 0,
+      "seconds": 0.00012312500257394277,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-05",
+      "expected": "partial",
+      "actual": "partial",
+      "relevant_retrieved": true,
+      "valid_citations": 1,
+      "invalid_citations": 0,
+      "seconds": 0.00012162500206613913,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-06",
+      "expected": "not_verifiable_from_code",
+      "actual": "not_verifiable_from_code",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 1.020800118567422e-05,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-07",
+      "expected": "not_verifiable_from_code",
+      "actual": "not_verifiable_from_code",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 7.0829992182552814e-06,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-08",
+      "expected": "supported",
+      "actual": "supported",
+      "relevant_retrieved": true,
+      "valid_citations": 1,
+      "invalid_citations": 0,
+      "seconds": 0.00011749999976018444,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-09",
+      "expected": "not_evidenced",
+      "actual": "not_evidenced",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 1.5708003047620878e-05,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-10",
+      "expected": "not_evidenced",
+      "actual": "not_evidenced",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 2.0625000615837052e-05,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-11",
+      "expected": "not_evidenced",
+      "actual": "not_evidenced",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 1.0707997716963291e-05,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-12",
+      "expected": "not_evidenced",
+      "actual": "not_evidenced",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 9.875002433545887e-06,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-13",
+      "expected": "not_evidenced",
+      "actual": "not_evidenced",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 8.250000973930582e-06,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-14",
+      "expected": "not_verifiable_from_code",
+      "actual": "not_verifiable_from_code",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 6.999998731771484e-06,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-15",
+      "expected": "not_verifiable_from_code",
+      "actual": "not_verifiable_from_code",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 1.06250008684583e-05,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-16",
+      "expected": "supported",
+      "actual": "supported",
+      "relevant_retrieved": true,
+      "valid_citations": 1,
+      "invalid_citations": 0,
+      "seconds": 0.00011645799895632081,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-17",
+      "expected": "not_evidenced",
+      "actual": "not_evidenced",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 8.208000508602709e-06,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-18",
+      "expected": "supported",
+      "actual": "supported",
+      "relevant_retrieved": true,
+      "valid_citations": 1,
+      "invalid_citations": 0,
+      "seconds": 0.00011145800090162084,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-19",
+      "expected": "partial",
+      "actual": "partial",
+      "relevant_retrieved": true,
+      "valid_citations": 1,
+      "invalid_citations": 0,
+      "seconds": 0.00010608299999148585,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-20",
+      "expected": "not_evidenced",
+      "actual": "partial",
+      "relevant_retrieved": null,
+      "valid_citations": 1,
+      "invalid_citations": 0,
+      "seconds": 0.00010312499944120646,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-21",
+      "expected": "not_verifiable_from_code",
+      "actual": "not_verifiable_from_code",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 8.33400190458633e-06,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-22",
+      "expected": "not_evidenced",
+      "actual": "not_evidenced",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 7.29100065655075e-06,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-23",
+      "expected": "supported",
+      "actual": "not_evidenced",
+      "relevant_retrieved": true,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 7.040998752927408e-06,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-24",
+      "expected": "supported",
+      "actual": "supported",
+      "relevant_retrieved": true,
+      "valid_citations": 1,
+      "invalid_citations": 0,
+      "seconds": 0.0001097919994208496,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-25",
+      "expected": "supported",
+      "actual": "supported",
+      "relevant_retrieved": true,
+      "valid_citations": 1,
+      "invalid_citations": 0,
+      "seconds": 0.00010637499872245826,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-26",
+      "expected": "not_evidenced",
+      "actual": "not_evidenced",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 8.791997970547527e-06,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-27",
+      "expected": "partial",
+      "actual": "not_evidenced",
+      "relevant_retrieved": true,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 1.0874999134102836e-05,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-28",
+      "expected": "not_verifiable_from_code",
+      "actual": "not_verifiable_from_code",
+      "relevant_retrieved": null,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 9.540999599266797e-06,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-29",
+      "expected": "partial",
+      "actual": "not_evidenced",
+      "relevant_retrieved": true,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 7.833001291146502e-06,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-30",
+      "expected": "supported",
+      "actual": "not_evidenced",
+      "relevant_retrieved": true,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 8.000002708286047e-06,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-31",
+      "expected": "supported",
+      "actual": "not_evidenced",
+      "relevant_retrieved": false,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 7.792001269990578e-06,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    },
+    {
+      "id": "case-32",
+      "expected": "supported",
+      "actual": "not_evidenced",
+      "relevant_retrieved": true,
+      "valid_citations": 0,
+      "invalid_citations": 0,
+      "seconds": 6.958001904422417e-06,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    }
+  ]
+}
