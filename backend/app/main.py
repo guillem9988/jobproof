@@ -85,10 +85,19 @@ class Health(Schema):
 @app.get("/health", response_model=Health)
 @app.get("/api/v1/health", response_model=Health)
 def health():
+    is_gemini = settings.llm_provider == "gemini" or (
+        not settings.anthropic_api_key and bool(settings.gemini_api_key)
+    )
+    configured = bool(settings.gemini_api_key) if is_gemini else bool(settings.anthropic_api_key)
+    model = (
+        settings.llm_model
+        if (settings.llm_model and (not is_gemini or settings.llm_model.startswith("gemini-")))
+        else ("gemini-2.5-flash" if is_gemini else "claude-sonnet-4-6")
+    )
     return Health(
         status="ok",
-        real_provider_configured=bool(settings.anthropic_api_key),
-        model=settings.llm_model,
+        real_provider_configured=configured,
+        model=model,
         demo_available=True,
         limits={
             "projects": 3,

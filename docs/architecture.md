@@ -22,7 +22,7 @@ Text identity is not entailment: a model can cite irrelevant real text. This rem
 
 ## Provider bounds and traceability
 
-The provider protocol has extraction, assessment and preparation operations. The Anthropic adapter uses Pydantic structured parsing, checks stop reason and parsed output, has a timeout and bounded SDK retries, and supplies no tools. The default is one call per selected requirement plus one preparation call; extraction is its own task. Call budgets count logical SDK calls; network retry attempts can increase actual requests by up to `1 + MAX_RETRIES` per logical call. Context limits count excerpt characters, not tokenizer tokens. Model output tokens are bounded per call.
+The provider protocol has extraction, assessment and preparation operations. The Anthropic adapter uses Pydantic structured parsing, while the Google Gemini adapter uses Gemini's REST structured outputs (`response_schema` with resolved definitions and `application/json` mode via `httpx`). Both check stop reasons, parsed output and token accounting, have timeouts and bounded retries, and supply no tools. The default is one call per selected requirement plus one preparation call; extraction is its own task. Call budgets count logical calls; network retry attempts can increase actual requests by up to `1 + MAX_RETRIES` per logical call. Context limits count excerpt characters, not tokenizer tokens. Model output tokens are bounded per call.
 
 Reports store model, pipeline/prompt versions, selected snapshots, requirement version, limits and returned token usage. No pricing is inferred. On failures, partial assessments remain inspectable by API but cannot be exported as a completed report. Usage for a failed in-flight call may be unavailable.
 

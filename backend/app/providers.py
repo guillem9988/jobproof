@@ -1,6 +1,7 @@
 import json
 from typing import Protocol
 
+import httpx
 from anthropic import Anthropic
 
 from .core import Assessment, Preparation, Requirements, redact_payload, settings
@@ -186,5 +187,133 @@ class DemoProvider:
         )
 
 
+def to_gemini_schema(schema: dict) -> dict:
+    defs = schema.get("$defs", {})
+
+    def resolve(node):
+        if isinstance(node, dict):
+            if "$ref" in node:
+                ref_key = node["$ref"].split("/")[-1]
+                if ref_key in defs:
+                    return resolve(defs[ref_key])
+            clean = {}
+            for k, v in node.items():
+                if k in ("$defs", "$ref", "additionalProperties", "title"):
+                    continue
+                clean[k] = resolve(v)
+            return clean
+        elif isinstance(node, list):
+            return [resolve(x) for x in node]
+        return node
+
+    return resolve(schema)
+
+
+class GeminiProvider:
+    def __init__(self):
+        self.model = settings.llm_model if settings.llm_model.startswith("gemini-") else "gemini-2.5-flash"
+        if not settings.gemini_api_key:
+            raise ValueError(
+                "GEMINI_API_KEY is missing. Configure the server or explicitly use the fixture demo."
+            )
+        self.client = httpx.Client(
+            timeout=settings.external_timeout,
+            headers={"x-goog-api-key": settings.gemini_api_key},
+        )
+        self.usage = {"calls": 0, "input_tokens": 0, "output_tokens": 0}
+
+    def close(self):
+        self.client.close()
+
+    def call(self, instruction, data, schema):
+        if self.usage["calls"] >= settings.max_calls:
+            raise ValueError("Provider call budget reached. Select fewer requirements.")
+        self.usage["calls"] += 1
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
+        payload = {
+            "system_instruction": {"parts": [{"text": SYSTEM + "\n" + instruction}]},
+            "contents": [
+                {"role": "user", "parts": [{"text": json.dumps(redact_payload(data), ensure_ascii=False)}]}
+            ],
+            "generationConfig": {
+                "response_mime_type": "application/json",
+                "response_schema": to_gemini_schema(schema.model_json_schema()),
+                "max_output_tokens": settings.max_tokens,
+                "temperature": 0.0,
+            },
+        }
+
+        response = None
+        for attempt in range(1 + settings.max_retries):
+            try:
+                response = self.client.post(url, json=payload)
+                if response.status_code == 200:
+                    break
+                if response.status_code in {401, 403}:
+                    raise ValueError("Authentication error: invalid or unauthorized GEMINI_API_KEY.")
+                if response.status_code == 429 and attempt < settings.max_retries:
+                    continue
+            except httpx.RequestError:
+                if attempt >= settings.max_retries:
+                    raise ValueError("Gemini provider network error. Retry explicitly.")
+                continue
+
+        if response is None or response.status_code != 200:
+            status = response.status_code if response else "no_response"
+            raise ValueError(f"Gemini API error (HTTP {status}). Retry explicitly.")
+
+        res_json = response.json()
+        usage = res_json.get("usageMetadata", {})
+        self.usage["input_tokens"] += usage.get("promptTokenCount", 0)
+        self.usage["output_tokens"] += usage.get("candidatesTokenCount", 0)
+
+        candidates = res_json.get("candidates", [])
+        if not candidates:
+            raise ValueError("Provider returned an empty response. Retry explicitly.")
+
+        candidate = candidates[0]
+        finish_reason = candidate.get("finishReason")
+        if finish_reason not in {"STOP", None}:
+            raise ValueError(
+                f"Provider response incomplete (finishReason={finish_reason}). Retry explicitly."
+            )
+
+        content_parts = candidate.get("content", {}).get("parts", [])
+        if not content_parts or "text" not in content_parts[0]:
+            raise ValueError("Provider returned an incomplete response. Retry explicitly.")
+
+        raw_text = content_parts[0]["text"]
+        return schema.model_validate_json(raw_text)
+
+    def extract_requirements(self, text):
+        return self.call(
+            "Extract all requirements (Catalan, Spanish or English). Exact quote and zero-based character offset into supplied text. Preserve required/preferred wording, alternatives and years. Do not split technology examples without reason. Mark experience, language and communication external. provenance=extracted. Do not omit hard requirements.",
+            {"job": text},
+            Requirements,
+        )
+
+    def assess_requirements(self, requirement, chunks):
+        return self.call(
+            "Evaluate this single requirement only against the candidate excerpts.",
+            {"requirement": requirement, "sources": chunks},
+            Assessment,
+        )
+
+    def generate_preparation_material(self, assessments):
+        return self.call(
+            "Generate exactly three interview questions, technical points, alternatives, honest limitations and personal prompts. Recommendations must identify concrete observable actions, estimated effort and a known requirement_id. Never equate projects with employment experience.",
+            assessments,
+            Preparation,
+        )
+
+
 def provider(mode):
-    return DemoProvider() if mode == "demo" else RealProvider()
+    if mode == "demo":
+        return DemoProvider()
+    if settings.llm_provider == "gemini" or (not settings.anthropic_api_key and settings.gemini_api_key):
+        return GeminiProvider()
+    if not settings.anthropic_api_key and not settings.gemini_api_key:
+        raise ValueError(
+            "ANTHROPIC_API_KEY or GEMINI_API_KEY is missing. Configure the server or explicitly use the fixture demo."
+        )
+    return RealProvider()

@@ -161,3 +161,78 @@ def test_call_budget_prevents_http_request(monkeypatch):
         assert seen == []
     finally:
         p.client.close()
+
+
+def gemini_with_response(monkeypatch, content, finish_reason="STOP", status=200):
+    seen = []
+
+    def handle(request):
+        seen.append(json.loads(request.content))
+        if status != 200:
+            return httpx2.Response(status, json={"error": {"code": status, "message": "API Error"}})
+        return httpx2.Response(
+            200,
+            json={
+                "candidates": [
+                    {
+                        "content": {"parts": [{"text": content}]},
+                        "finishReason": finish_reason,
+                    }
+                ],
+                "usageMetadata": {"promptTokenCount": 150, "candidatesTokenCount": 35},
+            },
+        )
+
+    monkeypatch.setattr(settings, "gemini_api_key", "AIzaSyTestKey123456789012345678901234")
+    monkeypatch.setattr(settings, "llm_provider", "gemini")
+    from app.providers import GeminiProvider
+
+    p = GeminiProvider()
+    p.close()
+    p.client = httpx2.Client(
+        headers={"x-goog-api-key": settings.gemini_api_key},
+        transport=httpx2.MockTransport(handle),
+    )
+    return p, seen
+
+
+def test_gemini_provider_schema_usage_and_validation(monkeypatch):
+    p, seen = gemini_with_response(monkeypatch, result_json())
+    try:
+        result = p.assess_requirements({"text": "Python"}, [])
+        assert result.status == "not_evidenced"
+        assert p.usage == {"calls": 1, "input_tokens": 150, "output_tokens": 35}
+        assert seen[0]["generationConfig"]["response_mime_type"] == "application/json"
+        assert "response_schema" in seen[0]["generationConfig"]
+    finally:
+        p.close()
+
+
+def test_gemini_authentication_error_is_not_demo_fallback(monkeypatch):
+    p, _ = gemini_with_response(monkeypatch, "", status=401)
+    try:
+        with pytest.raises(ValueError, match="Authentication error"):
+            p.assess_requirements({"text": "Python"}, [])
+    finally:
+        p.close()
+
+
+def test_gemini_key_redaction_in_text():
+    key = "AIzaSyD-1234567890123456789012345678"
+    sample = f"gemini_token={key}\nRequired Python."
+    redacted = redact(sample, preserve_positions=True)
+    assert key not in redacted
+    assert "[REDACTED]" in redacted
+    assert redacted.index("Required Python.") == sample.index("Required Python.")
+
+
+def test_provider_factory_selects_gemini_when_configured(monkeypatch):
+    monkeypatch.setattr(settings, "anthropic_api_key", "")
+    monkeypatch.setattr(settings, "gemini_api_key", "AIzaSyTestKey123456789012345678901234")
+    monkeypatch.setattr(settings, "llm_provider", "")
+    from app.providers import GeminiProvider, provider
+
+    p = provider("real")
+    assert isinstance(p, GeminiProvider)
+    assert p.model == "gemini-2.5-flash"
+    p.close()

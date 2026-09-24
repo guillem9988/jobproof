@@ -64,15 +64,15 @@ Demo assessment rules only cover their known fixture requirements. Editing them 
 
 ## Real mode
 
-Set `ANTHROPIC_API_KEY` in the **server's** `.env`, then restart the backend. `LLM_MODEL` defaults to the documented `claude-sonnet-4-6` and is configurable. The implementation uses official `anthropic==1.8.0` and `client.messages.parse(..., output_format=PydanticModel)`; schema parsing is followed by deterministic citation validation. No key is returned to the browser. A missing key is an error, never a demo fallback.
+Set `ANTHROPIC_API_KEY` (e.g. `sk-ant-...`) or `GEMINI_API_KEY` (e.g. `AIza...`) in the **server's** `.env`, then restart the backend. `LLM_MODEL` defaults to `claude-sonnet-4-6` for Anthropic or `gemini-2.5-flash` for Gemini and is configurable. You can also explicitly set `LLM_PROVIDER=gemini` or `LLM_PROVIDER=anthropic`. The Anthropic implementation uses official `anthropic==1.8.0` with `client.messages.parse(..., output_format=PydanticModel)`; the Google Gemini implementation uses REST structured outputs (`response_schema` and `application/json` via `httpx`). Schema parsing is followed by deterministic citation validation. No key is returned to the browser. A missing key is an error, never a demo fallback.
 
 In **Projects**, add a public URL such as `https://github.com/owner/repository`, optionally a branch/commit, and import it. The server resolves a SHA and fetches only tree/blob API endpoints on GitHub. Private repositories are rejected, even when `GITHUB_TOKEN` is configured. A token is optional and only improves API limits.
 
-Create a posting with **New analysis**, save, extract requirements, review them, select snapshots and analyze. Real extraction sends the redacted posting to Anthropic; assessment sends only bounded, retrieved excerpts. Interview preparation receives validated assessment summaries. Provider calls may incur charges according to your account; the app displays tokens and calls, not invented dollar costs.
+Create a posting with **New analysis**, save, extract requirements, review them, select snapshots and analyze. Real extraction sends the redacted posting to the AI provider; assessment sends only bounded, retrieved excerpts. Interview preparation receives validated assessment summaries. Provider calls may incur charges according to your account; the app displays tokens and calls, not invented dollar costs.
 
 ## Checks actually executed
 
-- **57 pytest checks passed**: URL restrictions, exclusions, partial import, commit references, chunk lines, invalid/unsent/out-of-scope citations, safe downgrade, redaction, requirement versions, original-preserving review, exports, duplicate requests including concurrent submits, malformed provider output, restart recovery, cancellation and injection fixtures.
+- **61 pytest checks passed**: URL restrictions, exclusions, partial import, commit references, chunk lines, invalid/unsent/out-of-scope citations, safe downgrade, redaction, requirement versions, original-preserving review, exports, duplicate requests including concurrent submits, malformed provider output, restart recovery, cancellation, injection fixtures, and official Anthropic/Gemini provider contracts.
 - **1 Vitest check passed** for four-state summary counts.
 - **3 Playwright checks passed**: complete demo → evidence → review → Markdown download, desktop/mobile rendering with no horizontal overflow, inert rendering of hostile posting HTML, and recovery of a completed extraction after reload.
 - Official Anthropic SDK contract tests exercise structured JSON, token accounting, secret redaction with stable posting offsets, malformed output, refusal, truncation, authentication failure and the call budget. No external requests or charges occur in these tests.

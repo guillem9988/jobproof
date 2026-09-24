@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file="../.env", extra="ignore")
     database_url: str = "sqlite:///./jobproof.db"
     anthropic_api_key: str = ""
+    gemini_api_key: str = ""
+    llm_provider: str = ""
     llm_model: str = "claude-sonnet-4-6"
     github_token: str = ""
     max_files: int = 150
@@ -94,7 +96,7 @@ def redact(text, *, preserve_positions=False):
         flags=re.DOTALL,
     )
     text = re.sub(
-        r"(?:sk-ant-[\w-]+|gh[pousr]_[\w]+|github_pat_[\w]+|AKIA[A-Z0-9]{16})",
+        r"(?:sk-ant-[\w-]+|AIza[0-9A-Za-z-_]{35}|gh[pousr]_[\w]+|github_pat_[\w]+|AKIA[A-Z0-9]{16})",
         lambda m: replacement(m.group(), "[REDACTED]"),
         text,
     )

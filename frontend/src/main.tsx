@@ -281,7 +281,7 @@ function App() {
                   <div className="quiet">
                     {health.data?.real_provider_configured
                       ? "AI provider configured"
-                      : "Real analysis needs an Anthropic API key on the server."}
+                      : "Real analysis needs an Anthropic or Gemini API key on the server."}
                   </div>
                 </section>
                 <section className="card demo-card">
@@ -511,7 +511,7 @@ function App() {
                   <div className="notice">
                     {job.demo
                       ? "FIXTURE DEMO — Results come from deterministic fixture rules. Edited requirements may not have a matching rule."
-                      : "Real analysis sends the posting and selected, redacted repository excerpts to Anthropic. Keys stay on the server."}
+                      : "Real analysis sends the posting and selected, redacted repository excerpts to the configured AI provider. Keys stay on the server."}
                   </div>
                   <details className="card">
                     <summary>{job.title} · Original posting</summary>
