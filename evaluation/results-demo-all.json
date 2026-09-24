@@ -38,7 +38,7 @@
     }
   },
   "false_supported": 0,
-  "total_seconds": 0.09348641600081464,
+  "total_seconds": 0.08254899999883492,
   "results": [
     {
       "id": "case-01",
@@ -47,7 +47,7 @@
       "relevant_retrieved": true,
       "valid_citations": 2,
       "invalid_citations": 0,
-      "seconds": 0.0004306660011934582,
+      "seconds": 0.0006915419944562018,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -61,7 +61,7 @@
       "relevant_retrieved": true,
       "valid_citations": 1,
       "invalid_citations": 0,
-      "seconds": 0.00016691699784132652,
+      "seconds": 0.0001230000052601099,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -75,7 +75,7 @@
       "relevant_retrieved": null,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 2.9915998311480507e-05,
+      "seconds": 1.012500433716923e-05,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -89,7 +89,7 @@
       "relevant_retrieved": true,
       "valid_citations": 1,
       "invalid_citations": 0,
-      "seconds": 0.00012312500257394277,
+      "seconds": 0.00010800000018207356,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -103,7 +103,7 @@
       "relevant_retrieved": true,
       "valid_citations": 1,
       "invalid_citations": 0,
-      "seconds": 0.00012162500206613913,
+      "seconds": 0.00013204100105213001,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -117,7 +117,7 @@
       "relevant_retrieved": null,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 1.020800118567422e-05,
+      "seconds": 8.292001439258456e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -131,7 +131,7 @@
       "relevant_retrieved": null,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 7.0829992182552814e-06,
+      "seconds": 9.208000847138464e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -145,7 +145,7 @@
       "relevant_retrieved": true,
       "valid_citations": 1,
       "invalid_citations": 0,
-      "seconds": 0.00011749999976018444,
+      "seconds": 0.00011020799865946174,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -159,7 +159,7 @@
       "relevant_retrieved": null,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 1.5708003047620878e-05,
+      "seconds": 1.0332994861528277e-05,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -173,7 +173,7 @@
       "relevant_retrieved": null,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 2.0625000615837052e-05,
+      "seconds": 7.542003004346043e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -187,7 +187,7 @@
       "relevant_retrieved": null,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 1.0707997716963291e-05,
+      "seconds": 8.041999535635114e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -201,7 +201,7 @@
       "relevant_retrieved": null,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 9.875002433545887e-06,
+      "seconds": 7.542003004346043e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -215,7 +215,7 @@
       "relevant_retrieved": null,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 8.250000973930582e-06,
+      "seconds": 8.25000461190939e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -229,7 +229,7 @@
       "relevant_retrieved": null,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 6.999998731771484e-06,
+      "seconds": 6.958995072636753e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -243,7 +243,7 @@
       "relevant_retrieved": null,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 1.06250008684583e-05,
+      "seconds": 6.750000466126949e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -257,7 +257,7 @@
       "relevant_retrieved": true,
       "valid_citations": 1,
       "invalid_citations": 0,
-      "seconds": 0.00011645799895632081,
+      "seconds": 0.00011083300341852009,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -271,7 +271,7 @@
       "relevant_retrieved": null,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 8.208000508602709e-06,
+      "seconds": 8.457995136268437e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -285,7 +285,7 @@
       "relevant_retrieved": true,
       "valid_citations": 1,
       "invalid_citations": 0,
-      "seconds": 0.00011145800090162084,
+      "seconds": 0.00010383399785496294,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -299,7 +299,7 @@
       "relevant_retrieved": true,
       "valid_citations": 1,
       "invalid_citations": 0,
-      "seconds": 0.00010608299999148585,
+      "seconds": 0.00010333400132367387,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -313,7 +313,7 @@
       "relevant_retrieved": null,
       "valid_citations": 1,
       "invalid_citations": 0,
-      "seconds": 0.00010312499944120646,
+      "seconds": 0.00012204200174892321,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -327,7 +327,7 @@
       "relevant_retrieved": null,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 8.33400190458633e-06,
+      "seconds": 9.666000551078469e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -341,7 +341,7 @@
       "relevant_retrieved": null,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 7.29100065655075e-06,
+      "seconds": 8.208000508602709e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -355,7 +355,7 @@
       "relevant_retrieved": true,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 7.040998752927408e-06,
+      "seconds": 8.625000191386789e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -369,7 +369,7 @@
       "relevant_retrieved": true,
       "valid_citations": 1,
       "invalid_citations": 0,
-      "seconds": 0.0001097919994208496,
+      "seconds": 0.00010812500113388523,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -383,7 +383,7 @@
       "relevant_retrieved": true,
       "valid_citations": 1,
       "invalid_citations": 0,
-      "seconds": 0.00010637499872245826,
+      "seconds": 0.00010558399662841111,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -397,7 +397,7 @@
       "relevant_retrieved": null,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 8.791997970547527e-06,
+      "seconds": 8.165996405296028e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -411,7 +411,7 @@
       "relevant_retrieved": true,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 1.0874999134102836e-05,
+      "seconds": 8.124996384140104e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -425,7 +425,7 @@
       "relevant_retrieved": null,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 9.540999599266797e-06,
+      "seconds": 6.667003617621958e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -439,7 +439,7 @@
       "relevant_retrieved": true,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 7.833001291146502e-06,
+      "seconds": 7.916998583823442e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -453,7 +453,7 @@
       "relevant_retrieved": true,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 8.000002708286047e-06,
+      "seconds": 7.375005225185305e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -467,7 +467,7 @@
       "relevant_retrieved": false,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 7.792001269990578e-06,
+      "seconds": 6.87500141793862e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
@@ -481,7 +481,7 @@
       "relevant_retrieved": true,
       "valid_citations": 0,
       "invalid_citations": 0,
-      "seconds": 6.958001904422417e-06,
+      "seconds": 7.457994797732681e-06,
       "usage": {
         "calls": 0,
         "input_tokens": 0,
