@@ -18,7 +18,9 @@ import {
   ShieldCheck,
   Search,
   Download,
+  Copy,
 } from "lucide-react";
+import { translations, type Lang } from "./i18n";
 import { one, many, request, labels, counts } from "./api";
 import type {
   Analysis,
@@ -53,7 +55,13 @@ function App() {
     [filter, setFilter] = useState("all"),
     [priority, setPriority] = useState("all"),
     [category, setCategory] = useState("all"),
-    [projectFilter, setProjectFilter] = useState("all");
+    [projectFilter, setProjectFilter] = useState("all"),
+    [searchQuery, setSearchQuery] = useState(""),
+    [copied, setCopied] = useState(false),
+    [lang, setLang] = useState<Lang>(
+      (localStorage.getItem("jobproof-lang") as Lang) || "en",
+    );
+  const t = translations[lang];
   const taskHandled = useRef("");
   const health = useQuery({
     queryKey: ["health"],
@@ -191,7 +199,15 @@ function App() {
       (priority === "all" || a.requirement.priority === priority) &&
       (category === "all" || a.requirement.category === category) &&
       (projectFilter === "all" ||
-        a.evidence.some((e) => e.snapshot_id === projectFilter)),
+        a.evidence.some((e) => e.snapshot_id === projectFilter)) &&
+      (!searchQuery.trim() ||
+        a.requirement.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.explanation.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.evidence.some(
+          (e) =>
+            e.quote.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            e.path.toLowerCase().includes(searchQuery.toLowerCase()),
+        )),
   );
   return (
     <div className="app">
@@ -205,9 +221,9 @@ function App() {
         <div className="workspace-label">PERSONAL WORKSPACE</div>
         <nav>
           {[
-            ["home", "Overview", FileText],
-            ["projects", "Projects", FolderGit2],
-            ["history", "Analysis history", History],
+            ["home", t.brand, FileText],
+            ["projects", t.navProjects, FolderGit2],
+            ["history", t.navHistory, History],
           ].map(([id, title, Icon]) => (
             <button
               key={String(id)}
@@ -236,7 +252,23 @@ function App() {
                 ? "New analysis"
                 : page.charAt(0).toUpperCase() + page.slice(1)}
           </span>
-          <span className="pill">Private · Local</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <select
+              aria-label="Language selector"
+              value={lang}
+              onChange={(e) => {
+                const l = e.target.value as Lang;
+                setLang(l);
+                localStorage.setItem("jobproof-lang", l);
+              }}
+              style={{ width: "auto", padding: "4px 8px", fontSize: "0.85rem" }}
+            >
+              <option value="en">English</option>
+              <option value="ca">Català</option>
+              <option value="es">Español</option>
+            </select>
+            <span className="pill">Private · Local</span>
+          </div>
         </header>
         <main>
           {error && (
@@ -256,8 +288,8 @@ function App() {
           {page === "home" && (
             <>
               <div className="eyebrow">YOUR WORK. YOUR EVIDENCE.</div>
-              <h1>{copy.tagline}</h1>
-              <p className="intro">{copy.subtitle}</p>
+              <h1>{t.tagline}</h1>
+              <p className="intro">{t.subtitle}</p>
               <div className="home-grid">
                 <section className="card start">
                   <span className="icon-box">
@@ -276,23 +308,20 @@ function App() {
                       setPage("job");
                     }}
                   >
-                    New analysis <ArrowRight size={17} />
+                    {t.navNewAnalysis} <ArrowRight size={17} />
                   </button>
                   <div className="quiet">
                     {health.data?.real_provider_configured
-                      ? "AI provider configured"
-                      : "Real analysis needs an Anthropic or Gemini API key on the server."}
+                      ? t.aiConfigured
+                      : t.aiNotConfigured}
                   </div>
                 </section>
                 <section className="card demo-card">
-                  <span className="pill">NO SETUP NEEDED</span>
-                  <h2>See what evidence looks like.</h2>
-                  <p>
-                    Explore two fictional projects and a job posting. Includes
-                    clear matches, gaps, and claims that code cannot prove.
-                  </p>
+                  <span className="pill">{t.demoBadge}</span>
+                  <h2>{t.demoTitle}</h2>
+                  <p>{t.demoDesc}</p>
                   <button disabled={busy} onClick={() => act(demo)}>
-                    Try fixture demo <ArrowRight size={17} />
+                    {t.tryDemo} <ArrowRight size={17} />
                   </button>
                   <small>Deterministic fixtures · No external calls</small>
                 </section>
@@ -800,6 +829,25 @@ function App() {
                   </p>
                 </div>
                 <div className="exports">
+                  <button
+                    className="button"
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(
+                          `/api/v1/analyses/${reportId}/export?format=markdown`,
+                        );
+                        const text = await res.text();
+                        await navigator.clipboard.writeText(text);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      } catch {
+                        // ignore
+                      }
+                    }}
+                  >
+                    {copied ? <Check size={16} /> : <Copy size={16} />}
+                    {copied ? t.copied : t.copyMarkdown}
+                  </button>
                   {["markdown", "json"].map((f) => (
                     <a
                       className="button"
@@ -837,6 +885,15 @@ function App() {
                     ))}
                   </div>
                   <div className="filters">
+                    <label style={{ gridColumn: "1 / -1" }}>
+                      {t.searchFilter}
+                      <input
+                        type="search"
+                        placeholder={t.searchPlaceholder}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </label>
                     <label>
                       Status
                       <select

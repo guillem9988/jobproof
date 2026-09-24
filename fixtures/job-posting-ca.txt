@@ -1,0 +1,23 @@
+Enginyer/a de Software Junior (Producte i IA)
+Empresa: InnovaTec Barcelona
+Ubicació: Barcelona (Híbrid) / Remot
+
+Sobre el rol:
+Busquem un/a graduat/da en enginyeria informàtica o similar per incorporar-se al nostre equip de desenvolupament de producte. Treballaràs en la construcció d'aplicacions web modernes integrades amb models de llenguatge (LLM) i pipelines de dades.
+
+Requisits obligatoris:
+- Desenvolupament d'APIs robustes amb Python (FastAPI o Flask).
+- Experiència amb TypeScript i React en el frontend.
+- Ús de bases de dades relacionals com PostgreSQL o SQLite i modelat d'esquemes.
+- Bones pràctiques d'enginyeria de software: tests unitaris i d'integració (pytest, vitest).
+- Configuració de contenidors amb Docker per a entorns de desenvolupament.
+
+Requisits valorables:
+- Coneixements d'integració amb APIs de models de llenguatge (Anthropic Claude, Google Gemini o OpenAI) i sortides estructurades (JSON schema / Pydantic).
+- Coneixements bàsics de cerca documental o sistemes de recuperació d'informació (BM25 o cerca lèxica).
+- Desplegament continu i pipelines de CI/CD (GitHub Actions).
+
+Experiència i competències:
+- Es valorarà experiència laboral prèvia o pràctiques en entorns àgils de desenvolupament (1-2 anys).
+- Excel·lents habilitats de comunicació i col·laboració en equip multidisciplinari.
+- Bon nivell d'anglès tècnic, tant parlat com escrit.
