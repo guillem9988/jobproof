@@ -195,9 +195,11 @@ export interface Translations {
   aiProviderSelect: string;
   geminiOption: string;
   anthropicOption: string;
+  openaiOption: string;
   modelLabel: string;
   geminiApiKeyLabel: string;
   anthropicApiKeyLabel: string;
+  openaiApiKeyLabel: string;
   githubTokenLabel: string;
   githubTokenDesc: string;
   keyConfiguredBadge: string;
@@ -209,6 +211,7 @@ export interface Translations {
   clearKeys: string;
   getGeminiKeyLink: string;
   getAnthropicKeyLink: string;
+  getOpenaiKeyLink: string;
   getGithubTokenLink: string;
   activeBadge: string;
   openSettingsButton: string;
@@ -449,14 +452,16 @@ export const translations: Record<Lang, Translations> = {
     settingsEyebrow: "PREFERÈNCIES LOCALS",
     settingsIntro: "Configura les claus d'API per utilitzar intel·ligència artificial real (Google Gemini o Anthropic Claude) o augmentar els límits de GitHub. Totes les claus es desen de forma local al teu servidor i mai no s'envien a servidors externs no autoritzats.",
     aiProviderSection: "Proveïdor d'IA per a l'anàlisi real",
-    aiProviderSelect: "Selecciona el proveïdor actiu",
-    geminiOption: "Google Gemini (Ràpid, gratuït a Google AI Studio)",
-    anthropicOption: "Anthropic Claude (Models Sonnet i Haiku)",
+    aiProviderSelect: "Proveïdor d'IA",
+    geminiOption: "Gemini API",
+    anthropicOption: "Anthropic",
+    openaiOption: "OpenAI",
     modelLabel: "Model d'IA",
-    geminiApiKeyLabel: "Clau d'API de Google Gemini",
-    anthropicApiKeyLabel: "Clau d'API d'Anthropic Claude",
-    githubTokenLabel: "Token d'accés personal de GitHub (opcional)",
-    githubTokenDesc: "Augmenta el límit de peticions públiques de GitHub de 60/hora a 5.000/hora quan importes repositoris.",
+    geminiApiKeyLabel: "Gemini API Key",
+    anthropicApiKeyLabel: "Anthropic API Key",
+    openaiApiKeyLabel: "OpenAI API Key",
+    githubTokenLabel: "GitHub Personal Access Token (opcional)",
+    githubTokenDesc: "Augmenta el límit de peticions públiques de GitHub de 60/hora a 5.000/hora i permet repositoris privats.",
     keyConfiguredBadge: "Configurada",
     keyNotConfiguredBadge: "Sense configurar",
     saveSettings: "Desar configuració",
@@ -464,8 +469,9 @@ export const translations: Record<Lang, Translations> = {
     testConnection: "Provar connexió",
     testingConnection: "Provant connexió...",
     clearKeys: "Netejar claus",
-    getGeminiKeyLink: "Aconsegueix una clau gratuïta a Google AI Studio →",
-    getAnthropicKeyLink: "Aconsegueix una clau a Anthropic Console →",
+    getGeminiKeyLink: "Obtenir clau de Gemini API →",
+    getAnthropicKeyLink: "Obtenir clau d'Anthropic →",
+    getOpenaiKeyLink: "Obtenir clau d'OpenAI →",
     getGithubTokenLink: "Crear un GitHub Personal Access Token →",
     activeBadge: "Actiu",
     openSettingsButton: "Configurar claus d'IA",
@@ -702,14 +708,16 @@ export const translations: Record<Lang, Translations> = {
     settingsEyebrow: "LOCAL PREFERENCES",
     settingsIntro: "Configure API keys to use real AI analysis (Google Gemini or Anthropic Claude) or increase GitHub rate limits. All keys are stored locally on your server and are never sent to unauthorized third parties.",
     aiProviderSection: "Active AI Provider",
-    aiProviderSelect: "Select provider for real analyses",
-    geminiOption: "Google Gemini (Fast, free tier on Google AI Studio)",
-    anthropicOption: "Anthropic Claude (Sonnet & Haiku models)",
+    aiProviderSelect: "AI Provider",
+    geminiOption: "Gemini API",
+    anthropicOption: "Anthropic",
+    openaiOption: "OpenAI",
     modelLabel: "AI Model",
-    geminiApiKeyLabel: "Google Gemini API Key",
-    anthropicApiKeyLabel: "Anthropic Claude API Key",
+    geminiApiKeyLabel: "Gemini API Key",
+    anthropicApiKeyLabel: "Anthropic API Key",
+    openaiApiKeyLabel: "OpenAI API Key",
     githubTokenLabel: "GitHub Personal Access Token (optional)",
-    githubTokenDesc: "Increases GitHub public rate limit from 60/hour to 5,000/hour when importing repositories.",
+    githubTokenDesc: "Increases GitHub public rate limit from 60/hour to 5,000/hour and enables private repositories.",
     keyConfiguredBadge: "Configured",
     keyNotConfiguredBadge: "Not configured",
     saveSettings: "Save settings",
@@ -717,8 +725,9 @@ export const translations: Record<Lang, Translations> = {
     testConnection: "Test connection",
     testingConnection: "Testing connection...",
     clearKeys: "Clear keys",
-    getGeminiKeyLink: "Get a free API key at Google AI Studio →",
-    getAnthropicKeyLink: "Get an API key at Anthropic Console →",
+    getGeminiKeyLink: "Get Gemini API key →",
+    getAnthropicKeyLink: "Get Anthropic API key →",
+    getOpenaiKeyLink: "Get OpenAI API key →",
     getGithubTokenLink: "Create a GitHub Personal Access Token →",
     activeBadge: "Active",
     openSettingsButton: "Configure AI keys",
@@ -955,14 +964,16 @@ export const translations: Record<Lang, Translations> = {
     settingsEyebrow: "PREFERENCIAS LOCALES",
     settingsIntro: "Configura las claves de API para utilizar inteligencia artificial real (Google Gemini o Anthropic Claude) o aumentar los límites de GitHub. Todas las claves se almacenan localmente en tu servidor y nunca se envían a terceros no autorizados.",
     aiProviderSection: "Proveedor de IA para análisis real",
-    aiProviderSelect: "Selecciona el proveedor activo",
-    geminiOption: "Google Gemini (Rápido, nivel gratuito en Google AI Studio)",
-    anthropicOption: "Anthropic Claude (Modelos Sonnet y Haiku)",
+    aiProviderSelect: "Proveedor de IA",
+    geminiOption: "Gemini API",
+    anthropicOption: "Anthropic",
+    openaiOption: "OpenAI",
     modelLabel: "Modelo de IA",
-    geminiApiKeyLabel: "Clave de API de Google Gemini",
-    anthropicApiKeyLabel: "Clave de API de Anthropic Claude",
-    githubTokenLabel: "Token de acceso personal de GitHub (opcional)",
-    githubTokenDesc: "Aumenta el límite de solicitudes públicas de GitHub de 60/hora a 5.000/hora al importar repositorios.",
+    geminiApiKeyLabel: "Gemini API Key",
+    anthropicApiKeyLabel: "Anthropic API Key",
+    openaiApiKeyLabel: "OpenAI API Key",
+    githubTokenLabel: "GitHub Personal Access Token (opcional)",
+    githubTokenDesc: "Aumenta el límite de solicitudes públicas de GitHub de 60/hora a 5.000/hora y permite repositorios privados.",
     keyConfiguredBadge: "Configurada",
     keyNotConfiguredBadge: "Sin configurar",
     saveSettings: "Guardar configuración",
@@ -970,8 +981,9 @@ export const translations: Record<Lang, Translations> = {
     testConnection: "Probar conexión",
     testingConnection: "Probando conexión...",
     clearKeys: "Limpiar claves",
-    getGeminiKeyLink: "Consigue una clave gratuita en Google AI Studio →",
-    getAnthropicKeyLink: "Consigue una clave en Anthropic Console →",
+    getGeminiKeyLink: "Obtener clave de Gemini API →",
+    getAnthropicKeyLink: "Obtener clave de Anthropic →",
+    getOpenaiKeyLink: "Obtener clave de OpenAI →",
     getGithubTokenLink: "Crear un GitHub Personal Access Token →",
     activeBadge: "Activo",
     openSettingsButton: "Configurar claves de IA",

@@ -29,37 +29,7 @@ class Provider(Protocol):
 
 
 
-class RealProvider:
-    def __init__(self):
-        self.model = settings.llm_model
-        if not settings.anthropic_api_key:
-            raise ValueError(
-                "ANTHROPIC_API_KEY is missing. Configure the server or explicitly use the fixture demo."
-            )
-        self.client = Anthropic(
-            api_key=settings.anthropic_api_key,
-            timeout=settings.external_timeout,
-            max_retries=settings.max_retries,
-        )
-        self.usage = {"calls": 0, "input_tokens": 0, "output_tokens": 0}
-
-    def call(self, instruction, data, schema):
-        if self.usage["calls"] >= settings.max_calls:
-            raise ValueError("Provider call budget reached. Select fewer requirements.")
-        self.usage["calls"] += 1
-        response = self.client.messages.parse(
-            model=self.model,
-            max_tokens=settings.max_tokens,
-            system=SYSTEM + "\n" + instruction,
-            messages=[{"role": "user", "content": json.dumps(redact_payload(data), ensure_ascii=False)}],
-            output_format=schema,
-        )
-        self.usage["input_tokens"] += response.usage.input_tokens
-        self.usage["output_tokens"] += response.usage.output_tokens
-        if response.stop_reason != "end_turn" or response.parsed_output is None:
-            raise ValueError("Provider returned an incomplete or refused response. Retry explicitly.")
-        return schema.model_validate(response.parsed_output)
-
+class BaseLLMProvider:
     def extract_requirements(self, text):
         return self.call(
             "Extract all requirements (Catalan, Spanish or English). Exact quote and zero-based character offset into supplied text. Preserve required/preferred wording, alternatives and years. Do not split technology examples without reason. Mark experience, language and communication external. provenance=extracted. Do not omit hard requirements.",
@@ -144,6 +114,42 @@ class RealProvider:
             "If the candidate has answered 3 or more questions, wrap up the interview and set is_wrap_up=True."
         )
         return self.call(instruction, data, InterviewChatReply)
+
+
+class RealProvider(BaseLLMProvider):
+    def __init__(self):
+        self.model = (
+            settings.llm_model
+            if settings.llm_model and "claude" in settings.llm_model
+            else "claude-sonnet-4-6"
+        )
+        if not settings.anthropic_api_key:
+            raise ValueError(
+                "ANTHROPIC_API_KEY is missing. Configure the server or explicitly use the fixture demo."
+            )
+        self.client = Anthropic(
+            api_key=settings.anthropic_api_key,
+            timeout=settings.external_timeout,
+            max_retries=settings.max_retries,
+        )
+        self.usage = {"calls": 0, "input_tokens": 0, "output_tokens": 0}
+
+    def call(self, instruction, data, schema):
+        if self.usage["calls"] >= settings.max_calls:
+            raise ValueError("Provider call budget reached. Select fewer requirements.")
+        self.usage["calls"] += 1
+        response = self.client.messages.parse(
+            model=self.model,
+            max_tokens=settings.max_tokens,
+            system=SYSTEM + "\n" + instruction,
+            messages=[{"role": "user", "content": json.dumps(redact_payload(data), ensure_ascii=False)}],
+            output_format=schema,
+        )
+        self.usage["input_tokens"] += response.usage.input_tokens
+        self.usage["output_tokens"] += response.usage.output_tokens
+        if response.stop_reason != "end_turn" or response.parsed_output is None:
+            raise ValueError("Provider returned an incomplete or refused response. Retry explicitly.")
+        return schema.model_validate(response.parsed_output)
 
 
 class DemoProvider:
@@ -442,7 +448,7 @@ def to_gemini_schema(schema: dict) -> dict:
     return resolve(schema)
 
 
-class GeminiProvider:
+class GeminiProvider(BaseLLMProvider):
     def __init__(self):
         self.model = settings.llm_model if settings.llm_model.startswith("gemini-") else "gemini-2.5-flash"
         if not settings.gemini_api_key:
@@ -518,99 +524,114 @@ class GeminiProvider:
         raw_text = content_parts[0]["text"]
         return schema.model_validate_json(raw_text)
 
-    def extract_requirements(self, text):
-        return self.call(
-            "Extract all requirements (Catalan, Spanish or English). Exact quote and zero-based character offset into supplied text. Preserve required/preferred wording, alternatives and years. Do not split technology examples without reason. Mark experience, language and communication external. provenance=extracted. Do not omit hard requirements.",
-            {"job": text},
-            Requirements,
-        )
 
-    def assess_requirements(self, requirement, chunks):
-        return self.call(
-            "Evaluate this single requirement only against the candidate excerpts.",
-            {"requirement": requirement, "sources": chunks},
-            Assessment,
+class OpenAIProvider(BaseLLMProvider):
+    def __init__(self):
+        self.model = (
+            settings.llm_model
+            if settings.llm_model
+            and ("gpt" in settings.llm_model or "o1" in settings.llm_model or "o3" in settings.llm_model)
+            else "gpt-4o"
         )
-
-    def generate_preparation_material(self, assessments):
-        return self.call(
-            "Generate exactly three interview questions, technical points, alternatives, honest limitations and personal prompts. Recommendations must identify concrete observable actions, estimated effort and a known requirement_id. Never equate projects with employment experience.",
-            assessments,
-            Preparation,
+        if not settings.openai_api_key:
+            raise ValueError(
+                "OPENAI_API_KEY is missing. Configure the server or explicitly use the fixture demo."
+            )
+        self.client = httpx.Client(
+            timeout=settings.external_timeout,
+            headers={
+                "Authorization": f"Bearer {settings.openai_api_key}",
+                "Content-Type": "application/json",
+            },
         )
+        self.usage = {"calls": 0, "input_tokens": 0, "output_tokens": 0}
 
-    def generate_cover_letter(self, job_title, job_text, assessments, language="en", tone="balanced"):
-        lang_name = {"ca": "Catalan", "es": "Spanish", "en": "English"}.get(language, "English")
-        evidence_summary = []
-        for a in assessments:
-            status = a.get("status", "")
-            req_text = a.get("requirement", {}).get("text", "")
-            ev_list = [
-                f"{e['path']} (L{e.get('start', '?')}-L{e.get('end', '?')}): {e.get('relation', '')}"
-                for e in a.get("evidence", [])
-            ]
-            evidence_summary.append({
-                "requirement": req_text,
-                "status": status,
-                "evidence": ev_list[:2],
-                "limitations": a.get("limitations", [])[:1],
-            })
-        data = {
-            "job_title": job_title,
-            "tone": tone,
-            "language": lang_name,
-            "evidence_audit": evidence_summary,
+    def close(self):
+        self.client.close()
+
+    def call(self, instruction, data, schema):
+        if self.usage["calls"] >= settings.max_calls:
+            raise ValueError("Provider call budget reached. Select fewer requirements.")
+        self.usage["calls"] += 1
+        url = "https://api.openai.com/v1/chat/completions"
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": SYSTEM + "\n" + instruction},
+                {"role": "user", "content": json.dumps(redact_payload(data), ensure_ascii=False)},
+            ],
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": schema.__name__,
+                    "strict": False,
+                    "schema": schema.model_json_schema(),
+                },
+            },
+            "temperature": 0.0,
+            "max_tokens": settings.max_tokens,
         }
-        instruction = (
-            f"Generate a professional, strictly honest cover letter for '{job_title}' in {lang_name}. "
-            f"Tone: {tone}. "
-            "HONESTY RULES: Do not invent employment or leadership. "
-            "Highlight verified code implementations and cited files as real evidence. "
-            "Acknowledge external limitations (e.g. team communication or years of experience cannot be proven by code alone). "
-            "Format the body in clean markdown paragraphs."
-        )
-        return self.call(instruction, data, GeneratedCoverLetter)
 
-    def chat_interview(self, job_title, assessments, messages, language="en"):
-        lang_name = {"ca": "Catalan", "es": "Spanish", "en": "English"}.get(language, "English")
-        evidence_summary = []
-        for a in assessments:
-            status = a.get("status", "")
-            req_text = a.get("requirement", {}).get("text", "")
-            ev_list = [
-                f"{e['path']} (L{e.get('start', '?')}-L{e.get('end', '?')}): {e.get('relation', '')}"
-                for e in a.get("evidence", [])
-            ]
-            evidence_summary.append({
-                "requirement": req_text,
-                "status": status,
-                "evidence": ev_list[:2],
-                "limitations": a.get("limitations", [])[:1],
-            })
-        data = {
-            "job_title": job_title,
-            "language": lang_name,
-            "evidence_audit": evidence_summary,
-            "conversation_history": messages,
-        }
-        instruction = (
-            f"You are a technical interviewer interviewing a candidate for '{job_title}'. "
-            f"Respond in {lang_name}. "
-            "Evaluate the candidate's responses against their actual repository audit. "
-            "Provide concise evaluation_feedback evaluating whether they demonstrated genuine code understanding and honesty about limitations. "
-            "In interviewer_reply, ask a focused technical question probing code trade-offs, architecture, or limitations in their files. "
-            "If the candidate has answered 3 or more questions, wrap up the interview and set is_wrap_up=True."
-        )
-        return self.call(instruction, data, InterviewChatReply)
+        response = None
+        for attempt in range(1 + settings.max_retries):
+            try:
+                response = self.client.post(url, json=payload)
+                if response.status_code == 200:
+                    break
+                if response.status_code in {401, 403}:
+                    raise ValueError("Authentication error: invalid or unauthorized OPENAI_API_KEY.")
+                if response.status_code == 429 and attempt < settings.max_retries:
+                    continue
+            except httpx.RequestError:
+                if attempt >= settings.max_retries:
+                    raise ValueError("OpenAI provider network error. Retry explicitly.")
+                continue
+
+        if response is None or response.status_code != 200:
+            status = response.status_code if response else "no_response"
+            err_msg = f"OpenAI API error (HTTP {status})."
+            if response is not None:
+                try:
+                    err_data = response.json()
+                    if isinstance(err_data, dict) and "error" in err_data and "message" in err_data["error"]:
+                        err_msg = str(err_data["error"]["message"])
+                except (ValueError, KeyError):
+                    err_msg = f"OpenAI API error (HTTP {status})."
+            raise ValueError(f"{err_msg} Retry explicitly.")
+
+        res_json = response.json()
+        usage = res_json.get("usage", {})
+        self.usage["input_tokens"] += usage.get("prompt_tokens", 0)
+        self.usage["output_tokens"] += usage.get("completion_tokens", 0)
+
+        choices = res_json.get("choices", [])
+        if not choices:
+            raise ValueError("Provider returned an empty response. Retry explicitly.")
+
+        content = choices[0].get("message", {}).get("content", "")
+        if not content:
+            raise ValueError("Provider returned an incomplete response. Retry explicitly.")
+
+        return schema.model_validate_json(content)
 
 
 def provider(mode):
     if mode == "demo":
         return DemoProvider()
-    if settings.llm_provider == "gemini" or (not settings.anthropic_api_key and settings.gemini_api_key):
+    if settings.llm_provider == "gemini" or (
+        not settings.anthropic_api_key
+        and not settings.openai_api_key
+        and settings.gemini_api_key
+    ):
         return GeminiProvider()
-    if not settings.anthropic_api_key and not settings.gemini_api_key:
+    if settings.llm_provider == "openai" or (
+        not settings.anthropic_api_key
+        and not settings.gemini_api_key
+        and settings.openai_api_key
+    ):
+        return OpenAIProvider()
+    if not settings.anthropic_api_key and not settings.gemini_api_key and not settings.openai_api_key:
         raise ValueError(
-            "ANTHROPIC_API_KEY or GEMINI_API_KEY is missing. Configure the server or explicitly use the fixture demo."
+            "An API key (Gemini API, Anthropic, or OpenAI) is required. Configure it in Settings or use the fixture demo."
         )
     return RealProvider()

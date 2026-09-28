@@ -114,16 +114,36 @@ class Health(Schema):
 @app.get("/health", response_model=Health)
 @app.get("/api/v1/health", response_model=Health)
 def health():
-    is_gemini = settings.llm_provider == "gemini" or (
-        not settings.anthropic_api_key and bool(settings.gemini_api_key)
-    )
-    configured = bool(settings.gemini_api_key) if is_gemini else bool(settings.anthropic_api_key)
-    active = "gemini" if (is_gemini and settings.gemini_api_key) else ("anthropic" if settings.anthropic_api_key else "")
-    model = (
-        settings.llm_model
-        if (settings.llm_model and (not is_gemini or settings.llm_model.startswith("gemini-")))
-        else ("gemini-2.5-flash" if is_gemini else "claude-sonnet-4-6")
-    )
+    pref = settings.llm_provider
+    if not pref:
+        if settings.gemini_api_key:
+            pref = "gemini"
+        elif settings.openai_api_key:
+            pref = "openai"
+        elif settings.anthropic_api_key:
+            pref = "anthropic"
+        else:
+            pref = "gemini"
+
+    active = ""
+    if pref == "gemini" and settings.gemini_api_key:
+        active = "gemini"
+    elif pref == "openai" and settings.openai_api_key:
+        active = "openai"
+    elif pref == "anthropic" and settings.anthropic_api_key:
+        active = "anthropic"
+
+    configured = bool(active)
+
+    if pref == "gemini":
+        default_model = "gemini-2.5-flash"
+    elif pref == "openai":
+        default_model = "gpt-4o"
+    else:
+        default_model = "claude-sonnet-4-6"
+
+    model = settings.llm_model if settings.llm_model else default_model
+
     return Health(
         status="ok",
         real_provider_configured=configured,
@@ -186,6 +206,8 @@ class SettingsView(Schema):
     gemini_api_key_preview: str
     anthropic_api_key_configured: bool
     anthropic_api_key_preview: str
+    openai_api_key_configured: bool
+    openai_api_key_preview: str
     github_token_configured: bool
     github_token_preview: str
     real_provider_configured: bool
@@ -197,11 +219,12 @@ class SettingsUpdate(Schema):
     llm_model: str | None = None
     gemini_api_key: str | None = None
     anthropic_api_key: str | None = None
+    openai_api_key: str | None = None
     github_token: str | None = None
 
 
 class SettingsTestRequest(Schema):
-    provider: Literal["gemini", "anthropic", "github"]
+    provider: Literal["gemini", "anthropic", "openai", "github"]
     api_key: str | None = None
     model: str | None = None
 
@@ -214,23 +237,45 @@ class SettingsTestResponse(Schema):
 
 @app.get("/api/v1/settings", response_model=SettingsView)
 def get_settings():
-    is_gemini = settings.llm_provider == "gemini" or (
-        not settings.anthropic_api_key and bool(settings.gemini_api_key)
-    )
-    configured = bool(settings.gemini_api_key) if is_gemini else bool(settings.anthropic_api_key)
-    active = "gemini" if (is_gemini and settings.gemini_api_key) else ("anthropic" if settings.anthropic_api_key else "")
-    current_model = (
-        settings.llm_model
-        if (settings.llm_model and (not is_gemini or settings.llm_model.startswith("gemini-")))
-        else ("gemini-2.5-flash" if is_gemini else "claude-sonnet-4-6")
-    )
+    provider_pref = settings.llm_provider
+    if not provider_pref:
+        if settings.gemini_api_key:
+            provider_pref = "gemini"
+        elif settings.openai_api_key:
+            provider_pref = "openai"
+        elif settings.anthropic_api_key:
+            provider_pref = "anthropic"
+        else:
+            provider_pref = "gemini"
+
+    active = ""
+    if provider_pref == "gemini" and settings.gemini_api_key:
+        active = "gemini"
+    elif provider_pref == "openai" and settings.openai_api_key:
+        active = "openai"
+    elif provider_pref == "anthropic" and settings.anthropic_api_key:
+        active = "anthropic"
+
+    configured = bool(active)
+
+    if provider_pref == "gemini":
+        default_model = "gemini-2.5-flash"
+    elif provider_pref == "openai":
+        default_model = "gpt-4o"
+    else:
+        default_model = "claude-sonnet-4-6"
+
+    current_model = settings.llm_model if settings.llm_model else default_model
+
     return SettingsView(
-        llm_provider="gemini" if is_gemini else "anthropic",
+        llm_provider=provider_pref,
         llm_model=current_model,
         gemini_api_key_configured=bool(settings.gemini_api_key),
         gemini_api_key_preview=mask_secret(settings.gemini_api_key),
         anthropic_api_key_configured=bool(settings.anthropic_api_key),
         anthropic_api_key_preview=mask_secret(settings.anthropic_api_key),
+        openai_api_key_configured=bool(settings.openai_api_key),
+        openai_api_key_preview=mask_secret(settings.openai_api_key),
         github_token_configured=bool(settings.github_token),
         github_token_preview=mask_secret(settings.github_token),
         real_provider_configured=configured,
@@ -248,6 +293,8 @@ def update_settings(payload: SettingsUpdate):
         settings.gemini_api_key = payload.gemini_api_key.strip()
     if payload.anthropic_api_key is not None:
         settings.anthropic_api_key = payload.anthropic_api_key.strip()
+    if payload.openai_api_key is not None:
+        settings.openai_api_key = payload.openai_api_key.strip()
     if payload.github_token is not None:
         settings.github_token = payload.github_token.strip()
 
@@ -258,6 +305,7 @@ def update_settings(payload: SettingsUpdate):
             "llm_model": settings.llm_model,
             "gemini_api_key": settings.gemini_api_key,
             "anthropic_api_key": settings.anthropic_api_key,
+            "openai_api_key": settings.openai_api_key,
             "github_token": settings.github_token,
         },
         id="config",
@@ -269,6 +317,7 @@ def update_settings(payload: SettingsUpdate):
             "LLM_MODEL": settings.llm_model,
             "GEMINI_API_KEY": settings.gemini_api_key,
             "ANTHROPIC_API_KEY": settings.anthropic_api_key,
+            "OPENAI_API_KEY": settings.openai_api_key,
             "GITHUB_TOKEN": settings.github_token,
         }
     )
@@ -362,6 +411,45 @@ def test_settings(payload: SettingsTestRequest):
                         err_msg = str(err_json["error"]["message"])
                 except (ValueError, KeyError):
                     err_msg = f"Anthropic returned HTTP {resp.status_code}"
+                return SettingsTestResponse(success=False, message=err_msg, latency_ms=latency)
+        except (httpx.RequestError, httpx.HTTPError) as e:
+            return SettingsTestResponse(success=False, message=f"Connection error: {e!s}")
+
+    elif payload.provider == "openai":
+        key = payload.api_key.strip() if payload.api_key else settings.openai_api_key
+        if not key:
+            return SettingsTestResponse(success=False, message="No OpenAI API key provided or configured.")
+        model = payload.model.strip() if payload.model else "gpt-4o"
+        start_t = time.perf_counter()
+        try:
+            with httpx.Client(
+                timeout=10, headers={"Authorization": f"Bearer {key}"}
+            ) as client:
+                resp = client.post(
+                    "https://api.openai.com/v1/chat/completions",
+                    json={
+                        "model": model,
+                        "max_tokens": 5,
+                        "messages": [{"role": "user", "content": "Hello"}],
+                    },
+                )
+            latency = int((time.perf_counter() - start_t) * 1000)
+            if resp.status_code == 200:
+                return SettingsTestResponse(
+                    success=True, message=f"OpenAI ({model}) connected successfully!", latency_ms=latency
+                )
+            elif resp.status_code in {401, 403}:
+                return SettingsTestResponse(
+                    success=False, message="Invalid or unauthorized OpenAI API key.", latency_ms=latency
+                )
+            else:
+                err_msg = f"OpenAI returned HTTP {resp.status_code}"
+                try:
+                    err_json = resp.json()
+                    if isinstance(err_json, dict) and "error" in err_json and "message" in err_json["error"]:
+                        err_msg = str(err_json["error"]["message"])
+                except (ValueError, KeyError):
+                    pass
                 return SettingsTestResponse(success=False, message=err_msg, latency_ms=latency)
         except (httpx.RequestError, httpx.HTTPError) as e:
             return SettingsTestResponse(success=False, message=f"Connection error: {e!s}")

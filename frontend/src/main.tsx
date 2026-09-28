@@ -187,13 +187,15 @@ function App() {
     queryKey: ["appSettings"],
     queryFn: () => one<AppSettings>("/settings"),
   });
-  const [settingsProvider, setSettingsProvider] = useState<"gemini" | "anthropic">("gemini");
+  const [settingsProvider, setSettingsProvider] = useState<"gemini" | "anthropic" | "openai">("gemini");
   const [settingsModel, setSettingsModel] = useState<string>("gemini-2.5-flash");
   const [geminiKeyInput, setGeminiKeyInput] = useState<string>("");
   const [anthropicKeyInput, setAnthropicKeyInput] = useState<string>("");
+  const [openaiKeyInput, setOpenaiKeyInput] = useState<string>("");
   const [githubTokenInput, setGithubTokenInput] = useState<string>("");
   const [showGeminiKey, setShowGeminiKey] = useState<boolean>(false);
   const [showAnthropicKey, setShowAnthropicKey] = useState<boolean>(false);
+  const [showOpenaiKey, setShowOpenaiKey] = useState<boolean>(false);
   const [showGithubToken, setShowGithubToken] = useState<boolean>(false);
   const [testStatus, setTestStatus] = useState<{ testing: boolean; result: SettingsTestResult | null }>({
     testing: false,
@@ -203,29 +205,37 @@ function App() {
 
   useEffect(() => {
     if (appSettings.data) {
-      setSettingsProvider(appSettings.data.llm_provider || "gemini");
-      setSettingsModel(
-        appSettings.data.llm_model ||
-          (appSettings.data.llm_provider === "anthropic" ? "claude-sonnet-4-6" : "gemini-2.5-flash"),
-      );
+      const p = (appSettings.data.llm_provider as "gemini" | "anthropic" | "openai") || "gemini";
+      setSettingsProvider(p);
+      const defModel =
+        p === "openai" ? "gpt-4o" : p === "anthropic" ? "claude-sonnet-4-6" : "gemini-2.5-flash";
+      setSettingsModel(appSettings.data.llm_model || defModel);
     }
   }, [appSettings.data]);
 
   async function handleSaveSettings(e: React.FormEvent) {
     e.preventDefault();
     await act(async () => {
+      const defModel =
+        settingsProvider === "openai"
+          ? "gpt-4o"
+          : settingsProvider === "anthropic"
+            ? "claude-sonnet-4-6"
+            : "gemini-2.5-flash";
       const payload: Partial<{
         llm_provider: string;
         llm_model: string;
         gemini_api_key?: string;
         anthropic_api_key?: string;
+        openai_api_key?: string;
         github_token?: string;
       }> = {
         llm_provider: settingsProvider,
-        llm_model: settingsModel,
+        llm_model: defModel,
       };
       if (geminiKeyInput) payload.gemini_api_key = geminiKeyInput;
       if (anthropicKeyInput) payload.anthropic_api_key = anthropicKeyInput;
+      if (openaiKeyInput) payload.openai_api_key = openaiKeyInput;
       if (githubTokenInput) payload.github_token = githubTokenInput;
 
       await one<AppSettings>("/settings", payload);
@@ -233,13 +243,14 @@ function App() {
       await qc.invalidateQueries({ queryKey: ["health"] });
       setGeminiKeyInput("");
       setAnthropicKeyInput("");
+      setOpenaiKeyInput("");
       setGithubTokenInput("");
       setSettingsSavedAlert(true);
       setTimeout(() => setSettingsSavedAlert(false), 3000);
     });
   }
 
-  async function handleTestConnection(providerToTest: "gemini" | "anthropic" | "github") {
+  async function handleTestConnection(providerToTest: "gemini" | "anthropic" | "openai" | "github") {
     setTestStatus({ testing: true, result: null });
     try {
       const key =
@@ -247,7 +258,9 @@ function App() {
           ? geminiKeyInput
           : providerToTest === "anthropic"
             ? anthropicKeyInput
-            : githubTokenInput;
+            : providerToTest === "openai"
+              ? openaiKeyInput
+              : githubTokenInput;
       const res = await one<SettingsTestResult>("/settings/test", {
         provider: providerToTest,
         api_key: key || undefined,
@@ -271,12 +284,14 @@ function App() {
       await one<AppSettings>("/settings", {
         gemini_api_key: "",
         anthropic_api_key: "",
+        openai_api_key: "",
         github_token: "",
       });
       await qc.invalidateQueries({ queryKey: ["appSettings"] });
       await qc.invalidateQueries({ queryKey: ["health"] });
       setGeminiKeyInput("");
       setAnthropicKeyInput("");
+      setOpenaiKeyInput("");
       setGithubTokenInput("");
       setTestStatus({ testing: false, result: null });
     });
@@ -684,7 +699,7 @@ function App() {
                     {health.data?.real_provider_configured ? (
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                         <span className="pill supported" style={{ fontSize: "0.75rem", padding: "2px 8px" }}>
-                          ✓ {health.data.active_provider ? (health.data.active_provider === "gemini" ? "Gemini" : "Claude") : "IA"}
+                          ✓ {health.data.active_provider ? (health.data.active_provider === "gemini" ? "Gemini" : health.data.active_provider === "openai" ? "OpenAI" : "Claude") : "IA"}
                         </span>
                         {t.aiConfigured} · {health.data.model}
                       </span>
@@ -1374,49 +1389,20 @@ function App() {
                   <select
                     value={settingsProvider}
                     onChange={(e) => {
-                      const p = e.target.value as "gemini" | "anthropic";
+                      const p = e.target.value as "gemini" | "anthropic" | "openai";
                       setSettingsProvider(p);
-                      setSettingsModel(
-                        p === "gemini" ? "gemini-2.5-flash" : "claude-3-7-sonnet-20250219",
-                      );
+                      const defModel =
+                        p === "openai"
+                          ? "gpt-4o"
+                          : p === "anthropic"
+                            ? "claude-sonnet-4-6"
+                            : "gemini-2.5-flash";
+                      setSettingsModel(defModel);
                     }}
                   >
                     <option value="gemini">{t.geminiOption}</option>
                     <option value="anthropic">{t.anthropicOption}</option>
-                  </select>
-                </label>
-
-                <label>
-                  {t.modelLabel}
-                  <select
-                    value={settingsModel}
-                    onChange={(e) => setSettingsModel(e.target.value)}
-                  >
-                    {settingsProvider === "gemini" ? (
-                      <>
-                        <option value="gemini-2.5-flash">
-                          gemini-2.5-flash (Fast, accurate — Recommended)
-                        </option>
-                        <option value="gemini-2.0-flash">gemini-2.0-flash</option>
-                        <option value="gemini-1.5-pro">
-                          gemini-1.5-pro (Deep reasoning)
-                        </option>
-                        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-                      </>
-                    ) : (
-                      <>
-                        <option value="claude-3-7-sonnet-20250219">
-                          claude-3-7-sonnet-20250219 (Latest — Recommended)
-                        </option>
-                        <option value="claude-3-5-sonnet-latest">
-                          claude-3-5-sonnet-latest
-                        </option>
-                        <option value="claude-3-5-haiku-latest">
-                          claude-3-5-haiku-latest (Fast, economical)
-                        </option>
-                        <option value="claude-sonnet-4-6">claude-sonnet-4-6</option>
-                      </>
-                    )}
+                    <option value="openai">{t.openaiOption}</option>
                   </select>
                 </label>
 
@@ -1580,6 +1566,86 @@ function App() {
                   </div>
                 </div>
 
+                <div style={{ marginTop: 18 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 6,
+                    }}
+                  >
+                    <label style={{ margin: 0, fontWeight: 600 }}>
+                      {t.openaiApiKeyLabel}
+                    </label>
+                    {appSettings.data?.openai_api_key_configured ? (
+                      <span className="pill supported" style={{ fontSize: "0.8rem" }}>
+                        ✓ {t.keyConfiguredBadge}: {appSettings.data.openai_api_key_preview}
+                      </span>
+                    ) : (
+                      <span className="pill not_evidenced" style={{ fontSize: "0.8rem" }}>
+                        {t.keyNotConfiguredBadge}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                    <input
+                      type={showOpenaiKey ? "text" : "password"}
+                      placeholder={
+                        appSettings.data?.openai_api_key_configured
+                          ? "••••••••••••••••••••••••••••"
+                          : "sk-proj-..."
+                      }
+                      value={openaiKeyInput}
+                      onChange={(e) => setOpenaiKeyInput(e.target.value)}
+                      style={{ paddingRight: 40 }}
+                    />
+                    <button
+                      type="button"
+                      aria-label="Toggle OpenAI key visibility"
+                      onClick={() => setShowOpenaiKey(!showOpenaiKey)}
+                      style={{
+                        position: "absolute",
+                        right: 8,
+                        background: "none",
+                        border: "none",
+                        padding: 4,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {showOpenaiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: 8,
+                      marginTop: 6,
+                    }}
+                  >
+                    <a
+                      href="https://platform.openai.com/api-keys"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="quiet"
+                      style={{ fontSize: "0.85rem", textDecoration: "underline" }}
+                    >
+                      {t.getOpenaiKeyLink}
+                    </a>
+                    <button
+                      type="button"
+                      disabled={testStatus.testing || (!openaiKeyInput && !appSettings.data?.openai_api_key_configured)}
+                      onClick={() => handleTestConnection("openai")}
+                      style={{ padding: "6px 12px", fontSize: "0.85rem" }}
+                    >
+                      {testStatus.testing ? t.testingConnection : `${t.testConnection} (OpenAI)`}
+                    </button>
+                  </div>
+                </div>
+
                 <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid #e2e8f0" }}>
                   <div
                     style={{
@@ -1675,6 +1741,7 @@ function App() {
                       busy ||
                       (!appSettings.data?.gemini_api_key_configured &&
                         !appSettings.data?.anthropic_api_key_configured &&
+                        !appSettings.data?.openai_api_key_configured &&
                         !appSettings.data?.github_token_configured)
                     }
                   >

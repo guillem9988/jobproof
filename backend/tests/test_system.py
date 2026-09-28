@@ -478,6 +478,26 @@ def test_settings_endpoints():
         assert test_fail.json()["success"] is False
         assert "missing" in test_fail.json()["message"].lower() or "no anthropic" in test_fail.json()["message"].lower()
 
+        # POST settings update with OpenAI
+        update_openai = c.post(
+            "/api/v1/settings",
+            json={
+                "llm_provider": "openai",
+                "openai_api_key": "sk-proj-test1234567890abcdef",
+            },
+        )
+        assert update_openai.status_code == 200
+        assert update_openai.json()["openai_api_key_configured"] is True
+        assert update_openai.json()["llm_provider"] == "openai"
+
+        # POST settings test with missing OpenAI key
+        test_openai_fail = c.post(
+            "/api/v1/settings/test",
+            json={"provider": "openai", "api_key": ""},
+        )
+        assert test_openai_fail.status_code == 200
+        assert test_openai_fail.json()["success"] is False
+
         # Clean up
         c.post(
             "/api/v1/settings",
@@ -486,6 +506,7 @@ def test_settings_endpoints():
                 "llm_model": "claude-sonnet-4-6",
                 "gemini_api_key": "",
                 "anthropic_api_key": "",
+                "openai_api_key": "",
             },
         )
 
