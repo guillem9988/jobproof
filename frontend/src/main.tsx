@@ -753,23 +753,27 @@ function App() {
                   />
                 </section>
               </div>
-              <section className="section-title">
-                <h2>{t.recentAnalyses}</h2>
-                <button
-                  className="text-button"
-                  onClick={() => setPage("history")}
-                >
-                  {t.viewHistory} <ArrowRight size={16} />
-                </button>
-              </section>
-              <HistoryList
-                rows={(history.data || []).slice(0, 4)}
-                t={t}
-                open={(id) => {
-                  setReportId(id);
-                  setPage("report");
-                }}
-              />
+              {(history.data || []).length > 0 && (
+                <>
+                  <section className="section-title">
+                    <h2>{t.recentAnalyses}</h2>
+                    <button
+                      className="text-button"
+                      onClick={() => setPage("history")}
+                    >
+                      {t.viewHistory} <ArrowRight size={16} />
+                    </button>
+                  </section>
+                  <HistoryList
+                    rows={(history.data || []).slice(0, 4)}
+                    t={t}
+                    open={(id) => {
+                      setReportId(id);
+                      setPage("report");
+                    }}
+                  />
+                </>
+              )}
               <div className="principles">
                 <p>
                   <strong>{t.principle1Title}</strong>{t.principle1Desc}
