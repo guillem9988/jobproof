@@ -187,6 +187,32 @@ export interface Translations {
   yourWorkYourEvidence: string;
   applicationWorkspace: string;
   waitingForTaskStatus: string;
+  navSettings: string;
+  settingsTitle: string;
+  settingsEyebrow: string;
+  settingsIntro: string;
+  aiProviderSection: string;
+  aiProviderSelect: string;
+  geminiOption: string;
+  anthropicOption: string;
+  modelLabel: string;
+  geminiApiKeyLabel: string;
+  anthropicApiKeyLabel: string;
+  githubTokenLabel: string;
+  githubTokenDesc: string;
+  keyConfiguredBadge: string;
+  keyNotConfiguredBadge: string;
+  saveSettings: string;
+  settingsSaved: string;
+  testConnection: string;
+  testingConnection: string;
+  clearKeys: string;
+  getGeminiKeyLink: string;
+  getAnthropicKeyLink: string;
+  getGithubTokenLink: string;
+  activeBadge: string;
+  openSettingsButton: string;
+  securityNote: string;
 }
 
 export const translations: Record<Lang, Translations> = {
@@ -379,6 +405,32 @@ export const translations: Record<Lang, Translations> = {
     yourWorkYourEvidence: "LA TEVA FEINA. LES TEVES EVIDÈNCIES.",
     applicationWorkspace: "ESPAI DE CANDIDATURA",
     waitingForTaskStatus: "Esperant l'estat de la tasca",
+    navSettings: "Configuració",
+    settingsTitle: "Configuració del proveïdor d'IA i API",
+    settingsEyebrow: "PREFERÈNCIES LOCALS",
+    settingsIntro: "Configura les claus d'API per utilitzar intel·ligència artificial real (Google Gemini o Anthropic Claude) o augmentar els límits de GitHub. Totes les claus es desen de forma local al teu servidor i mai no s'envien a servidors externs no autoritzats.",
+    aiProviderSection: "Proveïdor d'IA per a l'anàlisi real",
+    aiProviderSelect: "Selecciona el proveïdor actiu",
+    geminiOption: "Google Gemini (Ràpid, gratuït a Google AI Studio)",
+    anthropicOption: "Anthropic Claude (Models Sonnet i Haiku)",
+    modelLabel: "Model d'IA",
+    geminiApiKeyLabel: "Clau d'API de Google Gemini",
+    anthropicApiKeyLabel: "Clau d'API d'Anthropic Claude",
+    githubTokenLabel: "Token d'accés personal de GitHub (opcional)",
+    githubTokenDesc: "Augmenta el límit de peticions públiques de GitHub de 60/hora a 5.000/hora quan importes repositoris.",
+    keyConfiguredBadge: "Configurada",
+    keyNotConfiguredBadge: "Sense configurar",
+    saveSettings: "Desar configuració",
+    settingsSaved: "Configuració desada correctament!",
+    testConnection: "Provar connexió",
+    testingConnection: "Provant connexió...",
+    clearKeys: "Netejar claus",
+    getGeminiKeyLink: "Aconsegueix una clau gratuïta a Google AI Studio →",
+    getAnthropicKeyLink: "Aconsegueix una clau a Anthropic Console →",
+    getGithubTokenLink: "Crear un GitHub Personal Access Token →",
+    activeBadge: "Actiu",
+    openSettingsButton: "Configurar claus d'IA",
+    securityNote: "Privacitat garantida: les claus s'emmagatzemen a la teva base de dades SQLite local (jobproof.db) i al fitxer .env. Només s'utilitzen per fer peticions directes a l'API del proveïdor seleccionat quan analitzes una oferta.",
   },
   en: {
     brand: "JobProof",
@@ -569,6 +621,32 @@ export const translations: Record<Lang, Translations> = {
     yourWorkYourEvidence: "YOUR WORK. YOUR EVIDENCE.",
     applicationWorkspace: "APPLICATION WORKSPACE",
     waitingForTaskStatus: "Waiting for task status",
+    navSettings: "Settings",
+    settingsTitle: "AI Provider & API Settings",
+    settingsEyebrow: "LOCAL PREFERENCES",
+    settingsIntro: "Configure API keys to use real AI analysis (Google Gemini or Anthropic Claude) or increase GitHub rate limits. All keys are stored locally on your server and are never sent to unauthorized third parties.",
+    aiProviderSection: "Active AI Provider",
+    aiProviderSelect: "Select provider for real analyses",
+    geminiOption: "Google Gemini (Fast, free tier on Google AI Studio)",
+    anthropicOption: "Anthropic Claude (Sonnet & Haiku models)",
+    modelLabel: "AI Model",
+    geminiApiKeyLabel: "Google Gemini API Key",
+    anthropicApiKeyLabel: "Anthropic Claude API Key",
+    githubTokenLabel: "GitHub Personal Access Token (optional)",
+    githubTokenDesc: "Increases GitHub public rate limit from 60/hour to 5,000/hour when importing repositories.",
+    keyConfiguredBadge: "Configured",
+    keyNotConfiguredBadge: "Not configured",
+    saveSettings: "Save settings",
+    settingsSaved: "Settings saved successfully!",
+    testConnection: "Test connection",
+    testingConnection: "Testing connection...",
+    clearKeys: "Clear keys",
+    getGeminiKeyLink: "Get a free API key at Google AI Studio →",
+    getAnthropicKeyLink: "Get an API key at Anthropic Console →",
+    getGithubTokenLink: "Create a GitHub Personal Access Token →",
+    activeBadge: "Active",
+    openSettingsButton: "Configure AI keys",
+    securityNote: "Privacy guarantee: keys are stored in your local SQLite database (jobproof.db) and .env file. They are only used to make direct API calls to your selected provider when running an analysis.",
   },
   es: {
     brand: "JobProof",
@@ -759,6 +837,32 @@ export const translations: Record<Lang, Translations> = {
     yourWorkYourEvidence: "TU TRABAJO. TUS EVIDENCIAS.",
     applicationWorkspace: "ESPACIO DE CANDIDATURA",
     waitingForTaskStatus: "Esperando el estado de la tarea",
+    navSettings: "Configuración",
+    settingsTitle: "Configuración del proveedor de IA y API",
+    settingsEyebrow: "PREFERENCIAS LOCALES",
+    settingsIntro: "Configura las claves de API para utilizar inteligencia artificial real (Google Gemini o Anthropic Claude) o aumentar los límites de GitHub. Todas las claves se almacenan localmente en tu servidor y nunca se envían a terceros no autorizados.",
+    aiProviderSection: "Proveedor de IA para análisis real",
+    aiProviderSelect: "Selecciona el proveedor activo",
+    geminiOption: "Google Gemini (Rápido, nivel gratuito en Google AI Studio)",
+    anthropicOption: "Anthropic Claude (Modelos Sonnet y Haiku)",
+    modelLabel: "Modelo de IA",
+    geminiApiKeyLabel: "Clave de API de Google Gemini",
+    anthropicApiKeyLabel: "Clave de API de Anthropic Claude",
+    githubTokenLabel: "Token de acceso personal de GitHub (opcional)",
+    githubTokenDesc: "Aumenta el límite de solicitudes públicas de GitHub de 60/hora a 5.000/hora al importar repositorios.",
+    keyConfiguredBadge: "Configurada",
+    keyNotConfiguredBadge: "Sin configurar",
+    saveSettings: "Guardar configuración",
+    settingsSaved: "¡Configuración guardada correctamente!",
+    testConnection: "Probar conexión",
+    testingConnection: "Probando conexión...",
+    clearKeys: "Limpiar claves",
+    getGeminiKeyLink: "Consigue una clave gratuita en Google AI Studio →",
+    getAnthropicKeyLink: "Consigue una clave en Anthropic Console →",
+    getGithubTokenLink: "Crear un GitHub Personal Access Token →",
+    activeBadge: "Activo",
+    openSettingsButton: "Configurar claves de IA",
+    securityNote: "Privacidad garantizada: las claves se almacenan en tu base de datos SQLite local (jobproof.db) y en el archivo .env. Solo se utilizan para hacer llamadas directas a la API del proveedor seleccionado al analizar una oferta.",
   },
 };
 

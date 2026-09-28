@@ -106,3 +106,23 @@ export type Analysis = {
     }[];
   };
 };
+
+export type AppSettings = {
+  llm_provider: "gemini" | "anthropic";
+  llm_model: string;
+  gemini_api_key_configured: boolean;
+  gemini_api_key_preview: string;
+  anthropic_api_key_configured: boolean;
+  anthropic_api_key_preview: string;
+  github_token_configured: boolean;
+  github_token_preview: string;
+  real_provider_configured: boolean;
+  active_provider: string;
+};
+
+export type SettingsTestResult = {
+  success: boolean;
+  message: string;
+  latency_ms: number;
+};
+

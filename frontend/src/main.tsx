@@ -25,6 +25,10 @@ import {
   RotateCcw,
   Moon,
   Sun,
+  Settings,
+  Key,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { translations, type Lang, getStatusLabels, type Translations } from "./i18n";
 import { one, many, request, counts } from "./api";
@@ -38,6 +42,8 @@ import type {
   Snapshot,
   Status,
   Task,
+  AppSettings,
+  SettingsTestResult,
 } from "./types";
 import "./style.css";
 const qc = new QueryClient();
@@ -103,7 +109,7 @@ function App() {
   const health = useQuery({
     queryKey: ["health"],
     queryFn: () =>
-      request<{ real_provider_configured: boolean; model: string }>("/health"),
+      request<{ real_provider_configured: boolean; model: string; active_provider?: string }>("/health"),
   });
   const projects = useQuery({
     queryKey: ["projects"],
@@ -148,6 +154,105 @@ function App() {
     queryFn: () => many<Assessment>(`/analyses/${reportId}/assessments`),
     enabled: !!reportId,
   });
+  const appSettings = useQuery({
+    queryKey: ["appSettings"],
+    queryFn: () => one<AppSettings>("/settings"),
+  });
+  const [settingsProvider, setSettingsProvider] = useState<"gemini" | "anthropic">("gemini");
+  const [settingsModel, setSettingsModel] = useState<string>("gemini-2.5-flash");
+  const [geminiKeyInput, setGeminiKeyInput] = useState<string>("");
+  const [anthropicKeyInput, setAnthropicKeyInput] = useState<string>("");
+  const [githubTokenInput, setGithubTokenInput] = useState<string>("");
+  const [showGeminiKey, setShowGeminiKey] = useState<boolean>(false);
+  const [showAnthropicKey, setShowAnthropicKey] = useState<boolean>(false);
+  const [showGithubToken, setShowGithubToken] = useState<boolean>(false);
+  const [testStatus, setTestStatus] = useState<{ testing: boolean; result: SettingsTestResult | null }>({
+    testing: false,
+    result: null,
+  });
+  const [settingsSavedAlert, setSettingsSavedAlert] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (appSettings.data) {
+      setSettingsProvider(appSettings.data.llm_provider || "gemini");
+      setSettingsModel(
+        appSettings.data.llm_model ||
+          (appSettings.data.llm_provider === "anthropic" ? "claude-sonnet-4-6" : "gemini-2.5-flash"),
+      );
+    }
+  }, [appSettings.data]);
+
+  async function handleSaveSettings(e: React.FormEvent) {
+    e.preventDefault();
+    await act(async () => {
+      const payload: Partial<{
+        llm_provider: string;
+        llm_model: string;
+        gemini_api_key?: string;
+        anthropic_api_key?: string;
+        github_token?: string;
+      }> = {
+        llm_provider: settingsProvider,
+        llm_model: settingsModel,
+      };
+      if (geminiKeyInput) payload.gemini_api_key = geminiKeyInput;
+      if (anthropicKeyInput) payload.anthropic_api_key = anthropicKeyInput;
+      if (githubTokenInput) payload.github_token = githubTokenInput;
+
+      await one<AppSettings>("/settings", payload);
+      await qc.invalidateQueries({ queryKey: ["appSettings"] });
+      await qc.invalidateQueries({ queryKey: ["health"] });
+      setGeminiKeyInput("");
+      setAnthropicKeyInput("");
+      setGithubTokenInput("");
+      setSettingsSavedAlert(true);
+      setTimeout(() => setSettingsSavedAlert(false), 3000);
+    });
+  }
+
+  async function handleTestConnection(providerToTest: "gemini" | "anthropic" | "github") {
+    setTestStatus({ testing: true, result: null });
+    try {
+      const key =
+        providerToTest === "gemini"
+          ? geminiKeyInput
+          : providerToTest === "anthropic"
+            ? anthropicKeyInput
+            : githubTokenInput;
+      const res = await one<SettingsTestResult>("/settings/test", {
+        provider: providerToTest,
+        api_key: key || undefined,
+        model: settingsModel || undefined,
+      });
+      setTestStatus({ testing: false, result: res });
+    } catch (err) {
+      setTestStatus({
+        testing: false,
+        result: {
+          success: false,
+          message: err instanceof Error ? err.message : "Error testing connection",
+          latency_ms: 0,
+        },
+      });
+    }
+  }
+
+  async function handleClearKeys() {
+    await act(async () => {
+      await one<AppSettings>("/settings", {
+        gemini_api_key: "",
+        anthropic_api_key: "",
+        github_token: "",
+      });
+      await qc.invalidateQueries({ queryKey: ["appSettings"] });
+      await qc.invalidateQueries({ queryKey: ["health"] });
+      setGeminiKeyInput("");
+      setAnthropicKeyInput("");
+      setGithubTokenInput("");
+      setTestStatus({ testing: false, result: null });
+    });
+  }
+
   async function act(fn: () => Promise<void>) {
     setBusy(true);
     setError("");
@@ -156,6 +261,8 @@ function App() {
       await qc.invalidateQueries({ queryKey: ["projects"] });
       await qc.invalidateQueries({ queryKey: ["history"] });
       await qc.invalidateQueries({ queryKey: ["jobs"] });
+      await qc.invalidateQueries({ queryKey: ["appSettings"] });
+      await qc.invalidateQueries({ queryKey: ["health"] });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong. Retry.");
     } finally {
@@ -261,6 +368,7 @@ function App() {
             ["home", t.brand, FileText],
             ["projects", t.navProjects, FolderGit2],
             ["history", t.navHistory, History],
+            ["settings", t.navSettings, Settings],
           ].map(([id, title, Icon]) => (
             <button
               key={String(id)}
@@ -287,7 +395,9 @@ function App() {
               ? "Evidence report"
               : page === "job"
                 ? "New analysis"
-                : page.charAt(0).toUpperCase() + page.slice(1)}
+                : page === "settings"
+                  ? t.navSettings
+                  : page.charAt(0).toUpperCase() + page.slice(1)}
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <select
@@ -355,10 +465,34 @@ function App() {
                   >
                     {t.navNewAnalysis} <ArrowRight size={17} />
                   </button>
-                  <div className="quiet">
-                    {health.data?.real_provider_configured
-                      ? t.aiConfigured
-                      : t.aiNotConfigured}
+                  <div className="quiet" style={{ marginTop: 12 }}>
+                    {health.data?.real_provider_configured ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <span className="pill supported" style={{ fontSize: "0.75rem", padding: "2px 8px" }}>
+                          ✓ {health.data.active_provider ? (health.data.active_provider === "gemini" ? "Gemini" : "Claude") : "IA"}
+                        </span>
+                        {t.aiConfigured} · {health.data.model}
+                      </span>
+                    ) : (
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+                        <span>{t.aiNotConfigured}</span>
+                        <button
+                          type="button"
+                          className="quiet"
+                          style={{
+                            padding: 0,
+                            border: "none",
+                            background: "none",
+                            textDecoration: "underline",
+                            cursor: "pointer",
+                            fontWeight: 600,
+                          }}
+                          onClick={() => setPage("settings")}
+                        >
+                          {t.openSettingsButton} →
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </section>
                 <section className="card demo-card">
@@ -888,6 +1022,371 @@ function App() {
                   setPage("report");
                 }}
               />
+            </>
+          )}
+          {page === "settings" && (
+            <>
+              <div className="eyebrow">{t.settingsEyebrow}</div>
+              <h1>{t.settingsTitle}</h1>
+              <p className="intro">{t.settingsIntro}</p>
+
+              {settingsSavedAlert && (
+                <div className="success-banner" role="status">
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <Check size={18} />
+                    {t.settingsSaved}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="Dismiss alert"
+                    onClick={() => setSettingsSavedAlert(false)}
+                    style={{ border: "none", background: "none", cursor: "pointer", padding: 4 }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+
+              {testStatus.result && (
+                <div
+                  className={testStatus.result.success ? "success-banner" : "error"}
+                  role="alert"
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {testStatus.result.success ? <Check size={18} /> : <X size={18} />}
+                    {testStatus.result.message}
+                    {testStatus.result.latency_ms > 0 && ` (${testStatus.result.latency_ms}ms)`}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="Dismiss test result"
+                    onClick={() => setTestStatus({ testing: false, result: null })}
+                    style={{ border: "none", background: "none", cursor: "pointer", padding: 4 }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+
+              <form className="card form" onSubmit={handleSaveSettings}>
+                <h2>{t.aiProviderSection}</h2>
+                <label>
+                  {t.aiProviderSelect}
+                  <select
+                    value={settingsProvider}
+                    onChange={(e) => {
+                      const p = e.target.value as "gemini" | "anthropic";
+                      setSettingsProvider(p);
+                      setSettingsModel(
+                        p === "gemini" ? "gemini-2.5-flash" : "claude-3-7-sonnet-20250219",
+                      );
+                    }}
+                  >
+                    <option value="gemini">{t.geminiOption}</option>
+                    <option value="anthropic">{t.anthropicOption}</option>
+                  </select>
+                </label>
+
+                <label>
+                  {t.modelLabel}
+                  <select
+                    value={settingsModel}
+                    onChange={(e) => setSettingsModel(e.target.value)}
+                  >
+                    {settingsProvider === "gemini" ? (
+                      <>
+                        <option value="gemini-2.5-flash">
+                          gemini-2.5-flash (Fast, accurate — Recommended)
+                        </option>
+                        <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                        <option value="gemini-1.5-pro">
+                          gemini-1.5-pro (Deep reasoning)
+                        </option>
+                        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="claude-3-7-sonnet-20250219">
+                          claude-3-7-sonnet-20250219 (Latest — Recommended)
+                        </option>
+                        <option value="claude-3-5-sonnet-latest">
+                          claude-3-5-sonnet-latest
+                        </option>
+                        <option value="claude-3-5-haiku-latest">
+                          claude-3-5-haiku-latest (Fast, economical)
+                        </option>
+                        <option value="claude-sonnet-4-6">claude-sonnet-4-6</option>
+                      </>
+                    )}
+                  </select>
+                </label>
+
+                <div style={{ marginTop: 14 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 6,
+                    }}
+                  >
+                    <label style={{ margin: 0, fontWeight: 600 }}>
+                      {t.geminiApiKeyLabel}
+                    </label>
+                    {appSettings.data?.gemini_api_key_configured ? (
+                      <span className="pill supported" style={{ fontSize: "0.8rem" }}>
+                        ✓ {t.keyConfiguredBadge}: {appSettings.data.gemini_api_key_preview}
+                      </span>
+                    ) : (
+                      <span className="pill not_evidenced" style={{ fontSize: "0.8rem" }}>
+                        {t.keyNotConfiguredBadge}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                    <input
+                      type={showGeminiKey ? "text" : "password"}
+                      placeholder={
+                        appSettings.data?.gemini_api_key_configured
+                          ? "••••••••••••••••••••••••••••"
+                          : "AIzaSy..."
+                      }
+                      value={geminiKeyInput}
+                      onChange={(e) => setGeminiKeyInput(e.target.value)}
+                      style={{ paddingRight: 40 }}
+                    />
+                    <button
+                      type="button"
+                      aria-label="Toggle Gemini key visibility"
+                      onClick={() => setShowGeminiKey(!showGeminiKey)}
+                      style={{
+                        position: "absolute",
+                        right: 8,
+                        background: "none",
+                        border: "none",
+                        padding: 4,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {showGeminiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: 8,
+                      marginTop: 6,
+                    }}
+                  >
+                    <a
+                      href="https://aistudio.google.com/app/apikey"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="quiet"
+                      style={{ fontSize: "0.85rem", textDecoration: "underline" }}
+                    >
+                      {t.getGeminiKeyLink}
+                    </a>
+                    <button
+                      type="button"
+                      disabled={testStatus.testing || (!geminiKeyInput && !appSettings.data?.gemini_api_key_configured)}
+                      onClick={() => handleTestConnection("gemini")}
+                      style={{ padding: "6px 12px", fontSize: "0.85rem" }}
+                    >
+                      {testStatus.testing ? t.testingConnection : `${t.testConnection} (Gemini)`}
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 18 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 6,
+                    }}
+                  >
+                    <label style={{ margin: 0, fontWeight: 600 }}>
+                      {t.anthropicApiKeyLabel}
+                    </label>
+                    {appSettings.data?.anthropic_api_key_configured ? (
+                      <span className="pill supported" style={{ fontSize: "0.8rem" }}>
+                        ✓ {t.keyConfiguredBadge}: {appSettings.data.anthropic_api_key_preview}
+                      </span>
+                    ) : (
+                      <span className="pill not_evidenced" style={{ fontSize: "0.8rem" }}>
+                        {t.keyNotConfiguredBadge}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                    <input
+                      type={showAnthropicKey ? "text" : "password"}
+                      placeholder={
+                        appSettings.data?.anthropic_api_key_configured
+                          ? "••••••••••••••••••••••••••••"
+                          : "sk-ant-api03-..."
+                      }
+                      value={anthropicKeyInput}
+                      onChange={(e) => setAnthropicKeyInput(e.target.value)}
+                      style={{ paddingRight: 40 }}
+                    />
+                    <button
+                      type="button"
+                      aria-label="Toggle Anthropic key visibility"
+                      onClick={() => setShowAnthropicKey(!showAnthropicKey)}
+                      style={{
+                        position: "absolute",
+                        right: 8,
+                        background: "none",
+                        border: "none",
+                        padding: 4,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {showAnthropicKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: 8,
+                      marginTop: 6,
+                    }}
+                  >
+                    <a
+                      href="https://console.anthropic.com/settings/keys"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="quiet"
+                      style={{ fontSize: "0.85rem", textDecoration: "underline" }}
+                    >
+                      {t.getAnthropicKeyLink}
+                    </a>
+                    <button
+                      type="button"
+                      disabled={testStatus.testing || (!anthropicKeyInput && !appSettings.data?.anthropic_api_key_configured)}
+                      onClick={() => handleTestConnection("anthropic")}
+                      style={{ padding: "6px 12px", fontSize: "0.85rem" }}
+                    >
+                      {testStatus.testing ? t.testingConnection : `${t.testConnection} (Anthropic)`}
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid #e2e8f0" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 6,
+                    }}
+                  >
+                    <label style={{ margin: 0, fontWeight: 600 }}>
+                      {t.githubTokenLabel}
+                    </label>
+                    {appSettings.data?.github_token_configured ? (
+                      <span className="pill supported" style={{ fontSize: "0.8rem" }}>
+                        ✓ {t.keyConfiguredBadge}: {appSettings.data.github_token_preview}
+                      </span>
+                    ) : (
+                      <span className="pill" style={{ fontSize: "0.8rem" }}>
+                        {t.keyNotConfiguredBadge}
+                      </span>
+                    )}
+                  </div>
+                  <p className="quiet" style={{ margin: "4px 0 8px", fontSize: "0.85rem" }}>
+                    {t.githubTokenDesc}
+                  </p>
+                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                    <input
+                      type={showGithubToken ? "text" : "password"}
+                      placeholder={
+                        appSettings.data?.github_token_configured
+                          ? "••••••••••••••••••••••••••••"
+                          : "ghp_..."
+                      }
+                      value={githubTokenInput}
+                      onChange={(e) => setGithubTokenInput(e.target.value)}
+                      style={{ paddingRight: 40 }}
+                    />
+                    <button
+                      type="button"
+                      aria-label="Toggle GitHub token visibility"
+                      onClick={() => setShowGithubToken(!showGithubToken)}
+                      style={{
+                        position: "absolute",
+                        right: 8,
+                        background: "none",
+                        border: "none",
+                        padding: 4,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {showGithubToken ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: 8,
+                      marginTop: 6,
+                    }}
+                  >
+                    <a
+                      href="https://github.com/settings/tokens"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="quiet"
+                      style={{ fontSize: "0.85rem", textDecoration: "underline" }}
+                    >
+                      {t.getGithubTokenLink}
+                    </a>
+                    <button
+                      type="button"
+                      disabled={testStatus.testing || (!githubTokenInput && !appSettings.data?.github_token_configured)}
+                      onClick={() => handleTestConnection("github")}
+                      style={{ padding: "6px 12px", fontSize: "0.85rem" }}
+                    >
+                      {testStatus.testing ? t.testingConnection : `${t.testConnection} (GitHub)`}
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: "12px", marginTop: "24px", alignItems: "center", flexWrap: "wrap" }}>
+                  <button type="submit" className="primary" disabled={busy}>
+                    <Check size={16} />
+                    {t.saveSettings}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClearKeys}
+                    disabled={
+                      busy ||
+                      (!appSettings.data?.gemini_api_key_configured &&
+                        !appSettings.data?.anthropic_api_key_configured &&
+                        !appSettings.data?.github_token_configured)
+                    }
+                  >
+                    {t.clearKeys}
+                  </button>
+                </div>
+              </form>
+
+              <div className="notice" style={{ marginTop: 24 }}>
+                <p>{t.securityNote}</p>
+              </div>
             </>
           )}
           {page === "report" && report.data && (

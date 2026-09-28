@@ -424,3 +424,51 @@ def test_local_dir_ingestion(tmp_path):
         assert snap["local"] is True
         assert snap["file_count"] == 2  # README.md and src/main.py; .git is excluded
 
+
+def test_settings_endpoints():
+    with TestClient(app) as c:
+        # GET settings
+        res = c.get("/api/v1/settings")
+        assert res.status_code == 200
+        data = res.json()
+        assert "llm_provider" in data
+        assert "gemini_api_key_configured" in data
+        assert "anthropic_api_key_configured" in data
+
+        # POST settings update
+        update_res = c.post(
+            "/api/v1/settings",
+            json={
+                "llm_provider": "gemini",
+                "llm_model": "gemini-2.5-flash",
+                "gemini_api_key": "AIzaSyFakeTestKey1234567890abcdef",
+            },
+        )
+        assert update_res.status_code == 200
+        updated = update_res.json()
+        assert updated["llm_provider"] == "gemini"
+        assert updated["llm_model"] == "gemini-2.5-flash"
+        assert updated["gemini_api_key_configured"] is True
+        assert "..." in updated["gemini_api_key_preview"]
+
+        # POST settings test with missing key
+        test_fail = c.post(
+            "/api/v1/settings/test",
+            json={"provider": "anthropic", "api_key": ""},
+        )
+        assert test_fail.status_code == 200
+        assert test_fail.json()["success"] is False
+        assert "missing" in test_fail.json()["message"].lower() or "no anthropic" in test_fail.json()["message"].lower()
+
+        # Clean up
+        c.post(
+            "/api/v1/settings",
+            json={
+                "llm_provider": "",
+                "llm_model": "claude-sonnet-4-6",
+                "gemini_api_key": "",
+                "anthropic_api_key": "",
+            },
+        )
+
+

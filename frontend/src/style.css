@@ -416,6 +416,25 @@ footer {
   background: transparent;
   padding: 2px;
 }
+.success-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #edfcf2;
+  border: 1px solid #b7ebd0;
+  padding: 14px 18px;
+  border-radius: 7px;
+  color: #146c36;
+  font-size: 0.875rem;
+  font-weight: 550;
+  margin-bottom: 20px;
+}
+html.dark .success-banner {
+  background: #0f301e;
+  border-color: #1d5c38;
+  color: #72e399;
+}
 .requirements {
   margin-top: 20px;
 }
@@ -733,14 +752,23 @@ details .form {
   }
   .sidebar nav {
     display: flex;
-    gap: 5px;
-    margin-top: 16px;
+    gap: 6px;
+    margin-top: 14px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    max-width: 100%;
+  }
+  .sidebar nav::-webkit-scrollbar {
+    display: none;
   }
   .nav {
     font-size: 0.75rem;
-    padding: 9px;
+    padding: 8px 10px;
     margin: 0;
     justify-content: center;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .workspace-label,
   .sidebar-bottom {

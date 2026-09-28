@@ -1,8 +1,10 @@
 import json
 import os
+import time
 from contextlib import asynccontextmanager
 from typing import Any, Literal
 
+import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
@@ -32,8 +34,26 @@ from .retrieval import retrieve, validate_assessment
 PIPELINE = "1.1"
 
 
+def init_settings():
+    try:
+        cfg = get("config", kind="settings")
+    except (ValueError, KeyError):
+        return
+    if cfg.get("anthropic_api_key") and not settings.anthropic_api_key:
+        settings.anthropic_api_key = cfg["anthropic_api_key"]
+    if cfg.get("gemini_api_key") and not settings.gemini_api_key:
+        settings.gemini_api_key = cfg["gemini_api_key"]
+    if cfg.get("llm_provider") and not settings.llm_provider:
+        settings.llm_provider = cfg["llm_provider"]
+    if cfg.get("llm_model") and (not settings.llm_model or settings.llm_model == "claude-sonnet-4-6"):
+        settings.llm_model = cfg["llm_model"]
+    if cfg.get("github_token") and not settings.github_token:
+        settings.github_token = cfg["github_token"]
+
+
 @asynccontextmanager
 async def lifespan(app):
+    init_settings()
     tasks.recover()
     yield
 
@@ -78,6 +98,7 @@ def doc(row):
 class Health(Schema):
     status: str
     real_provider_configured: bool
+    active_provider: str = ""
     model: str
     demo_available: bool
     limits: dict[str, int]
@@ -90,6 +111,7 @@ def health():
         not settings.anthropic_api_key and bool(settings.gemini_api_key)
     )
     configured = bool(settings.gemini_api_key) if is_gemini else bool(settings.anthropic_api_key)
+    active = "gemini" if (is_gemini and settings.gemini_api_key) else ("anthropic" if settings.anthropic_api_key else "")
     model = (
         settings.llm_model
         if (settings.llm_model and (not is_gemini or settings.llm_model.startswith("gemini-")))
@@ -98,6 +120,7 @@ def health():
     return Health(
         status="ok",
         real_provider_configured=configured,
+        active_provider=active,
         model=model,
         demo_available=True,
         limits={
@@ -108,6 +131,265 @@ def health():
             "project_bytes": settings.max_project_bytes,
         },
     )
+
+
+def mask_secret(secret: str) -> str:
+    if not secret:
+        return ""
+    if len(secret) <= 8:
+        return "****"
+    return secret[:6] + "..." + secret[-4:]
+
+
+def update_env_file(updates: dict[str, str]):
+    for env_path in [
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".env")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".env")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), ".env")),
+    ]:
+        if not os.path.exists(env_path):
+            continue
+        try:
+            with open(env_path, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+            updated_keys = set()
+            new_lines = []
+            for line in lines:
+                stripped = line.strip()
+                if stripped and not stripped.startswith("#") and "=" in stripped:
+                    key = stripped.split("=", 1)[0].strip()
+                    if key in updates:
+                        new_lines.append(f"{key}={updates[key]}\n")
+                        updated_keys.add(key)
+                        continue
+                new_lines.append(line)
+            for k, v in updates.items():
+                if k not in updated_keys:
+                    new_lines.append(f"{k}={v}\n")
+            with open(env_path, "w", encoding="utf-8") as f:
+                f.writelines(new_lines)
+        except OSError:
+            continue
+
+
+class SettingsView(Schema):
+    llm_provider: str
+    llm_model: str
+    gemini_api_key_configured: bool
+    gemini_api_key_preview: str
+    anthropic_api_key_configured: bool
+    anthropic_api_key_preview: str
+    github_token_configured: bool
+    github_token_preview: str
+    real_provider_configured: bool
+    active_provider: str
+
+
+class SettingsUpdate(Schema):
+    llm_provider: str | None = None
+    llm_model: str | None = None
+    gemini_api_key: str | None = None
+    anthropic_api_key: str | None = None
+    github_token: str | None = None
+
+
+class SettingsTestRequest(Schema):
+    provider: Literal["gemini", "anthropic", "github"]
+    api_key: str | None = None
+    model: str | None = None
+
+
+class SettingsTestResponse(Schema):
+    success: bool
+    message: str
+    latency_ms: int = 0
+
+
+@app.get("/api/v1/settings", response_model=SettingsView)
+def get_settings():
+    is_gemini = settings.llm_provider == "gemini" or (
+        not settings.anthropic_api_key and bool(settings.gemini_api_key)
+    )
+    configured = bool(settings.gemini_api_key) if is_gemini else bool(settings.anthropic_api_key)
+    active = "gemini" if (is_gemini and settings.gemini_api_key) else ("anthropic" if settings.anthropic_api_key else "")
+    current_model = (
+        settings.llm_model
+        if (settings.llm_model and (not is_gemini or settings.llm_model.startswith("gemini-")))
+        else ("gemini-2.5-flash" if is_gemini else "claude-sonnet-4-6")
+    )
+    return SettingsView(
+        llm_provider="gemini" if is_gemini else "anthropic",
+        llm_model=current_model,
+        gemini_api_key_configured=bool(settings.gemini_api_key),
+        gemini_api_key_preview=mask_secret(settings.gemini_api_key),
+        anthropic_api_key_configured=bool(settings.anthropic_api_key),
+        anthropic_api_key_preview=mask_secret(settings.anthropic_api_key),
+        github_token_configured=bool(settings.github_token),
+        github_token_preview=mask_secret(settings.github_token),
+        real_provider_configured=configured,
+        active_provider=active,
+    )
+
+
+@app.post("/api/v1/settings", response_model=SettingsView)
+def update_settings(payload: SettingsUpdate):
+    if payload.llm_provider is not None:
+        settings.llm_provider = payload.llm_provider.strip()
+    if payload.llm_model is not None:
+        settings.llm_model = payload.llm_model.strip()
+    if payload.gemini_api_key is not None:
+        settings.gemini_api_key = payload.gemini_api_key.strip()
+    if payload.anthropic_api_key is not None:
+        settings.anthropic_api_key = payload.anthropic_api_key.strip()
+    if payload.github_token is not None:
+        settings.github_token = payload.github_token.strip()
+
+    save(
+        "settings",
+        {
+            "llm_provider": settings.llm_provider,
+            "llm_model": settings.llm_model,
+            "gemini_api_key": settings.gemini_api_key,
+            "anthropic_api_key": settings.anthropic_api_key,
+            "github_token": settings.github_token,
+        },
+        id="config",
+    )
+
+    update_env_file(
+        {
+            "LLM_PROVIDER": settings.llm_provider,
+            "LLM_MODEL": settings.llm_model,
+            "GEMINI_API_KEY": settings.gemini_api_key,
+            "ANTHROPIC_API_KEY": settings.anthropic_api_key,
+            "GITHUB_TOKEN": settings.github_token,
+        }
+    )
+
+    return get_settings()
+
+
+@app.post("/api/v1/settings/test", response_model=SettingsTestResponse)
+def test_settings(payload: SettingsTestRequest):
+    if payload.provider == "gemini":
+        key = payload.api_key.strip() if payload.api_key else settings.gemini_api_key
+        if not key:
+            return SettingsTestResponse(success=False, message="No Gemini API key provided or configured.")
+        model = (
+            payload.model.strip()
+            if payload.model
+            else (settings.llm_model if settings.llm_model.startswith("gemini-") else "gemini-2.5-flash")
+        )
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+        start_t = time.perf_counter()
+        try:
+            with httpx.Client(timeout=10, headers={"x-goog-api-key": key}) as client:
+                resp = client.post(
+                    url,
+                    json={
+                        "contents": [{"role": "user", "parts": [{"text": "Hello"}]}],
+                        "generationConfig": {"max_output_tokens": 5},
+                    },
+                )
+            latency = int((time.perf_counter() - start_t) * 1000)
+            if resp.status_code == 200:
+                return SettingsTestResponse(
+                    success=True, message=f"Gemini ({model}) connected successfully!", latency_ms=latency
+                )
+            elif resp.status_code in {400, 401, 403}:
+                err_msg = "Invalid or unauthorized Gemini API key."
+                try:
+                    err_json = resp.json()
+                    if isinstance(err_json, dict) and "error" in err_json and "message" in err_json["error"]:
+                        err_msg = str(err_json["error"]["message"])
+                except (ValueError, KeyError):
+                    err_msg = "Invalid or unauthorized Gemini API key."
+                return SettingsTestResponse(success=False, message=err_msg, latency_ms=latency)
+            else:
+                return SettingsTestResponse(
+                    success=False, message=f"Gemini returned HTTP {resp.status_code}", latency_ms=latency
+                )
+        except (httpx.RequestError, httpx.HTTPError) as e:
+            return SettingsTestResponse(success=False, message=f"Connection error: {e!s}")
+
+    elif payload.provider == "anthropic":
+        key = payload.api_key.strip() if payload.api_key else settings.anthropic_api_key
+        if not key:
+            return SettingsTestResponse(success=False, message="No Anthropic API key provided or configured.")
+        model = (
+            payload.model.strip()
+            if payload.model
+            else (
+                settings.llm_model
+                if not settings.llm_model.startswith("gemini-")
+                else "claude-3-5-haiku-20241022"
+            )
+        )
+        start_t = time.perf_counter()
+        try:
+            with httpx.Client(
+                timeout=10, headers={"x-api-key": key, "anthropic-version": "2023-06-01"}
+            ) as client:
+                resp = client.post(
+                    "https://api.anthropic.com/v1/messages",
+                    json={
+                        "model": model,
+                        "max_tokens": 5,
+                        "messages": [{"role": "user", "content": "Hello"}],
+                    },
+                )
+            latency = int((time.perf_counter() - start_t) * 1000)
+            if resp.status_code == 200:
+                return SettingsTestResponse(
+                    success=True, message=f"Anthropic ({model}) connected successfully!", latency_ms=latency
+                )
+            elif resp.status_code in {401, 403}:
+                return SettingsTestResponse(
+                    success=False, message="Invalid or unauthorized Anthropic API key.", latency_ms=latency
+                )
+            else:
+                err_msg = f"Anthropic returned HTTP {resp.status_code}"
+                try:
+                    err_json = resp.json()
+                    if isinstance(err_json, dict) and "error" in err_json and "message" in err_json["error"]:
+                        err_msg = str(err_json["error"]["message"])
+                except (ValueError, KeyError):
+                    err_msg = f"Anthropic returned HTTP {resp.status_code}"
+                return SettingsTestResponse(success=False, message=err_msg, latency_ms=latency)
+        except (httpx.RequestError, httpx.HTTPError) as e:
+            return SettingsTestResponse(success=False, message=f"Connection error: {e!s}")
+
+    elif payload.provider == "github":
+        token = payload.api_key.strip() if payload.api_key else settings.github_token
+        if not token:
+            return SettingsTestResponse(success=False, message="No GitHub token provided or configured.")
+        start_t = time.perf_counter()
+        try:
+            headers = {
+                "Accept": "application/vnd.github+json",
+                "Authorization": f"Bearer {token}",
+                "User-Agent": "JobProof",
+            }
+            with httpx.Client(timeout=10, headers=headers) as client:
+                resp = client.get("https://api.github.com/user")
+            latency = int((time.perf_counter() - start_t) * 1000)
+            if resp.status_code == 200:
+                login = resp.json().get("login", "authenticated user")
+                return SettingsTestResponse(
+                    success=True, message=f"GitHub token verified for user @{login}!", latency_ms=latency
+                )
+            elif resp.status_code in {401, 403}:
+                return SettingsTestResponse(
+                    success=False, message="Invalid or unauthorized GitHub token.", latency_ms=latency
+                )
+            else:
+                return SettingsTestResponse(
+                    success=False, message=f"GitHub returned HTTP {resp.status_code}", latency_ms=latency
+                )
+        except (httpx.RequestError, httpx.HTTPError) as e:
+            return SettingsTestResponse(success=False, message=f"Connection error: {e!s}")
+
+    return SettingsTestResponse(success=False, message="Unknown provider requested.")
 
 
 class ProjectInput(Schema):
