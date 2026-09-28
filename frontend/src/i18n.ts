@@ -200,6 +200,16 @@ export interface Translations {
   anthropicOption: string;
   openaiOption: string;
   modelLabel: string;
+  modelSelectorLabel: string;
+  selectModelOption: string;
+  customModelOption: string;
+  customModelPlaceholder: string;
+  modelBadgeFlagship: string;
+  modelBadgeBalanced: string;
+  modelBadgeFast: string;
+  modelBadgeReasoning: string;
+  modelBadgeMaxPower: string;
+  modelPresetsLabel: string;
   customModelLabel: string;
   customModelHelp: string;
   geminiApiKeyLabel: string;
@@ -458,15 +468,25 @@ export const translations: Record<Lang, Translations> = {
     navSettings: "Configuració",
     settingsTitle: "Configuració del proveïdor d'IA i API",
     settingsEyebrow: "PREFERÈNCIES LOCALS",
-    settingsIntro: "Configura les claus d'API per utilitzar intel·ligència artificial real (Google Gemini o Anthropic Claude) o augmentar els límits de GitHub. Totes les claus es desen de forma local al teu servidor i mai no s'envien a servidors externs no autoritzats.",
+    settingsIntro: "Configura les claus d'API per utilitzar intel·ligència artificial real (Google Gemini, Anthropic Claude o OpenAI) o augmentar els límits de GitHub. Totes les claus es desen de forma local al teu servidor i mai no s'envien a servidors externs no autoritzats.",
     aiProviderSection: "Proveïdor d'IA per a l'anàlisi real",
     aiProviderSelect: "Proveïdor d'IA",
     geminiOption: "Gemini API",
     anthropicOption: "Anthropic",
     openaiOption: "OpenAI",
     modelLabel: "Model d'IA",
-    customModelLabel: "Model d'IA (opcional)",
-    customModelHelp: "Deixa-ho en blanc per al model recomanat per defecte, o escriu qualsevol model suportat per la teva clau.",
+    modelSelectorLabel: "Model d'IA",
+    selectModelOption: "Selecciona un model recomanat...",
+    customModelOption: "Personalitzat / Un altre model...",
+    customModelPlaceholder: "Ex: gemini-3.8-flash, gpt-6-sol, claude-sonnet-4-6...",
+    modelBadgeFlagship: "Recomanat · Flagship",
+    modelBadgeBalanced: "Equilibrat",
+    modelBadgeFast: "Ràpid i econòmic",
+    modelBadgeReasoning: "Raonament profund",
+    modelBadgeMaxPower: "Màxima potència",
+    modelPresetsLabel: "Models disponibles i recomanats",
+    customModelLabel: "Model d'IA personalitzat",
+    customModelHelp: "Escriu l'identificador exacte del model suportat per la teva clau d'API.",
     geminiApiKeyLabel: "Gemini API Key",
     anthropicApiKeyLabel: "Anthropic API Key",
     openaiApiKeyLabel: "OpenAI API Key",
@@ -719,15 +739,25 @@ export const translations: Record<Lang, Translations> = {
     navSettings: "Settings",
     settingsTitle: "AI Provider & API Settings",
     settingsEyebrow: "LOCAL PREFERENCES",
-    settingsIntro: "Configure API keys to use real AI analysis (Google Gemini or Anthropic Claude) or increase GitHub rate limits. All keys are stored locally on your server and are never sent to unauthorized third parties.",
+    settingsIntro: "Configure API keys to use real AI analysis (Google Gemini, Anthropic Claude, or OpenAI) or increase GitHub rate limits. All keys are stored locally on your server and are never sent to unauthorized third parties.",
     aiProviderSection: "Active AI Provider",
     aiProviderSelect: "AI Provider",
     geminiOption: "Gemini API",
     anthropicOption: "Anthropic",
     openaiOption: "OpenAI",
     modelLabel: "AI Model",
-    customModelLabel: "AI Model (optional)",
-    customModelHelp: "Leave blank for the recommended default model, or specify any model supported by your key.",
+    modelSelectorLabel: "AI Model",
+    selectModelOption: "Select a recommended model...",
+    customModelOption: "Custom / Another model...",
+    customModelPlaceholder: "e.g. gemini-3.8-flash, gpt-6-sol, claude-sonnet-4-6...",
+    modelBadgeFlagship: "Recommended · Flagship",
+    modelBadgeBalanced: "Balanced",
+    modelBadgeFast: "Fast & economical",
+    modelBadgeReasoning: "Deep reasoning",
+    modelBadgeMaxPower: "Maximum power",
+    modelPresetsLabel: "Available & recommended models",
+    customModelLabel: "Custom AI Model",
+    customModelHelp: "Enter the exact model identifier supported by your API key.",
     geminiApiKeyLabel: "Gemini API Key",
     anthropicApiKeyLabel: "Anthropic API Key",
     openaiApiKeyLabel: "OpenAI API Key",
@@ -980,15 +1010,25 @@ export const translations: Record<Lang, Translations> = {
     navSettings: "Configuración",
     settingsTitle: "Configuración del proveedor de IA y API",
     settingsEyebrow: "PREFERENCIAS LOCALES",
-    settingsIntro: "Configura las claves de API para utilizar inteligencia artificial real (Google Gemini o Anthropic Claude) o aumentar los límites de GitHub. Todas las claves se almacenan localmente en tu servidor y nunca se envían a terceros no autorizados.",
+    settingsIntro: "Configura las claves de API para utilizar inteligencia artificial real (Google Gemini, Anthropic Claude u OpenAI) o aumentar los límites de GitHub. Todas las claves se almacenan localmente en tu servidor y nunca se envían a terceros no autorizados.",
     aiProviderSection: "Proveedor de IA para análisis real",
     aiProviderSelect: "Proveedor de IA",
     geminiOption: "Gemini API",
     anthropicOption: "Anthropic",
     openaiOption: "OpenAI",
     modelLabel: "Modelo de IA",
-    customModelLabel: "Modelo de IA (opcional)",
-    customModelHelp: "Déjalo en blanco para el modelo recomendado por defecto, o escribe cualquier modelo soportado por tu clave.",
+    modelSelectorLabel: "Modelo de IA",
+    selectModelOption: "Selecciona un modelo recomendado...",
+    customModelOption: "Personalizado / Otro modelo...",
+    customModelPlaceholder: "Ej: gemini-3.8-flash, gpt-6-sol, claude-sonnet-4-6...",
+    modelBadgeFlagship: "Recomendado · Flagship",
+    modelBadgeBalanced: "Equilibrado",
+    modelBadgeFast: "Rápido y económico",
+    modelBadgeReasoning: "Razonamiento profundo",
+    modelBadgeMaxPower: "Máxima potencia",
+    modelPresetsLabel: "Modelos disponibles y recomendados",
+    customModelLabel: "Modelo de IA personalizado",
+    customModelHelp: "Introduce el identificador exacto del modelo soportado por tu clave de API.",
     geminiApiKeyLabel: "Gemini API Key",
     anthropicApiKeyLabel: "Anthropic API Key",
     openaiApiKeyLabel: "OpenAI API Key",

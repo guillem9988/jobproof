@@ -460,7 +460,7 @@ class GeminiProvider(BaseLLMProvider):
             else (
                 settings.llm_model
                 if settings.llm_model and not any(p in settings.llm_model for p in ("claude", "gpt", "o1", "o3", "o4"))
-                else "gemini-2.5-flash"
+                else "gemini-3.8-flash"
             )
         )
         if not settings.gemini_api_key:

@@ -138,7 +138,7 @@ def health():
     configured = bool(active)
 
     if pref == "gemini":
-        default_model = "gemini-2.5-flash"
+        default_model = "gemini-3.8-flash"
     elif pref == "openai":
         default_model = "gpt-6-sol"
     else:
@@ -261,7 +261,7 @@ def get_settings():
     configured = bool(active)
 
     if provider_pref == "gemini":
-        default_model = "gemini-2.5-flash"
+        default_model = "gemini-3.8-flash"
     elif provider_pref == "openai":
         default_model = "gpt-6-sol"
     else:
@@ -336,7 +336,7 @@ def test_settings(payload: SettingsTestRequest):
         model = (
             payload.model.strip()
             if payload.model
-            else (settings.llm_model if settings.llm_model.startswith("gemini-") else "gemini-2.5-flash")
+            else (settings.llm_model if settings.llm_model.startswith("gemini-") else "gemini-3.8-flash")
         )
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
         start_t = time.perf_counter()

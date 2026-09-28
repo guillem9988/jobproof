@@ -65,6 +65,166 @@ const copy = {
   subtitle:
     "Connect a job’s requirements to evidence in your projects. Know what you can support, and what needs an honest conversation.",
 };
+
+interface ModelPreset {
+  id: string;
+  name: string;
+  tag: "flagship" | "balanced" | "fast" | "reasoning" | "max_power";
+  desc: {
+    ca: string;
+    en: string;
+    es: string;
+  };
+}
+
+const PROVIDER_MODELS: Record<"gemini" | "anthropic" | "openai", ModelPreset[]> = {
+  gemini: [
+    {
+      id: "gemini-3.8-flash",
+      name: "Gemini 3.8 Flash",
+      tag: "flagship",
+      desc: {
+        ca: "Darrera generació d'alta eficiència i precisió per a anàlisi de codi.",
+        en: "Latest generation high-efficiency model, optimized for code analysis.",
+        es: "Última generación de alta eficiencia y precisión para análisis de código.",
+      },
+    },
+    {
+      id: "gemini-2.5-flash",
+      name: "Gemini 2.5 Flash",
+      tag: "balanced",
+      desc: {
+        ca: "Versió 2.5 estable multimodal de gran context i velocitat.",
+        en: "Stable multimodal 2.5 version with large context and high speed.",
+        es: "Versión 2.5 estable multimodal de gran contexto y velocidad.",
+      },
+    },
+    {
+      id: "gemini-2.5-flash-lite",
+      name: "Gemini 2.5 Flash-Lite",
+      tag: "fast",
+      desc: {
+        ca: "Model lleuger dissenyat per a consum mínim de quota i costos baixos.",
+        en: "Lightweight model designed for minimal quota usage and low costs.",
+        es: "Modelo ligero diseñado para consumo mínimo de cuota y bajo coste.",
+      },
+    },
+    {
+      id: "gemini-2.5-pro",
+      name: "Gemini 2.5 Pro",
+      tag: "reasoning",
+      desc: {
+        ca: "Màxim raonament per a repositoris complexos i lògica avançada.",
+        en: "Maximum reasoning capacity for complex repositories and advanced logic.",
+        es: "Máximo razonamiento para repositorios complejos y lógica avanzada.",
+      },
+    },
+  ],
+  openai: [
+    {
+      id: "gpt-6-sol",
+      name: "GPT-6 Sol",
+      tag: "flagship",
+      desc: {
+        ca: "Darrera generació d'OpenAI, equilibri òptim de velocitat i capacitat tècnica.",
+        en: "Latest OpenAI generation, optimal balance of speed and technical capacity.",
+        es: "Última generación de OpenAI, equilibrio óptimo de velocidad y capacidad técnica.",
+      },
+    },
+    {
+      id: "gpt-6-luna",
+      name: "GPT-6 Luna",
+      tag: "fast",
+      desc: {
+        ca: "Model àgil i ultra econòmic per a anàlisis ràpides i estables.",
+        en: "Agile and economical model for rapid, stable analyses.",
+        es: "Modelo ágil y ultra económico para análisis rápidos y estables.",
+      },
+    },
+    {
+      id: "gpt-6-astra",
+      name: "GPT-6 Astra",
+      tag: "max_power",
+      desc: {
+        ca: "Màxima potència multimodal i capacitat per a problemes complexos.",
+        en: "Maximum multimodal power and capability for complex tasks.",
+        es: "Máxima potencia multimodal y capacidad para problemas complejos.",
+      },
+    },
+    {
+      id: "o4-mini",
+      name: "o4-mini",
+      tag: "reasoning",
+      desc: {
+        ca: "Especialitzat en raonament matemàtic, lògica de codi i seguretat.",
+        en: "Specialized in reasoning, code logic, and security verification.",
+        es: "Especializado en razonamiento matemático, lógica de código y seguridad.",
+      },
+    },
+    {
+      id: "gpt-4o",
+      name: "GPT-4o",
+      tag: "balanced",
+      desc: {
+        ca: "Model de referència multimodal versàtil i àmpliament provat.",
+        en: "Versatile, widely tested multimodal reference model.",
+        es: "Modelo de referencia multimodal versátil y ampliamente probado.",
+      },
+    },
+  ],
+  anthropic: [
+    {
+      id: "claude-sonnet-4-6",
+      name: "Claude Sonnet 4.6",
+      tag: "flagship",
+      desc: {
+        ca: "Líder d'Anthropic en comprensió de codi, arquitectura i proves.",
+        en: "Anthropic's leader in code understanding, architecture, and tests.",
+        es: "Líder de Anthropic en comprensión de código, arquitectura y pruebas.",
+      },
+    },
+    {
+      id: "claude-3-7-sonnet-20250219",
+      name: "Claude 3.7 Sonnet",
+      tag: "reasoning",
+      desc: {
+        ca: "Raonament híbrid pas a pas per a lògica complexa i auditoria exigent.",
+        en: "Hybrid step-by-step reasoning for complex logic and thorough auditing.",
+        es: "Razonamiento híbrido paso a paso para lógica compleja y auditoría exigente.",
+      },
+    },
+    {
+      id: "claude-3-5-haiku-20241022",
+      name: "Claude 3.5 Haiku",
+      tag: "fast",
+      desc: {
+        ca: "Execució ultraràpida i baix cost per a tasques lleugeres.",
+        en: "Ultra-fast execution and low cost for lightweight tasks.",
+        es: "Ejecución ultrarrápida y bajo coste para tareas ligeras.",
+      },
+    },
+  ],
+};
+
+function getModelTagBadge(tag: ModelPreset["tag"], t: typeof translations["ca"]): string {
+  switch (tag) {
+    case "flagship":
+      return t.modelBadgeFlagship;
+    case "balanced":
+      return t.modelBadgeBalanced;
+    case "fast":
+      return t.modelBadgeFast;
+    case "reasoning":
+      return t.modelBadgeReasoning;
+    case "max_power":
+      return t.modelBadgeMaxPower;
+  }
+}
+
+function getDefaultModelForProvider(p: "gemini" | "anthropic" | "openai"): string {
+  return PROVIDER_MODELS[p][0].id;
+}
+
 function App() {
   const [page, setPage] = useState(
       localStorage.getItem("jobproof-task") ? "progress" : "home",
@@ -189,6 +349,7 @@ function App() {
   });
   const [settingsProvider, setSettingsProvider] = useState<"gemini" | "anthropic" | "openai">("gemini");
   const [settingsModel, setSettingsModel] = useState<string>("");
+  const [isCustomModel, setIsCustomModel] = useState<boolean>(false);
   const [geminiKeyInput, setGeminiKeyInput] = useState<string>("");
   const [anthropicKeyInput, setAnthropicKeyInput] = useState<string>("");
   const [openaiKeyInput, setOpenaiKeyInput] = useState<string>("");
@@ -207,19 +368,18 @@ function App() {
     if (appSettings.data) {
       const p = (appSettings.data.llm_provider as "gemini" | "anthropic" | "openai") || "gemini";
       setSettingsProvider(p);
-      setSettingsModel(appSettings.data.llm_model || "");
+      const savedModel = (appSettings.data.llm_model || "").trim();
+      const current = savedModel || getDefaultModelForProvider(p);
+      setSettingsModel(current);
+      const isPreset = PROVIDER_MODELS[p].some((m) => m.id === current);
+      setIsCustomModel(!isPreset);
     }
   }, [appSettings.data]);
 
   async function handleSaveSettings(e: React.FormEvent) {
     e.preventDefault();
     await act(async () => {
-      const defModel =
-        settingsProvider === "openai"
-          ? "gpt-6-sol"
-          : settingsProvider === "anthropic"
-            ? "claude-sonnet-4-6"
-            : "gemini-2.5-flash";
+      const defModel = getDefaultModelForProvider(settingsProvider);
       const payload: Partial<{
         llm_provider: string;
         llm_model: string;
@@ -260,11 +420,7 @@ function App() {
               ? openaiKeyInput
               : githubTokenInput;
       const defModel =
-        providerToTest === "openai"
-          ? "gpt-6-sol"
-          : providerToTest === "anthropic"
-            ? "claude-sonnet-4-6"
-            : "gemini-2.5-flash";
+        providerToTest === "github" ? "" : getDefaultModelForProvider(providerToTest);
       const res = await one<SettingsTestResult>("/settings/test", {
         provider: providerToTest,
         api_key: key || undefined,
@@ -1413,6 +1569,9 @@ function App() {
                     onChange={(e) => {
                       const p = e.target.value as "gemini" | "anthropic" | "openai";
                       setSettingsProvider(p);
+                      const def = getDefaultModelForProvider(p);
+                      setSettingsModel(def);
+                      setIsCustomModel(false);
                     }}
                   >
                     <option value="gemini">{t.geminiOption}</option>
@@ -1421,25 +1580,145 @@ function App() {
                   </select>
                 </label>
 
-                <label style={{ marginTop: 14 }}>
-                  {t.customModelLabel}
-                  <input
-                    type="text"
-                    placeholder={
-                      settingsProvider === "openai"
-                        ? "gpt-6-sol"
-                        : settingsProvider === "anthropic"
-                          ? "claude-sonnet-4-6"
-                          : "gemini-2.5-flash"
-                    }
-                    value={settingsModel}
-                    onChange={(e) => setSettingsModel(e.target.value)}
-                    style={{ fontFamily: "monospace", fontSize: "0.9rem" }}
-                  />
-                  <span className="quiet" style={{ fontSize: "0.8rem", marginTop: 4, display: "block" }}>
-                    {t.customModelHelp}
-                  </span>
-                </label>
+                <div style={{ marginTop: 14 }}>
+                  <label style={{ margin: 0, fontWeight: 600, display: "block", marginBottom: 6 }}>
+                    {t.modelSelectorLabel}
+                  </label>
+                  <select
+                    value={isCustomModel ? "__custom__" : settingsModel}
+                    onChange={(e) => {
+                      if (e.target.value === "__custom__") {
+                        setIsCustomModel(true);
+                      } else {
+                        setIsCustomModel(false);
+                        setSettingsModel(e.target.value);
+                      }
+                    }}
+                  >
+                    <optgroup label={t.modelPresetsLabel}>
+                      {PROVIDER_MODELS[settingsProvider].map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name} — {getModelTagBadge(m.tag, t)} ({m.id})
+                        </option>
+                      ))}
+                    </optgroup>
+                    <option value="__custom__">{t.customModelOption}</option>
+                  </select>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))",
+                      gap: 8,
+                      marginTop: 10,
+                    }}
+                  >
+                    {PROVIDER_MODELS[settingsProvider].map((m) => {
+                      const isSelected = !isCustomModel && settingsModel === m.id;
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => {
+                            setSettingsModel(m.id);
+                            setIsCustomModel(false);
+                          }}
+                          style={{
+                            textAlign: "left",
+                            padding: "8px 12px",
+                            borderRadius: 8,
+                            border: isSelected
+                              ? "2px solid var(--accent, #3b82f6)"
+                              : "1px solid var(--border, #e2e8f0)",
+                            background: isSelected
+                              ? "rgba(59, 130, 246, 0.08)"
+                              : "transparent",
+                            cursor: "pointer",
+                            transition: "all 0.15s ease",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 4,
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: 6,
+                              width: "100%",
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontWeight: 600,
+                                fontSize: "0.85rem",
+                                color: isSelected ? "var(--accent, #3b82f6)" : "inherit",
+                              }}
+                            >
+                              {m.name}
+                            </span>
+                            <span
+                              className={`pill ${
+                                m.tag === "flagship"
+                                  ? "supported"
+                                  : m.tag === "fast"
+                                    ? "partially_supported"
+                                    : "not_evidenced"
+                              }`}
+                              style={{
+                                fontSize: "0.68rem",
+                                padding: "1px 6px",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {getModelTagBadge(m.tag, t)}
+                            </span>
+                          </div>
+                          <span
+                            className="quiet"
+                            style={{ fontSize: "0.75rem", lineHeight: 1.3 }}
+                          >
+                            {m.desc[lang] || m.desc.en}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {isCustomModel && (
+                    <div
+                      style={{
+                        marginTop: 10,
+                        padding: 12,
+                        borderRadius: 8,
+                        border: "1px dashed var(--border, #cbd5e1)",
+                      }}
+                    >
+                      <label style={{ margin: 0, fontSize: "0.85rem", fontWeight: 600 }}>
+                        {t.customModelLabel}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder={t.customModelPlaceholder}
+                        value={settingsModel}
+                        onChange={(e) => setSettingsModel(e.target.value)}
+                        style={{
+                          fontFamily: "monospace",
+                          fontSize: "0.9rem",
+                          marginTop: 6,
+                        }}
+                        autoFocus
+                      />
+                      <span
+                        className="quiet"
+                        style={{ fontSize: "0.8rem", marginTop: 4, display: "block" }}
+                      >
+                        {t.customModelHelp}
+                      </span>
+                    </div>
+                  )}
+                </div>
 
                 <div style={{ marginTop: 14 }}>
                   <div

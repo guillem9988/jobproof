@@ -17,7 +17,7 @@ Instead of generating superficial "ATS match percentages" or hallucinated hiring
 
 ### 1. Multi-LLM Provider Architecture
 - **Native Support for 3 Top Providers:**
-  - **Google Gemini API:** Structured output via REST (`gemini-2.5-flash`, `gemini-2.5-pro`).
+  - **Google Gemini API:** Structured output via REST (`gemini-3.8-flash`, `gemini-2.5-flash`, `gemini-2.5-pro`).
   - **Anthropic Claude:** Official Anthropic SDK with Pydantic structured parsing (`claude-sonnet-4-6`, `claude-3-7-sonnet`).
   - **OpenAI:** Official JSON schema structured completions (`gpt-6-sol`, `gpt-6-luna`, `gpt-6-astra`, `o-series`).
 - **Flexible Model Configuration:** Automatic modern defaults per provider, with an optional custom model ID input in Settings.

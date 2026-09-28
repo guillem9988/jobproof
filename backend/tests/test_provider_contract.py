@@ -234,5 +234,5 @@ def test_provider_factory_selects_gemini_when_configured(monkeypatch):
 
     p = provider("real")
     assert isinstance(p, GeminiProvider)
-    assert p.model == "gemini-2.5-flash"
+    assert p.model == "gemini-3.8-flash"
     p.close()
