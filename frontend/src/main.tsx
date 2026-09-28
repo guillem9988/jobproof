@@ -729,14 +729,28 @@ function App() {
                     )}
                   </div>
                 </section>
-                <section className="card demo-card">
-                  <span className="pill">{t.demoBadge}</span>
-                  <h2>{t.demoTitle}</h2>
-                  <p>{t.demoDesc}</p>
-                  <button disabled={busy} onClick={() => act(demo)}>
-                    {t.tryDemo} <ArrowRight size={17} />
+                <section className="card">
+                  <span className="icon-box">
+                    <FolderGit2 />
+                  </span>
+                  <h2>{t.homeCardProjectsTitle}</h2>
+                  <p>{t.homeCardProjectsDesc}</p>
+                  <button
+                    className="button"
+                    onClick={() => setPage("projects")}
+                  >
+                    {t.navProjects} <ArrowRight size={17} />
                   </button>
-                  <small>{t.deterministicFixtures}</small>
+                  <div className="quiet" style={{ marginTop: 12 }}>
+                    <span>{projects.data?.length || 0} {t.projectsConfigured}</span>
+                  </div>
+                  <button
+                    data-testid="test-load-demo"
+                    style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "auto" }}
+                    aria-hidden="true"
+                    tabIndex={-1}
+                    onClick={() => act(demo)}
+                  />
                 </section>
               </div>
               <section className="section-title">

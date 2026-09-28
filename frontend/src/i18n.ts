@@ -166,6 +166,9 @@ export interface Translations {
   deterministicFixtures: string;
   homeCardStartTitle: string;
   homeCardStartDesc: string;
+  homeCardProjectsTitle: string;
+  homeCardProjectsDesc: string;
+  projectsConfigured: string;
   principle1Title: string;
   principle1Desc: string;
   principle2Title: string;
@@ -378,7 +381,7 @@ export const translations: Record<Lang, Translations> = {
     historyEyebrow: "LA TEVA TRAÇABILITAT",
     historyDesc: "Cada informe conserva els seus requisits, versions del codi i conclusions originals.",
     emptyHistoryTitle: "El teu primer informe comença aquí.",
-    emptyHistoryDesc: "Prova la demo o afegeix una oferta de feina per començar.",
+    emptyHistoryDesc: "Afegeix una oferta de feina i els teus projectes per començar.",
     recentAnalyses: "Anàlisis recents",
     viewHistory: "Veure historial",
     jobReviewTitle: "Revisa els requisits",
@@ -428,6 +431,9 @@ export const translations: Record<Lang, Translations> = {
     deterministicFixtures: "Fixtures deterministes · Sense crides externes",
     homeCardStartTitle: "Prepara una candidatura més sòlida",
     homeCardStartDesc: "Comença amb una oferta de feina i fins a tres projectes. Revisa cada conclusió contrastant-la amb la seva font original.",
+    homeCardProjectsTitle: "Projectes i repositoris",
+    homeCardProjectsDesc: "Importa repositoris de GitHub o carpetes locals. JobProof n'extreu fragments de codi immutables per verificar les teves competències.",
+    projectsConfigured: "projectes registrats",
     principle1Title: "01 · Fonamentat en fonts",
     principle1Desc: "Cada prova enllaça a un fitxer i línies exactes.",
     principle2Title: "02 · Honest amb les mancances",
@@ -636,7 +642,7 @@ export const translations: Record<Lang, Translations> = {
     historyEyebrow: "YOUR RESEARCH TRAIL",
     historyDesc: "Each report keeps its requirements, source snapshots and original conclusions.",
     emptyHistoryTitle: "Your first report starts here.",
-    emptyHistoryDesc: "Try the demo or add a job posting to begin.",
+    emptyHistoryDesc: "Add a job posting and your projects to begin.",
     recentAnalyses: "Recent analyses",
     viewHistory: "View history",
     jobReviewTitle: "Review the requirements",
@@ -686,6 +692,9 @@ export const translations: Record<Lang, Translations> = {
     deterministicFixtures: "Deterministic fixtures · No external calls",
     homeCardStartTitle: "Prepare a stronger application",
     homeCardStartDesc: "Start with a job posting and up to three projects. Review every conclusion against its source.",
+    homeCardProjectsTitle: "Projects & Repositories",
+    homeCardProjectsDesc: "Import GitHub repositories or local directories. JobProof extracts immutable code chunks to verify your competencies.",
+    projectsConfigured: "projects registered",
     principle1Title: "01 · Grounded in sources",
     principle1Desc: "Every proof links to a file and exact lines.",
     principle2Title: "02 · Honest about gaps",
@@ -894,7 +903,7 @@ export const translations: Record<Lang, Translations> = {
     historyEyebrow: "TU RASTRO DE INVESTIGACIÓN",
     historyDesc: "Cada informe conserva sus requisitos, versiones de código y conclusiones originales.",
     emptyHistoryTitle: "Tu primer informe comienza aquí.",
-    emptyHistoryDesc: "Prueba la demo o añade una oferta de empleo para comenzar.",
+    emptyHistoryDesc: "Añade una oferta de empleo y tus proyectos para comenzar.",
     recentAnalyses: "Análisis recientes",
     viewHistory: "Ver historial",
     jobReviewTitle: "Revisa los requisitos",
@@ -944,6 +953,9 @@ export const translations: Record<Lang, Translations> = {
     deterministicFixtures: "Fixtures deterministas · Sin llamadas externas",
     homeCardStartTitle: "Prepara una candidatura más sólida",
     homeCardStartDesc: "Empieza con una oferta de empleo y hasta tres proyectos. Revisa cada conclusión contrastándola con su fuente original.",
+    homeCardProjectsTitle: "Proyectos y repositorios",
+    homeCardProjectsDesc: "Importa repositorios de GitHub o carpetas locales. JobProof extrae fragmentos de código inmutables para verificar tus competencias.",
+    projectsConfigured: "proyectos registrados",
     principle1Title: "01 · Fundamentado en fuentes",
     principle1Desc: "Cada prueba enlaza a un archivo y líneas exactas.",
     principle2Title: "02 · Honesto con las carencias",

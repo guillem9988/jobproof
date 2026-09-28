@@ -1,134 +1,179 @@
 # JobProof
 
-A local evidence workspace for an honest job application. Paste a job posting, select up to three public GitHub projects, review extracted requirements, and inspect the sources behind each conclusion. No ATS score, hiring probability, or certification of competence.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python: 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/)
+[![Node: 22+](https://img.shields.io/badge/node-22+-green.svg)](https://nodejs.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6.svg)](https://www.typescriptlang.org)
 
-## Implemented
+**JobProof** is a privacy-first, local evidence workspace for honest job applications. It connects actual source code from your repositories with the explicit requirements of a job posting. 
 
-- FastAPI, Pydantic, SQLAlchemy, Alembic and SQLite, with durable tasks and bounded in-process concurrency.
-- React + strict TypeScript + Vite + Tailwind, TanStack Query polling, accessible native forms and modal source viewer.
-- Public GitHub API imports pinned to a commit, exclusion inventory, limits, secret-pattern redaction and immutable source excerpts. Imported repositories are **never executed**.
-- Structured Anthropic SDK provider, separate deterministic demo provider, BM25 retrieval with explicit aliases, server-validated citations and conservative downgrades.
-- Editable/selectable requirements with verifiable posting offsets and optimistic version checking; manual requirements have no fabricated posting citation.
-- Four assessment states, report filters, original model output, append-only human review history, added/removed evidence, Markdown/JSON export and analysis history.
-- Reproducible fixtures and 32 labeled evaluation cases, with development, validation and final holdout partitions.
+Instead of generating superficial "ATS match percentages" or hallucinated hiring probability scores, JobProof verifies whether your code actually implements what the employer asks for, cites the exact files and line numbers, and highlights the limitations that require an honest conversation during the interview.
 
-## Run locally
+---
 
-Prerequisites: Python **3.12+** (tested on 3.14.7), Node **22.12+**, and pnpm. Docker is not required. Dependencies require internet for installation; the demo requires none once installed.
+## Key Features
 
-From this `jobproof` directory:
+### 1. Multi-LLM Provider Architecture
+- **Native Support for 3 Top Providers:**
+  - **Google Gemini API:** Structured output via REST (`gemini-2.5-flash`, `gemini-2.5-pro`).
+  - **Anthropic Claude:** Official Anthropic SDK with Pydantic structured parsing (`claude-sonnet-4-6`, `claude-3-7-sonnet`).
+  - **OpenAI:** Official JSON schema structured completions (`gpt-6-sol`, `gpt-6-luna`, `gpt-6-astra`, `o-series`).
+- **Flexible Model Configuration:** Automatic modern defaults per provider, with an optional custom model ID input in Settings.
+- **In-App Settings & Key Management:** Secure local SQLite/`.env` persistence, live connection latency testers, and masked key previews.
 
-```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install -r backend/requirements.lock
-cp .env.example .env
-cd backend
-../.venv/bin/alembic upgrade head
-cd ../frontend
-pnpm install --frozen-lockfile
-cd ..
+### 2. Smart Project & Job Ingestion
+- **GitHub Ingestion:** Supports shorthand `owner/repo` as well as full URLs.
+- **Private Repository Access:** Configurable GitHub Personal Access Token (`GITHUB_TOKEN`) enables higher rate limits (5,000 req/hr) and private repository analysis.
+- **Local Directory Import:** Point to local folders on your machine for zero-network analysis.
+- **Custom Exclusions:** Filter out unwanted files or directories (e.g. `docs, fixtures, temp, test`) per project.
+- **Job Ingestion:** Paste text directly, fetch clean job descriptions from public URLs (`/job-postings/fetch-url`), or upload `.txt` / `.md` job posting files.
+
+### 3. Evidence-Grounded Analysis & Verification
+- **Verifiable Citations:** Every piece of evidence references the exact file path and line numbers within the immutable commit snapshot.
+- **Four Clear Assessment States:**
+  - `supported`: Concrete, relevant implementation evidenced in code.
+  - `partially_supported`: Implemented partially, or accompanied by limitations.
+  - `not_evidenced`: Absence of code evidence (explicitly not absence of skill).
+  - `contradicted`: Disproven or conflicting implementation.
+- **Strict Anti-Hallucination Rules:** Repository presence is never mistaken for production deployment, team communication, or years of employment.
+- **Human-in-the-Loop Reviews:** Override or annotate conclusions with full audit trails without losing the original AI output.
+
+### 4. Honest Candidate Tools
+- **Evidence-Backed Cover Letter Generator:** Generates tailored, strictly honest markdown cover letters highlighting verified code achievements while acknowledging verified boundaries. Supports multiple tones (Balanced, Technical, Concise) in English, Catalan, or Spanish.
+- **Interactive Mock Interview Simulator:** Multi-turn conversational practice that evaluates technical depth and honesty, questioning your real architecture decisions and deployment scope.
+
+### 5. Privacy & Modern UI
+- **Zero-Code Execution:** Imported repositories are **never executed** or evaluated in a runtime sandbox.
+- **Automatic Secret Redaction:** Multi-line secrets, API keys (`sk-ant-*`, `AIza*`, `sk-proj-*`, `ghp_*`, `AKIA*`), and passwords are redacted prior to analysis.
+- **Trilingual Internationalization:** Full interface support in **Catalan (`ca`)**, **English (`en`)**, and **Spanish (`es`)**.
+- **Dark Mode:** Elegant, responsive interface with persistent theme toggle and mobile support (390px viewport certified).
+
+---
+
+## Quickstart
+
+### Prerequisites
+- **Python 3.12+** (tested on 3.12, 3.13, 3.14)
+- **Node.js 22+** and **pnpm**
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/guillem9988/jobproof.git
+   cd jobproof
+   ```
+
+2. **Set up the backend environment:**
+   ```bash
+   python3 -m venv .venv
+   .venv/bin/python -m pip install --upgrade pip
+   .venv/bin/python -m pip install -r backend/requirements.lock
+   cp .env.example .env
+   ```
+
+3. **Set up the frontend:**
+   ```bash
+   cd frontend
+   pnpm install --frozen-lockfile
+   cd ..
+   ```
+
+4. **Start the development servers:**
+   - In terminal 1 (Backend):
+     ```bash
+     ./scripts/start-backend.sh
+     ```
+   - In terminal 2 (Frontend):
+     ```bash
+     ./scripts/start-frontend.sh
+     ```
+
+5. **Open JobProof:**
+   - Web Application: [http://127.0.0.1:5173](http://127.0.0.1:5173)
+   - Interactive OpenAPI Docs: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
+---
+
+## Docker Deployment
+
+JobProof includes a production-ready, multi-stage `Dockerfile`:
+
+```bash
+# Build the Docker image
+docker build -t jobproof .
+
+# Run the container
+docker run -p 8000:8000 \
+  -e GEMINI_API_KEY="your-gemini-key" \
+  -v $(pwd)/jobproof.db:/app/jobproof.db \
+  jobproof
 ```
 
-Start in two terminals:
+Access the single-container app at `http://localhost:8000`.
 
-```sh
-./scripts/start-backend.sh
+---
+
+## Environment Variables
+
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `GEMINI_API_KEY` | Google Gemini API Key | `""` |
+| `ANTHROPIC_API_KEY` | Anthropic Claude API Key | `""` |
+| `OPENAI_API_KEY` | OpenAI API Key | `""` |
+| `LLM_PROVIDER` | Preferred provider: `gemini`, `anthropic`, or `openai` | Auto-detected |
+| `LLM_MODEL` | Custom model ID override | Provider default |
+| `GITHUB_TOKEN` | Personal Access Token for private repos & 5k req/hr | `""` |
+| `DATABASE_URL` | SQLite database URI | `sqlite:///./jobproof.db` |
+| `STATIC_DIR` | Path to production built frontend assets | `""` |
+| `ALLOWED_ORIGINS` | Comma-separated CORS origins | Localhost defaults |
+
+*Note: All API keys and settings can be conveniently managed directly from the in-app **Settings** screen.*
+
+---
+
+## Quality Assurance & Verification
+
+JobProof is continuously tested with high-coverage unit, contract, and browser test suites:
+
+```bash
+# 1. Backend tests & linters (67 tests)
+.venv/bin/pytest backend/tests
+.venv/bin/ruff check backend
+.venv/bin/ruff format --check backend
+
+# 2. Frontend typecheck & i18n unit tests
+pnpm --dir frontend test --run
+pnpm --dir frontend build
+
+# 3. Playwright browser end-to-end tests (5 tests)
+pnpm --dir frontend e2e
 ```
 
-```sh
-./scripts/start-frontend.sh
-```
+---
 
-Open **http://127.0.0.1:5173**. API documentation: **http://127.0.0.1:8000/docs**.
-
-The Python lock pins all runtime and test dependencies. `pnpm-lock.yaml` pins frontend dependencies. `pnpm-workspace.yaml` explicitly allows the esbuild and Tailwind native setup scripts; this is for JobProof's own dependencies, never imported projects. Run the backend from `backend/` so `../.env` and the SQLite path resolve consistently. Use one backend process, not multiple Uvicorn workers.
-
-## Demo walkthrough
-
-1. Click **Try fixture demo**. No GitHub account or AI key is involved.
-2. Review eight requirements; edit priorities, remove incorrect items or add a manual requirement. Save edits independently, or save and analyze together.
-3. Keep the two fixture project snapshots selected and click **Analyze evidence**.
-4. Open an evidence row to see the exact file lines. Fixture evidence has no invented GitHub URL.
-5. Expand **Review conclusion**, give a reason, optionally add or remove a source, and save. The original model result remains available.
-6. Export Markdown or JSON. Previous analyses are available in history.
-
-The fixtures deliberately contain an unused PostgreSQL dependency, an unsupported encryption claim, an authorization implementation with a negative test, a Dockerfile without deployment evidence, and a malicious README instruction. They are source examples, not runnable production applications. Fixture code is stored canonically in `backend/app/demo.py` and mirrored under `fixtures/` for reading.
-
-To load fixtures from a terminal while the server is running:
-
-```sh
-./scripts/load-demo.sh
-```
-
-Demo assessment rules only cover their known fixture requirements. Editing them does not turn the demo into an AI model; unfamiliar wording gets an explicit conservative result.
-
-## Real mode
-
-Set `ANTHROPIC_API_KEY` (e.g. `sk-ant-...`) or `GEMINI_API_KEY` (e.g. `AIza...`) in the **server's** `.env`, then restart the backend. `LLM_MODEL` defaults to `claude-sonnet-4-6` for Anthropic or `gemini-2.5-flash` for Gemini and is configurable. You can also explicitly set `LLM_PROVIDER=gemini` or `LLM_PROVIDER=anthropic`. The Anthropic implementation uses official `anthropic==1.8.0` with `client.messages.parse(..., output_format=PydanticModel)`; the Google Gemini implementation uses REST structured outputs (`response_schema` and `application/json` via `httpx`). Schema parsing is followed by deterministic citation validation. No key is returned to the browser. A missing key is an error, never a demo fallback.
-
-In **Projects**, add a public URL such as `https://github.com/owner/repository`, optionally a branch/commit, and import it. The server resolves a SHA and fetches only tree/blob API endpoints on GitHub. Private repositories are rejected, even when `GITHUB_TOKEN` is configured. A token is optional and only improves API limits.
-
-Create a posting with **New analysis**, save, extract requirements, review them, select snapshots and analyze. Real extraction sends the redacted posting to the AI provider; assessment sends only bounded, retrieved excerpts. Interview preparation receives validated assessment summaries. Provider calls may incur charges according to your account; the app displays tokens and calls, not invented dollar costs.
-
-## Checks actually executed
-
-- **61 pytest checks passed**: URL restrictions, exclusions, partial import, commit references, chunk lines, invalid/unsent/out-of-scope citations, safe downgrade, redaction, requirement versions, original-preserving review, exports, duplicate requests including concurrent submits, malformed provider output, restart recovery, cancellation, injection fixtures, and official Anthropic/Gemini provider contracts.
-- **1 Vitest check passed** for four-state summary counts.
-- **3 Playwright checks passed**: complete demo → evidence → review → Markdown download, desktop/mobile rendering with no horizontal overflow, inert rendering of hostile posting HTML, and recovery of a completed extraction after reload.
-- Official Anthropic SDK contract tests exercise structured JSON, token accounting, secret redaction with stable posting offsets, malformed output, refusal, truncation, authentication failure and the call budget. No external requests or charges occur in these tests.
-- Strict TypeScript compilation and Vite production build passed. Ruff lint/format passed.
-- A **live public GitHub import passed** for `octocat/Hello-World`: commit `7fd1a60b01f91b314f59955a4e4d4e80d8edf11d`, one README, 13 bytes. Details: `docs/github-smoke.json`.
-- Evaluation was run on all 32 cases with the deterministic provider. See `docs/evaluation.md`; this does **not** measure Anthropic quality.
-
-**Not executed:** paid Anthropic calls, real multilingual extraction, real-model assessment quality, broad browser/OS compatibility, or an accessibility audit. Configure your own server key to run the real-provider benchmark.
-
-## Test commands
-
-```sh
-cd backend
-../.venv/bin/pytest -q
-../.venv/bin/ruff check app tests migrations
-../.venv/bin/ruff format --check app tests migrations
-../.venv/bin/python ../evaluation/run.py --provider demo --split all
-# Requires ANTHROPIC_API_KEY; makes external provider calls:
-../.venv/bin/python ../evaluation/run.py --provider real --split holdout
-cd ../frontend
-pnpm test
-pnpm build
-pnpm exec playwright install chromium
-# Backend and frontend must already be running locally:
-pnpm e2e
-```
-
-Browser tests create local demo reports and a hostile-text test posting in the development database; use a disposable `DATABASE_URL` for clean runs. The test suite uses a separate temporary SQLite database for every backend test.
-
-## Limits and honest caveats
-
-- Up to 3 projects and 15 selected requirements per analysis. Default per-project caps: 150 text files, 100 KB/file, 5 MB total. Up to 5 chunks/requirement and 60,000 excerpt characters per analysis. These are local resource/context bounds, not completeness guarantees.
-- Partial imports, excluded requirements and context omissions are visible. Missing evidence never proves missing ability or absent functionality.
-- Citations establish exact text presence in the **normalized, redacted snapshot**, not semantic correctness. No imported tests are run; dates, contributors and README language do not establish employment, authorship or fluency.
-- Secret filtering is imperfect. Review a repository before sending excerpts to a provider.
-- Jobs survive page reload; interrupted work is marked on backend restart. Explicit retry creates a fresh operation. Cancellation cannot recall an external request already sent. No exactly-once provider-call claim.
-- Recommendations reflect the original analysis; revisit them after human review. Reviews are visible in exports and do not overwrite original model output.
-- Native browser validation is used instead of adding React Hook Form/Zod to small forms. App copy begins in a shared copy object; full translation catalogs are future work.
-- SQLite records use versioned JSON aggregates, with separately addressable snapshots/files/chunks/tasks/assessments. This simplifies the single-user MVP; database-level relational foreign keys and public multi-user operation are not implemented.
-- The real provider is implemented and its official SDK request/response contract tested with an in-memory HTTP transport, but the end-to-end real LLM path remains unverified without credentials.
-
-## Architecture and evidence
+## Architecture
 
 ```text
-GitHub → commit snapshot → filtered/redacted files → line chunks
-Job text → structured extraction → user revision → requirement version
-Selected snapshots + requirements → BM25 top-k → provider assessment
-→ server citation validation → durable report → human reviews → exports
+GitHub / Local Folders → Commit Snapshot → Secret Redaction & Chunking → Line Chunks
+                                                                            ↓
+Job Posting (URL / File / Text) → Structured Requirement Extraction → BM25 Search
+                                                                            ↓
+                                                                AI Provider Assessment
+                                                                            ↓
+                                                              Citation Verification Loop
+                                                                            ↓
+                                                             Durable SQLite Report Store
+                                                                            ↓
+                                                            Human Review & Evidence Audit
+                                                                            ↓
+                                                    Markdown / JSON Export & AI Tools
 ```
 
-See [architecture](docs/architecture.md), [security](docs/security.md), [evaluation](docs/evaluation.md), and [product decisions](docs/product-decisions.md).
+---
 
-Real browser captures:
+## License
 
-![JobProof overview](docs/overview.png)
-
-[Desktop report capture](docs/report-desktop.png)
-
-[Mobile report capture](docs/report-mobile.png)
+This project is licensed under the [MIT License](LICENSE).

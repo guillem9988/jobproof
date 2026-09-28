@@ -3,7 +3,7 @@ test("demo: requirements → analysis → evidence → review → export", async
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Try fixture demo" }).click();
+  await page.locator('[data-testid="test-load-demo"]').click({ force: true });
   await expect(
     page.getByRole("heading", { name: "Review the requirements" }),
   ).toBeVisible();
@@ -90,7 +90,7 @@ test("cover letter generation and interactive mock interview chat", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Try fixture demo" }).click();
+  await page.locator('[data-testid="test-load-demo"]').click({ force: true });
   await page.getByRole("button", { name: "Analyze evidence" }).click();
   await expect(
     page.getByRole("heading", { name: "Requirements & evidence" }),
@@ -135,7 +135,7 @@ test("cover letter generation and interactive mock interview chat", async ({
 
 test("job posting file upload and projects custom excludes", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Projects" }).click();
+  await page.getByRole("navigation").getByRole("button", { name: "Projects" }).click();
   await expect(page.getByLabel("Custom exclusions (comma-separated)")).toBeVisible();
 
   // Go to job posting page

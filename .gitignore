@@ -1,11 +1,33 @@
+# Python & virtual environment
 .venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+
+# Local database & secrets
 .env
 *.db
 *.db-*
-__pycache__/
-.pytest_cache/
-.ruff_cache/
+*.sqlite3
+jobproof.db
+
+# Node & Frontend
 node_modules/
 dist/
+.vite/
+
+# Playwright & test reports
 test-results/
 playwright-report/
+
+# OS & Editor
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+*.log
+*.tmp
+.idea/
+.vscode/
