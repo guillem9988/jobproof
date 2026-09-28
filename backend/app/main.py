@@ -1,4 +1,5 @@
 import json
+import os
 from contextlib import asynccontextmanager
 from typing import Any, Literal
 
@@ -22,7 +23,7 @@ from .core import (
     uid,
 )
 from .demo import load_demo
-from .ingestion import GitHub, parse_url
+from .ingestion import FORBIDDEN_PREFIXES, GitHub, import_local_dir, parse_url
 from .providers import PROMPT_VERSION, provider
 from .retrieval import retrieve, validate_assessment
 
@@ -110,7 +111,8 @@ def health():
 
 
 class ProjectInput(Schema):
-    url: str = Field(max_length=300)
+    url: str = Field(default="", max_length=300)
+    local_path: str = Field(default="", max_length=500)
     name: str = Field(default="", max_length=200)
     description: str = Field(default="", max_length=2000)
     contribution: str = Field(default="", max_length=4000)
@@ -118,6 +120,32 @@ class ProjectInput(Schema):
 
 @app.post("/api/v1/projects", response_model=Document)
 def project_create(body: ProjectInput):
+    if body.local_path:
+        abs_path = os.path.abspath(body.local_path)
+        if not os.path.isdir(abs_path):
+            raise ValueError(f"Local directory does not exist: {body.local_path}")
+        if any(abs_path == p or abs_path.startswith(p + "/") for p in FORBIDDEN_PREFIXES):
+            raise ValueError("System directories cannot be imported.")
+        repo_name = body.name or os.path.basename(abs_path) or "local-project"
+        return doc(
+            save(
+                "project",
+                {
+                    **body.model_dump(),
+                    "name": repo_name,
+                    "owner": "local",
+                    "repository": repo_name,
+                    "url": f"file://{abs_path}",
+                    "local_path": abs_path,
+                    "created_at": now(),
+                    "updated_at": now(),
+                    "demo": False,
+                    "local": True,
+                },
+            )
+        )
+    if not body.url:
+        raise ValueError("Either url or local_path must be supplied.")
     owner, repo = parse_url(body.url)
     return doc(
         save(
@@ -131,6 +159,7 @@ def project_create(body: ProjectInput):
                 "created_at": now(),
                 "updated_at": now(),
                 "demo": False,
+                "local": False,
             },
         )
     )
@@ -156,6 +185,14 @@ def import_project(id: str, body: ImportInput):
     p = get(id, "project")
     if p.get("demo"):
         raise ValueError("Fixture projects cannot be fetched from GitHub.")
+    if p.get("local"):
+        return doc(
+            tasks.submit(
+                "import",
+                "import:" + id + ":" + body.request_id,
+                lambda check: import_local_dir(p, p["local_path"], check)["id"],
+            )
+        )
     return doc(
         tasks.submit(
             "import",

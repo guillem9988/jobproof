@@ -49,6 +49,7 @@ export type Snapshot = {
   bytes: number;
   discarded: { path: string; reason: string }[];
   demo: boolean;
+  local?: boolean;
 };
 export type Project = {
   id: string;
@@ -56,6 +57,8 @@ export type Project = {
   url: string;
   contribution: string;
   demo: boolean;
+  local?: boolean;
+  local_path?: string;
 };
 export type Job = {
   id: string;

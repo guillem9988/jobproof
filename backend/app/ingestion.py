@@ -1,4 +1,5 @@
 import base64
+import os
 import re
 from pathlib import PurePosixPath
 from urllib.parse import quote
@@ -225,9 +226,129 @@ class GitHub:
             self.client.close()
 
 
+FORBIDDEN_PREFIXES = (
+    "/etc",
+    "/bin",
+    "/sbin",
+    "/usr",
+    "/System",
+    "/private/etc",
+    "/private/var/root",
+    "/private/var/db",
+)
+
+
+def is_excluded_dir(path: str) -> bool:
+    p = PurePosixPath(path)
+    return any(
+        x in {"node_modules", ".git", "venv", ".venv", "dist", "build", "__pycache__", "vendor", "coverage"}
+        for x in p.parts
+    )
+
+
+def import_local_dir(project, directory_path, checkpoint=lambda stage: None):
+    abs_dir = os.path.abspath(directory_path)
+    if not os.path.isdir(abs_dir):
+        raise ValueError(f"Directory not found: {directory_path}")
+    if any(abs_dir == p or abs_dir.startswith(p + "/") for p in FORBIDDEN_PREFIXES):
+        raise ValueError("System directories cannot be imported.")
+
+    checkpoint("Scanning local directory")
+    snap = save(
+        "snapshot",
+        {
+            "project_id": project["id"],
+            "sha": "local-" + digest(abs_dir)[:34],
+            "requested_ref": "local",
+            "created_at": now(),
+            "status": "importing",
+            "file_count": 0,
+            "bytes": 0,
+            "discarded": [],
+            "partial": False,
+            "importer_version": "1.1",
+            "demo": False,
+            "local": True,
+        },
+    )
+    file_hashes = []
+    try:
+        entries = []
+        for root, dirs, files in os.walk(abs_dir):
+            rel_root = os.path.relpath(root, abs_dir).replace("\\", "/")
+            dirs[:] = [
+                d
+                for d in dirs
+                if not is_excluded_dir(d if rel_root == "." else f"{rel_root}/{d}")
+            ]
+            if rel_root != "." and is_excluded_dir(rel_root):
+                continue
+            for f in files:
+                rel_f = f if rel_root == "." else f"{rel_root}/{f}"
+                entries.append((rel_f, os.path.join(root, f)))
+
+        entries.sort(
+            key=lambda item: (
+                0 if "readme" in item[0].lower() else 1 if "test" in item[0].lower() else 2,
+                item[0],
+            )
+        )
+
+        for rel_path, full_path in entries:
+            checkpoint("Importing files")
+            try:
+                size = os.path.getsize(full_path)
+            except OSError:
+                continue
+            reason = exclusion(rel_path, size)
+            if not reason and (
+                snap["file_count"] >= settings.max_files
+                or snap["bytes"] + size > settings.max_project_bytes
+            ):
+                reason = "project import limit"
+            if reason:
+                snap["discarded"].append({"path": rel_path, "reason": reason})
+                snap["partial"] = True
+                continue
+            try:
+                with open(full_path, "rb") as fh:
+                    raw = fh.read(settings.max_file_bytes + 1)
+                if (
+                    len(raw) > settings.max_file_bytes
+                    or snap["bytes"] + len(raw) > settings.max_project_bytes
+                ):
+                    reason = "byte limit"
+                else:
+                    content = raw.decode("utf-8")
+                    if "\x00" in content:
+                        raise UnicodeError()
+            except (UnicodeError, OSError):
+                reason = "binary or non UTF-8"
+
+            if reason:
+                snap["discarded"].append({"path": rel_path, "reason": reason})
+                snap["partial"] = True
+                continue
+
+            index_file(snap["id"], rel_path, content)
+            file_hashes.append(digest(content))
+            snap["bytes"] += len(raw)
+            snap["file_count"] += 1
+
+        content_hash = digest("".join(sorted(file_hashes)))[:40] if file_hashes else "0" * 40
+        snap["sha"] = content_hash
+        snap["status"] = "complete"
+        return save("snapshot", snap, snap["id"])
+    except Exception:
+        snap["status"] = "incomplete"
+        save("snapshot", snap, snap["id"])
+        raise
+
+
 def stable_url(chunk, start, end):
     snap = get(chunk["snapshot_id"], "snapshot")
-    if snap.get("demo"):
+    if snap.get("demo") or snap.get("local"):
         return None
     project = get(snap["project_id"], "project")
     return f"{project['url']}/blob/{snap['sha']}/{quote(chunk['path'], safe='/')}#L{start}-L{end}"
+

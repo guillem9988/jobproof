@@ -385,3 +385,42 @@ def test_cancel_queued_work_never_calls_provider(monkeypatch):
         blocker.result()
     assert get(t["id"])["status"] == "cancelled"
     assert called == []
+
+
+def test_local_dir_ingestion(tmp_path):
+    # Create a dummy project structure
+    project_dir = tmp_path / "sample_local_project"
+    project_dir.mkdir()
+    (project_dir / "README.md").write_text("# Sample Project\nA local repository for testing.", encoding="utf-8")
+    src_dir = project_dir / "src"
+    src_dir.mkdir()
+    (src_dir / "main.py").write_text("def hello():\n    return 'world'\n", encoding="utf-8")
+    # Ignored directory
+    git_dir = project_dir / ".git"
+    git_dir.mkdir()
+    (git_dir / "config").write_text("[core]\nrepositoryformatversion = 0\n", encoding="utf-8")
+
+    with TestClient(app) as c:
+        # Rejection of forbidden system paths
+        bad = c.post("/api/v1/projects", json={"local_path": "/etc"})
+        assert bad.status_code == 400
+        # Valid local path
+        res = c.post(
+            "/api/v1/projects",
+            json={"local_path": str(project_dir), "name": "Local Sample", "description": "Local test repo"},
+        )
+        assert res.status_code == 200
+        proj = res.json()
+        assert proj["data"]["local"] is True
+        assert proj["data"]["name"] == "Local Sample"
+
+        imp = c.post(f"/api/v1/projects/{proj['id']}/imports", json={"request_id": "test-local-import"})
+        assert imp.status_code == 200
+        task_data = wait_task(c, imp.json()["id"])
+        assert task_data["status"] == "complete"
+
+        snap = get(task_data["result"], "snapshot")
+        assert snap["status"] == "complete"
+        assert snap["local"] is True
+        assert snap["file_count"] == 2  # README.md and src/main.py; .git is excluded
+

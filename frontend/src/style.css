@@ -813,3 +813,130 @@ details .form {
     font-size: 0.625rem;
   }
 }
+
+/* Feature extensions: Tabs, Local Ingestion, Bullets, Interview */
+.tab-group {
+  display: flex;
+  gap: 8px;
+  margin: 20px 0 24px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 4px;
+  flex-wrap: wrap;
+}
+.tab-button {
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  padding: 8px 16px;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.tab-button:hover {
+  background: transparent;
+  color: #1e293b;
+}
+.tab-button.active {
+  background: transparent;
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+.source-toggle {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.source-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 550;
+  flex: 1;
+}
+.source-option.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.bullet-card {
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  border-left: 4px solid #3b82f6;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.bullet-card.partial {
+  border-left-color: #f59e0b;
+}
+.bullet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.bullet-text {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #1e293b;
+  margin: 0;
+}
+.bullet-meta {
+  margin-top: 8px;
+  font-size: 0.825rem;
+  color: #64748b;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.interview-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+}
+.timer-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 18px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.timer-display {
+  font-family: ui-monospace, monospace;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0.05em;
+}
+.timer-controls {
+  display: flex;
+  gap: 8px;
+}
+.interview-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+

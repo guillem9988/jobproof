@@ -19,6 +19,10 @@ import {
   Search,
   Download,
   Copy,
+  Folder,
+  Play,
+  Pause,
+  RotateCcw,
 } from "lucide-react";
 import { translations, type Lang } from "./i18n";
 import { one, many, request, labels, counts } from "./api";
@@ -58,10 +62,30 @@ function App() {
     [projectFilter, setProjectFilter] = useState("all"),
     [searchQuery, setSearchQuery] = useState(""),
     [copied, setCopied] = useState(false),
+    [copiedBullets, setCopiedBullets] = useState(false),
+    [projectSource, setProjectSource] = useState<"github" | "local">("github"),
+    [reportTab, setReportTab] = useState<"evidence" | "resume" | "interview">("evidence"),
+    [interviewIndex, setInterviewIndex] = useState(0),
+    [interviewTimer, setInterviewTimer] = useState(0),
+    [timerActive, setTimerActive] = useState(false),
+    [interviewNotes, setInterviewNotes] = useState<Record<number, string>>({}),
+    [revealedQuestions, setRevealedQuestions] = useState<Record<number, boolean>>({}),
     [lang, setLang] = useState<Lang>(
       (localStorage.getItem("jobproof-lang") as Lang) || "en",
     );
   const t = translations[lang];
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (timerActive) {
+      interval = setInterval(() => {
+        setInterviewTimer((prev) => prev + 1);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [timerActive]);
   const taskHandled = useRef("");
   const health = useQuery({
     queryKey: ["health"],
@@ -372,44 +396,86 @@ function App() {
                   e.preventDefault();
                   const f = new FormData(e.currentTarget);
                   void act(async () => {
-                    const p = await one<Project>("/projects", {
-                      url: f.get("url"),
-                      name: f.get("name"),
-                      contribution: f.get("contribution"),
-                    });
+                    const payload =
+                      projectSource === "local"
+                        ? {
+                            local_path: f.get("local_path"),
+                            name: f.get("name"),
+                            contribution: f.get("contribution"),
+                          }
+                        : {
+                            url: f.get("url"),
+                            name: f.get("name"),
+                            contribution: f.get("contribution"),
+                          };
+                    const p = await one<Project>("/projects", payload);
                     track(
                       await one<Task>(`/projects/${p.id}/imports`, {
-                        ref: f.get("ref"),
+                        ref: f.get("ref") || "",
                         request_id: crypto.randomUUID(),
                       }),
                     );
                   });
                 }}
               >
-                <label>
-                  Public GitHub repository
-                  <input
-                    name="url"
-                    placeholder="https://github.com/owner/repository"
-                    required
-                  />
-                </label>
+                <div className="source-toggle">
+                  <button
+                    type="button"
+                    className={`source-option ${projectSource === "github" ? "active" : ""}`}
+                    onClick={() => setProjectSource("github")}
+                  >
+                    <FolderGit2 size={18} />
+                    {t.sourceTypeGithub}
+                  </button>
+                  <button
+                    type="button"
+                    className={`source-option ${projectSource === "local" ? "active" : ""}`}
+                    onClick={() => setProjectSource("local")}
+                  >
+                    <Folder size={18} />
+                    {t.sourceTypeLocal}
+                  </button>
+                </div>
+                {projectSource === "github" ? (
+                  <label>
+                    {t.sourceTypeGithub}
+                    <input
+                      name="url"
+                      placeholder="https://github.com/owner/repository"
+                      required
+                    />
+                  </label>
+                ) : (
+                  <label>
+                    {t.localPathLabel}
+                    <input
+                      name="local_path"
+                      placeholder={t.localPathPlaceholder}
+                      required
+                    />
+                  </label>
+                )}
                 <div className="two">
                   <label>
                     Project name (optional)
                     <input name="name" />
                   </label>
-                  <label>
-                    Branch or commit (optional)
-                    <input name="ref" />
-                  </label>
+                  {projectSource === "github" && (
+                    <label>
+                      Branch or commit (optional)
+                      <input name="ref" />
+                    </label>
+                  )}
                 </div>
                 <label>
                   Your contribution (self-declared, unverified)
                   <textarea name="contribution" rows={2} />
                 </label>
                 <button className="primary" disabled={busy}>
-                  Import repository <Plus size={17} />
+                  {projectSource === "local"
+                    ? t.importLocalDir
+                    : "Import repository"}{" "}
+                  <Plus size={17} />
                 </button>
               </form>
               {projects.data?.map((p) => (
@@ -417,7 +483,11 @@ function App() {
                   <div className="section-title">
                     <h2>{p.name}</h2>
                     <span className="pill">
-                      {p.demo ? "Fixture" : "Public repository"}
+                      {p.demo
+                        ? "Fixture"
+                        : p.local
+                          ? t.badgeLocalFolder
+                          : t.badgePublicRepo}
                     </span>
                   </div>
                   <p>
@@ -860,12 +930,44 @@ function App() {
                   ))}
                 </div>
               </div>
+              <div className="tab-group" role="tablist">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={reportTab === "evidence"}
+                  className={`tab-button ${reportTab === "evidence" ? "active" : ""}`}
+                  onClick={() => setReportTab("evidence")}
+                >
+                  <FileText size={16} />
+                  {t.tabEvidence}
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={reportTab === "resume"}
+                  className={`tab-button ${reportTab === "resume" ? "active" : ""}`}
+                  onClick={() => setReportTab("resume")}
+                >
+                  <Check size={16} />
+                  {t.tabResumeBullets}
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={reportTab === "interview"}
+                  className={`tab-button ${reportTab === "interview" ? "active" : ""}`}
+                  onClick={() => setReportTab("interview")}
+                >
+                  <Play size={16} />
+                  {t.tabInterviewMode}
+                </button>
+              </div>
               {report.data.status !== "complete" ? (
                 <div role="alert" className="notice">
                   Analysis {report.data.status}. Partial results are not a
                   complete report.
                 </div>
-              ) : (
+              ) : reportTab === "evidence" ? (
                 <>
                   <div className="counts">
                     {counts(assessments.data || []).map((c) => (
@@ -1051,6 +1153,269 @@ function App() {
                       <p key={s.id}>Commit {s.sha}</p>
                     ))}
                   </details>
+                </>
+              ) : reportTab === "resume" ? (
+                <>
+                  <div className="section-title">
+                    <div>
+                      <h2>{t.resumeBulletsTitle}</h2>
+                      <p className="intro">{t.resumeBulletsDesc}</p>
+                    </div>
+                    {(() => {
+                      const bullets = (assessments.data || []).filter(
+                        (a) =>
+                          ["supported", "partial"].includes(a.status) &&
+                          a.evidence.length > 0,
+                      );
+                      const allText = bullets
+                        .map((a) => {
+                          const firstEv = a.evidence[0];
+                          return `• ${a.requirement.text}: Implemented in ${firstEv ? `${firstEv.path} (L${firstEv.start}-L${firstEv.end}) — ${firstEv.relation}` : "codebase"}.${a.limitations?.length ? ` Note: ${a.limitations[0]}` : ""}`;
+                        })
+                        .join("\n");
+                      return (
+                        bullets.length > 0 && (
+                          <button
+                            className="primary"
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(allText);
+                                setCopiedBullets(true);
+                                setTimeout(() => setCopiedBullets(false), 2000);
+                              } catch {
+                                // ignore
+                              }
+                            }}
+                          >
+                            {copiedBullets ? <Check size={16} /> : <Copy size={16} />}
+                            {copiedBullets ? t.copiedAllBullets : t.copyAllBullets}
+                          </button>
+                        )
+                      );
+                    })()}
+                  </div>
+                  {(() => {
+                    const bullets = (assessments.data || []).filter(
+                      (a) =>
+                        ["supported", "partial"].includes(a.status) &&
+                        a.evidence.length > 0,
+                    );
+                    if (!bullets.length) {
+                      return <div className="card">{t.noEvidenceBullets}</div>;
+                    }
+                    return bullets.map((a) => {
+                      const firstEv = a.evidence[0];
+                      const bulletText = `• ${a.requirement.text}: Implemented in ${firstEv ? `${firstEv.path} (L${firstEv.start}-L${firstEv.end}) — ${firstEv.relation}` : "codebase"}.${a.limitations?.length ? ` Note: ${a.limitations[0]}` : ""}`;
+                      return (
+                        <div key={a.id} className={`bullet-card ${a.status}`}>
+                          <div className="bullet-header">
+                            <p className="bullet-text">{bulletText}</p>
+                            <button
+                              className="button"
+                              title="Copy bullet"
+                              onClick={async () => {
+                                try {
+                                  await navigator.clipboard.writeText(bulletText);
+                                } catch {
+                                  // ignore
+                                }
+                              }}
+                            >
+                              <Copy size={15} />
+                            </button>
+                          </div>
+                          <div className="bullet-meta">
+                            <span className={`pill ${a.status}`}>
+                              {labels[a.status]}
+                            </span>
+                            {firstEv && (
+                              <button
+                                className="quiet"
+                                style={{
+                                  padding: 0,
+                                  border: "none",
+                                  background: "none",
+                                  textDecoration: "underline",
+                                }}
+                                onClick={() => setEvidence(firstEv)}
+                              >
+                                {firstEv.path} (L{firstEv.start}-L{firstEv.end})
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </>
+              ) : (
+                <>
+                  <div className="section-title">
+                    <div>
+                      <h2>{t.interviewSimTitle}</h2>
+                      <p className="intro">{t.interviewSimDesc}</p>
+                    </div>
+                  </div>
+                  {(() => {
+                    const questions =
+                      report.data.preparation?.questions || [];
+                    if (!questions.length) {
+                      return (
+                        <div className="card">
+                          No interview questions were generated for this report.
+                        </div>
+                      );
+                    }
+                    const qIndex = Math.min(
+                      interviewIndex,
+                      questions.length - 1,
+                    );
+                    const qText = questions[qIndex];
+                    const isRevealed = !!revealedQuestions[qIndex];
+                    const mins = String(
+                      Math.floor(interviewTimer / 60),
+                    ).padStart(2, "0");
+                    const secs = String(interviewTimer % 60).padStart(2, "0");
+
+                    return (
+                      <div className="interview-card">
+                        <div className="eyebrow">
+                          {t.questionOf} {qIndex + 1} / {questions.length}
+                        </div>
+                        <h2 style={{ fontSize: "1.35rem", marginTop: 8 }}>
+                          {qText}
+                        </h2>
+
+                        <div className="timer-box">
+                          <div className="timer-display">
+                            ⏱️ {mins}:{secs}
+                          </div>
+                          <div className="timer-controls">
+                            <button
+                              type="button"
+                              className={timerActive ? "" : "primary"}
+                              onClick={() => setTimerActive(!timerActive)}
+                            >
+                              {timerActive ? (
+                                <Pause size={16} />
+                              ) : (
+                                <Play size={16} />
+                              )}
+                              {timerActive ? t.timerPause : t.timerStart}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTimerActive(false);
+                                setInterviewTimer(0);
+                              }}
+                            >
+                              <RotateCcw size={16} />
+                              {t.timerReset}
+                            </button>
+                          </div>
+                        </div>
+
+                        <label style={{ marginTop: 16 }}>
+                          {t.draftYourAnswer}
+                          <textarea
+                            rows={4}
+                            placeholder={t.draftPlaceholder}
+                            value={interviewNotes[qIndex] || ""}
+                            onChange={(e) =>
+                              setInterviewNotes((prev) => ({
+                                ...prev,
+                                [qIndex]: e.target.value,
+                              }))
+                            }
+                          />
+                        </label>
+
+                        <div style={{ marginTop: 20 }}>
+                          <button
+                            type="button"
+                            className="button"
+                            onClick={() =>
+                              setRevealedQuestions((prev) => ({
+                                ...prev,
+                                [qIndex]: !prev[qIndex],
+                              }))
+                            }
+                          >
+                            <ShieldCheck size={16} />
+                            {isRevealed ? t.hideAnswer : t.revealAnswer}
+                          </button>
+                        </div>
+
+                        {isRevealed && (
+                          <div
+                            style={{
+                              marginTop: 20,
+                              padding: 16,
+                              background: "#f8fafc",
+                              borderRadius: 8,
+                              border: "1px solid #e2e8f0",
+                            }}
+                          >
+                            <h3>{t.technicalPoints}</h3>
+                            <ul>
+                              {report.data?.preparation?.technical_points.map(
+                                (pt) => (
+                                  <li key={pt}>{pt}</li>
+                                ),
+                              )}
+                            </ul>
+
+                            <h3>Decisions & Trade-offs</h3>
+                            <ul>
+                              {report.data?.preparation?.decisions.map((d) => (
+                                <li key={d}>{d}</li>
+                              ))}
+                            </ul>
+
+                            <h3>{t.honestLimitations}</h3>
+                            <ul>
+                              {report.data?.preparation?.honest_limitations.map(
+                                (lim) => (
+                                  <li key={lim}>{lim}</li>
+                                ),
+                              )}
+                            </ul>
+                          </div>
+                        )}
+
+                        <div className="interview-nav">
+                          <button
+                            type="button"
+                            disabled={qIndex === 0}
+                            onClick={() => {
+                              setInterviewIndex((i) => Math.max(0, i - 1));
+                              setInterviewTimer(0);
+                              setTimerActive(false);
+                            }}
+                          >
+                            ← {t.prevQuestion}
+                          </button>
+                          <span>
+                            {qIndex + 1} / {questions.length}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={qIndex >= questions.length - 1}
+                            onClick={() => {
+                              setInterviewIndex((i) =>
+                                Math.min(questions.length - 1, i + 1),
+                              );
+                              setInterviewTimer(0);
+                              setTimerActive(false);
+                            }}
+                          >
+                            {t.nextQuestion} →
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </>
               )}
             </>
