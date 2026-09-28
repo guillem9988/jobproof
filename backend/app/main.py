@@ -5,7 +5,8 @@ from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.staticfiles import StaticFiles
 from pydantic import Field
 
 from . import tasks
@@ -16,6 +17,7 @@ from .core import (
     Status,
     all_records,
     get,
+    get_allowed_origins,
     normalize,
     now,
     save,
@@ -37,9 +39,10 @@ async def lifespan(app):
 
 
 app = FastAPI(title="JobProof local API", version=PIPELINE, lifespan=lifespan)
+configured_origins = get_allowed_origins()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
+    allow_origins=["*"] if "*" in configured_origins else configured_origins,
     allow_methods=["GET", "POST", "PUT"],
     allow_headers=["Content-Type"],
 )
@@ -49,11 +52,8 @@ app.add_middleware(
 async def protect(request: Request, call_next):
     if request.method in {"POST", "PUT", "DELETE"}:
         origin = request.headers.get("origin")
-        if origin and origin not in {
-            "http://127.0.0.1:5173",
-            "http://localhost:5173",
-            "http://127.0.0.1:8000",
-        }:
+        allowed = set(get_allowed_origins())
+        if origin and "*" not in allowed and origin not in allowed:
             return JSONResponse({"error": {"code": "origin", "message": "Untrusted origin"}}, 403)
         body = await request.body()
         if len(body) > 300_000:
@@ -621,3 +621,26 @@ def export(id: str, format: Literal["markdown", "json"] = "markdown"):
             "Content-Disposition": f'attachment; filename="jobproof-{id}.{"md" if format == "markdown" else "json"}"'
         },
     )
+
+
+# Serve static frontend SPA in production if built
+_static_dir = settings.static_dir or os.environ.get("STATIC_DIR", "")
+if not _static_dir:
+    _candidate = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
+    if os.path.isdir(_candidate):
+        _static_dir = _candidate
+
+if _static_dir and os.path.isdir(_static_dir):
+    _assets = os.path.join(_static_dir, "assets")
+    if os.path.isdir(_assets):
+        app.mount("/assets", StaticFiles(directory=_assets), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_spa(full_path: str):
+        target = os.path.join(_static_dir, full_path)
+        if full_path and os.path.isfile(target):
+            return FileResponse(target)
+        index_html = os.path.join(_static_dir, "index.html")
+        if os.path.isfile(index_html):
+            return FileResponse(index_html)
+        raise HTTPException(status_code=404, detail="Page not found")

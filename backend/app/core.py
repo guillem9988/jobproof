@@ -28,9 +28,16 @@ class Settings(BaseSettings):
     external_timeout: int = 45
     max_retries: int = 1
     task_workers: int = 2
+    allowed_origins: str = "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:8000,http://localhost:8000"
+    static_dir: str = ""
 
 
 settings = Settings()
+
+
+def get_allowed_origins() -> list[str]:
+    raw = settings.allowed_origins
+    return [o.strip() for o in raw.split(",") if o.strip()]
 engine = create_engine(settings.database_url, connect_args={"check_same_thread": False})
 Session = sessionmaker(engine, expire_on_commit=False)
 

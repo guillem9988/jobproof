@@ -1,0 +1,14 @@
+.git
+.gitignore
+.env
+.venv
+.ruff_cache
+__pycache__
+*.pyc
+node_modules
+dist
+test-results
+playwright-report
+evaluation
+docs
+*.db
