@@ -59,6 +59,7 @@ export type Project = {
   demo: boolean;
   local?: boolean;
   local_path?: string;
+  excludes?: string;
 };
 export type Job = {
   id: string;
@@ -146,5 +147,11 @@ export type InterviewChatReply = {
   evaluation_feedback: string;
   interviewer_reply: string;
   is_wrap_up: boolean;
+};
+
+export type JobUrlFetchResponse = {
+  title: string;
+  company: string;
+  text: string;
 };
 

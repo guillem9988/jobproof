@@ -1,5 +1,7 @@
+import html as html_lib
 import json
 import os
+import re
 import time
 from contextlib import asynccontextmanager
 from typing import Any, Literal
@@ -403,6 +405,8 @@ class ProjectInput(Schema):
     name: str = Field(default="", max_length=200)
     description: str = Field(default="", max_length=2000)
     contribution: str = Field(default="", max_length=4000)
+    excludes: str = Field(default="", max_length=500)
+
 
 
 @app.post("/api/v1/projects", response_model=Document)
@@ -540,6 +544,70 @@ def jobs():
 @app.get("/api/v1/job-postings/{id}", response_model=Document)
 def job_get(id: str):
     return doc(get(id, "job"))
+
+
+class JobUrlFetchRequest(Schema):
+    url: str = Field(min_length=5, max_length=1000)
+
+
+class JobUrlFetchResponse(Schema):
+    title: str = ""
+    company: str = ""
+    text: str
+
+
+@app.post("/api/v1/job-postings/fetch-url", response_model=JobUrlFetchResponse)
+def fetch_job_url(body: JobUrlFetchRequest):
+    if not body.url.startswith(("http://", "https://")):
+        raise ValueError("URL must start with http:// or https://")
+    try:
+        resp = httpx.get(
+            body.url,
+            follow_redirects=True,
+            timeout=15,
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                )
+            },
+        )
+    except (httpx.RequestError, httpx.HTTPError) as e:
+        raise HTTPException(status_code=400, detail=f"Failed to reach URL: {e!s}")
+
+    if resp.status_code != 200:
+        raise HTTPException(status_code=400, detail=f"Website returned HTTP {resp.status_code}")
+
+    html = resp.text
+    clean = re.sub(
+        r"<(script|style|nav|footer|header|noscript)[^>]*>.*?</\1>",
+        " ",
+        html,
+        flags=re.DOTALL | re.IGNORECASE,
+    )
+    title_match = re.search(r"<title[^>]*>(.*?)</title>", html, re.IGNORECASE | re.DOTALL)
+    title = ""
+    if title_match:
+        raw_title = re.sub(r"\s+", " ", title_match.group(1)).strip()
+        title = raw_title.split("|")[0].split(" - ")[0].strip()
+
+    clean = re.sub(r"<(p|br|div|li|h[1-6])[^>]*>", "\n", clean, flags=re.IGNORECASE)
+    clean = re.sub(r"<[^>]+>", " ", clean)
+    clean = html_lib.unescape(clean)
+    lines = [line.strip() for line in clean.splitlines()]
+    clean_text = "\n".join(line for line in lines if line)
+
+    if len(clean_text) < 30:
+        raise HTTPException(
+            status_code=400, detail="Could not extract readable text from the provided URL."
+        )
+
+    return JobUrlFetchResponse(
+        title=title[:200],
+        company="",
+        text=clean_text[:40000],
+    )
+
 
 
 class ExtractInput(Schema):

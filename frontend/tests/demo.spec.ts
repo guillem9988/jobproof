@@ -133,3 +133,26 @@ test("cover letter generation and interactive mock interview chat", async ({
   await expect(page.locator(".chat-message")).toHaveCount(0);
 });
 
+test("job posting file upload and projects custom excludes", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Projects" }).click();
+  await expect(page.getByLabel("Custom exclusions (comma-separated)")).toBeVisible();
+
+  // Go to job posting page
+  await page.goto("/");
+  await page.getByRole("button", { name: "New analysis", exact: true }).click();
+  await expect(page.getByText("Import posting from URL")).toBeVisible();
+
+  // Test file upload
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "Senior-Backend-Role.md",
+    mimeType: "text/markdown",
+    buffer: Buffer.from("# Senior Backend Role\nRequires 5 years of Python and PostgreSQL experience with distributed systems."),
+  });
+
+  await expect(page.locator('input[name="title"]')).toHaveValue("Senior Backend Role");
+  await expect(page.locator('textarea[name="text"]')).toContainText("Requires 5 years of Python");
+  await expect(page.getByText("Job posting file loaded successfully!")).toBeVisible();
+});
+
+

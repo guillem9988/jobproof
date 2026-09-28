@@ -242,6 +242,16 @@ export interface Translations {
   resetInterview: string;
   interviewCompletedBadge: string;
   interviewThinking: string;
+  githubUrlPlaceholder: string;
+  customExcludesLabel: string;
+  customExcludesPlaceholder: string;
+  privateRepoTokenNotice: string;
+  fetchJobFromUrl: string;
+  fetchJobButton: string;
+  fetchingJobUrl: string;
+  fetchJobUrlPlaceholder: string;
+  uploadJobFile: string;
+  fileLoadedSuccess: string;
 }
 
 export const translations: Record<Lang, Translations> = {
@@ -487,6 +497,16 @@ export const translations: Record<Lang, Translations> = {
     resetInterview: "Reiniciar entrevista",
     interviewCompletedBadge: "Simulacre completat",
     interviewThinking: "L'entrevistador està avaluant...",
+    githubUrlPlaceholder: "https://github.com/usuari/repo o usuari/repo",
+    customExcludesLabel: "Exclusions personalitzades (separades per coma)",
+    customExcludesPlaceholder: "docs, fixtures, temp, assets",
+    privateRepoTokenNotice: "Token de GitHub configurat: pots importar repositoris privats!",
+    fetchJobFromUrl: "Importar oferta des d'una URL",
+    fetchJobButton: "Extreure text",
+    fetchingJobUrl: "Extreient text de l'oferta...",
+    fetchJobUrlPlaceholder: "https://exemple.cat/ofertes/desenvolupador",
+    uploadJobFile: "Carregar fitxer d'oferta (.txt, .md)",
+    fileLoadedSuccess: "Fitxer d'oferta carregat correctament!",
   },
   en: {
     brand: "JobProof",
@@ -730,6 +750,16 @@ export const translations: Record<Lang, Translations> = {
     resetInterview: "Reset Interview",
     interviewCompletedBadge: "Interview Complete",
     interviewThinking: "Interviewer is evaluating...",
+    githubUrlPlaceholder: "https://github.com/owner/repo or owner/repo",
+    customExcludesLabel: "Custom exclusions (comma-separated)",
+    customExcludesPlaceholder: "docs, fixtures, temp, assets",
+    privateRepoTokenNotice: "GitHub Token configured: you can import private repositories!",
+    fetchJobFromUrl: "Import posting from URL",
+    fetchJobButton: "Extract text",
+    fetchingJobUrl: "Extracting job text...",
+    fetchJobUrlPlaceholder: "https://example.com/careers/developer",
+    uploadJobFile: "Upload job posting file (.txt, .md)",
+    fileLoadedSuccess: "Job posting file loaded successfully!",
   },
   es: {
     brand: "JobProof",
@@ -973,6 +1003,16 @@ export const translations: Record<Lang, Translations> = {
     resetInterview: "Reiniciar entrevista",
     interviewCompletedBadge: "Simulacro completado",
     interviewThinking: "El entrevistador está evaluando...",
+    githubUrlPlaceholder: "https://github.com/usuario/repo o usuario/repo",
+    customExcludesLabel: "Exclusiones personalizadas (separadas por coma)",
+    customExcludesPlaceholder: "docs, fixtures, temp, assets",
+    privateRepoTokenNotice: "Token de GitHub configurado: ¡puedes importar repositorios privados!",
+    fetchJobFromUrl: "Importar oferta desde una URL",
+    fetchJobButton: "Extraer texto",
+    fetchingJobUrl: "Extrayendo texto de la oferta...",
+    fetchJobUrlPlaceholder: "https://ejemplo.com/empleo/desarrollador",
+    uploadJobFile: "Cargar archivo de oferta (.txt, .md)",
+    fileLoadedSuccess: "¡Archivo de oferta cargado correctamente!",
   },
 };
 

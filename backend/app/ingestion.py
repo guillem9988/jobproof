@@ -9,16 +9,25 @@ import httpx
 from .core import digest, get, normalize, now, redact, save, settings
 
 URL = re.compile(r"https://github\.com/([A-Za-z0-9][A-Za-z0-9-]{0,38})/([A-Za-z0-9_.-]{1,100})/?$")
+SHORT_REPO = re.compile(r"^([A-Za-z0-9][A-Za-z0-9-]{0,38})/([A-Za-z0-9_.-]{1,100})$")
 
 
-def parse_url(url):
-    match = URL.fullmatch(url)
-    if not match or match[2] in {".", ".."}:
-        raise ValueError("Use https://github.com/owner/repository without query or credentials.")
-    return match[1], match[2].removesuffix(".git")
+def parse_url(url: str):
+    raw = url.strip()
+    match = URL.fullmatch(raw)
+    if match:
+        owner, repo = match[1], match[2].removesuffix(".git")
+        if repo not in {".", ".."}:
+            return owner, repo
+    short_match = SHORT_REPO.fullmatch(raw)
+    if short_match:
+        owner, repo = short_match[1], short_match[2].removesuffix(".git")
+        if repo not in {".", ".."}:
+            return owner, repo
+    raise ValueError("Use https://github.com/owner/repository without query or credentials.")
 
 
-def exclusion(path, size=0, mode="100644"):
+def exclusion(path, size=0, mode="100644", custom_excludes=None):
     p = PurePosixPath(path)
     lower = path.lower()
     if mode not in {"100644", "100755"}:
@@ -28,6 +37,11 @@ def exclusion(path, size=0, mode="100644"):
         for x in p.parts
     ):
         return "generated or dependency directory"
+    if custom_excludes:
+        for pat in custom_excludes:
+            clean_pat = pat.strip().lower()
+            if clean_pat and (clean_pat in lower or any(clean_pat == part.lower() for part in p.parts)):
+                return "custom user exclusion"
     if any(
         x in lower
         for x in (
@@ -148,8 +162,10 @@ class GitHub:
     def import_repo(self, project, ref, checkpoint=lambda stage: None):
         base = f"/repos/{project['owner']}/{project['repository']}"
         meta = self.request(base)
-        if meta.get("private") or meta.get("visibility", "public") != "public":
-            raise ValueError("Only public repositories are supported.")
+        if not settings.github_token and (meta.get("private") or meta.get("visibility", "public") != "public"):
+            raise ValueError(
+                "Private repositories require a configured GitHub Personal Access Token in Settings."
+            )
         checkpoint("Resolving commit")
         commit = self.request(base + "/commits/" + quote(ref or meta["default_branch"], safe=""))
         sha = commit["sha"]
@@ -172,6 +188,9 @@ class GitHub:
                 "demo": False,
             },
         )
+        custom_excludes = [
+            x.strip() for x in project.get("excludes", "").split(",") if x.strip()
+        ]
         try:
             entries = sorted(
                 tree["tree"],
@@ -185,7 +204,7 @@ class GitHub:
                     continue
                 checkpoint("Importing files")
                 path = entry["path"]
-                reason = exclusion(path, entry.get("size", 0), entry.get("mode", ""))
+                reason = exclusion(path, entry.get("size", 0), entry.get("mode", ""), custom_excludes)
                 if not reason and (
                     snap["file_count"] >= settings.max_files
                     or snap["bytes"] + entry.get("size", 0) > settings.max_project_bytes
@@ -294,13 +313,17 @@ def import_local_dir(project, directory_path, checkpoint=lambda stage: None):
             )
         )
 
+        custom_excludes = [
+            x.strip() for x in project.get("excludes", "").split(",") if x.strip()
+        ]
+
         for rel_path, full_path in entries:
             checkpoint("Importing files")
             try:
                 size = os.path.getsize(full_path)
             except OSError:
                 continue
-            reason = exclusion(rel_path, size)
+            reason = exclusion(rel_path, size, "100644", custom_excludes)
             if not reason and (
                 snap["file_count"] >= settings.max_files
                 or snap["bytes"] + size > settings.max_project_bytes

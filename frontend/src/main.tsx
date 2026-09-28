@@ -35,6 +35,8 @@ import {
   Bot,
   User,
   Sparkles,
+  Globe,
+  Upload,
 } from "lucide-react";
 import { translations, type Lang, getStatusLabels, type Translations } from "./i18n";
 import { one, many, request, counts } from "./api";
@@ -53,6 +55,7 @@ import type {
   GeneratedCoverLetter,
   ChatMessage,
   InterviewChatReply,
+  JobUrlFetchResponse,
 } from "./types";
 import "./style.css";
 const qc = new QueryClient();
@@ -96,6 +99,14 @@ function App() {
     [timerActive, setTimerActive] = useState(false),
     [interviewNotes, setInterviewNotes] = useState<Record<number, string>>({}),
     [revealedQuestions, setRevealedQuestions] = useState<Record<number, boolean>>({}),
+    [jobTitle, setJobTitle] = useState(""),
+    [jobCompany, setJobCompany] = useState(""),
+    [jobUrl, setJobUrl] = useState(""),
+    [jobText, setJobText] = useState(""),
+    [jobLanguage, setJobLanguage] = useState<string>("en"),
+    [jobFetchUrlInput, setJobFetchUrlInput] = useState(""),
+    [fetchingJobUrl, setFetchingJobUrl] = useState(false),
+    [fileNotice, setFileNotice] = useState(""),
     [lang, setLang] = useState<Lang>(
       (localStorage.getItem("jobproof-lang") as Lang) || "en",
     ),
@@ -269,6 +280,45 @@ function App() {
       setGithubTokenInput("");
       setTestStatus({ testing: false, result: null });
     });
+  }
+
+  async function handleFetchJobUrl() {
+    if (!jobFetchUrlInput.trim()) return;
+    setFetchingJobUrl(true);
+    try {
+      const res = await request<JobUrlFetchResponse>("/job-postings/fetch-url", {
+        url: jobFetchUrlInput.trim(),
+      });
+      if (res.title) setJobTitle(res.title);
+      if (res.company) setJobCompany(res.company);
+      setJobUrl(jobFetchUrlInput.trim());
+      setJobText(res.text);
+      setFileNotice(t.fileLoadedSuccess);
+      setTimeout(() => setFileNotice(""), 3500);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setFetchingJobUrl(false);
+    }
+  }
+
+  function handleJobFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (content) {
+        setJobText(content);
+        if (!jobTitle) {
+          const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+          setJobTitle(cleanName);
+        }
+        setFileNotice(t.fileLoadedSuccess);
+        setTimeout(() => setFileNotice(""), 3500);
+      }
+    };
+    reader.readAsText(file);
   }
 
   useEffect(() => {
@@ -619,6 +669,12 @@ function App() {
                     onClick={() => {
                       setJob(null);
                       setSelected([]);
+                      setJobTitle("");
+                      setJobCompany("");
+                      setJobUrl("");
+                      setJobText("");
+                      setJobFetchUrlInput("");
+                      setFileNotice("");
                       setPage("job");
                     }}
                   >
@@ -711,11 +767,13 @@ function App() {
                             local_path: f.get("local_path"),
                             name: f.get("name"),
                             contribution: f.get("contribution"),
+                            excludes: f.get("excludes") || "",
                           }
                         : {
                             url: f.get("url"),
                             name: f.get("name"),
                             contribution: f.get("contribution"),
+                            excludes: f.get("excludes") || "",
                           };
                     const p = await one<Project>("/projects", payload);
                     track(
@@ -746,14 +804,21 @@ function App() {
                   </button>
                 </div>
                 {projectSource === "github" ? (
-                  <label>
-                    {t.sourceTypeGithub}
-                    <input
-                      name="url"
-                      placeholder="https://github.com/owner/repository"
-                      required
-                    />
-                  </label>
+                  <>
+                    <label>
+                      {t.sourceTypeGithub}
+                      <input
+                        name="url"
+                        placeholder={t.githubUrlPlaceholder}
+                        required
+                      />
+                    </label>
+                    {appSettings.data?.github_token_configured && (
+                      <div style={{ margin: "-6px 0 10px", fontSize: "0.85rem", color: "var(--color-success, #10b981)" }}>
+                        ✓ {t.privateRepoTokenNotice}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <label>
                     {t.localPathLabel}
@@ -776,6 +841,13 @@ function App() {
                     </label>
                   )}
                 </div>
+                <label>
+                  {t.customExcludesLabel}
+                  <input
+                    name="excludes"
+                    placeholder={t.customExcludesPlaceholder}
+                  />
+                </label>
                 <label>
                   {t.yourContribution}
                   <textarea name="contribution" rows={2} />
@@ -857,18 +929,58 @@ function App() {
               </p>
               {!job ? (
                 <>
+                  <div className="card" style={{ marginBottom: 16 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <Globe size={18} />
+                      <h2 style={{ fontSize: "1.1rem", margin: 0 }}>{t.fetchJobFromUrl}</h2>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <input
+                        type="url"
+                        placeholder={t.fetchJobUrlPlaceholder}
+                        value={jobFetchUrlInput}
+                        onChange={(e) => setJobFetchUrlInput(e.target.value)}
+                        style={{ flex: 1, minWidth: 240 }}
+                      />
+                      <button
+                        type="button"
+                        disabled={fetchingJobUrl || !jobFetchUrlInput.trim()}
+                        onClick={handleFetchJobUrl}
+                      >
+                        {fetchingJobUrl ? t.fetchingJobUrl : t.fetchJobButton}
+                      </button>
+                    </div>
+
+                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--color-border, #e2e8f0)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+                      <label style={{ fontSize: "0.88rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, margin: 0, fontWeight: 500 }}>
+                        <Upload size={16} />
+                        <span>{t.uploadJobFile}</span>
+                        <input
+                          type="file"
+                          accept=".txt,.md,.text"
+                          style={{ display: "none" }}
+                          onChange={handleJobFileUpload}
+                        />
+                      </label>
+                      {fileNotice && (
+                        <span className="pill supported" style={{ fontSize: "0.8rem" }}>
+                          ✓ {fileNotice}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
                   <form
                     className="card form"
                     onSubmit={(e) => {
                       e.preventDefault();
-                      const f = new FormData(e.currentTarget);
                       void act(async () => {
                         const j = await one<Job>("/job-postings", {
-                          title: f.get("title"),
-                          company: f.get("company"),
-                          url: f.get("url"),
-                          text: f.get("text"),
-                          language: f.get("language"),
+                          title: jobTitle,
+                          company: jobCompany,
+                          url: jobUrl,
+                          text: jobText,
+                          language: jobLanguage,
                         });
                         setJob(j);
                       });
@@ -877,20 +989,38 @@ function App() {
                     <div className="two">
                       <label>
                         {t.jobTitleLabel}
-                        <input name="title" required />
+                        <input
+                          name="title"
+                          required
+                          value={jobTitle}
+                          onChange={(e) => setJobTitle(e.target.value)}
+                        />
                       </label>
                       <label>
                         {t.companyLabel}
-                        <input name="company" />
+                        <input
+                          name="company"
+                          value={jobCompany}
+                          onChange={(e) => setJobCompany(e.target.value)}
+                        />
                       </label>
                     </div>
                     <label>
                       {t.referenceUrlLabel}
-                      <input name="url" type="url" />
+                      <input
+                        name="url"
+                        type="url"
+                        value={jobUrl}
+                        onChange={(e) => setJobUrl(e.target.value)}
+                      />
                     </label>
                     <label>
                       {t.languageLabel}
-                      <select name="language">
+                      <select
+                        name="language"
+                        value={jobLanguage}
+                        onChange={(e) => setJobLanguage(e.target.value)}
+                      >
                         <option value="en">English</option>
                         <option value="ca">Català</option>
                         <option value="es">Español</option>
@@ -898,9 +1028,19 @@ function App() {
                     </label>
                     <label>
                       {t.jobPostingLabel}
-                      <textarea name="text" required minLength={10} rows={10} />
+                      <textarea
+                        name="text"
+                        required
+                        minLength={10}
+                        rows={10}
+                        value={jobText}
+                        onChange={(e) => setJobText(e.target.value)}
+                      />
                     </label>
-                    <button className="primary" disabled={busy}>
+                    <button
+                      className="primary"
+                      disabled={busy || !jobTitle.trim() || jobText.trim().length < 10}
+                    >
                       {t.savePosting} <ArrowRight size={16} />
                     </button>
                   </form>

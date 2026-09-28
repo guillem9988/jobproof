@@ -56,6 +56,24 @@ def test_url_canonical():
     assert parse_url("https://github.com/openai/example.git") == ("openai", "example")
 
 
+def test_url_shorthand():
+    assert parse_url("openai/example") == ("openai", "example")
+    assert parse_url("openai/example.git") == ("openai", "example")
+    assert parse_url("  guillem9988/jobproof  ") == ("guillem9988", "jobproof")
+    with pytest.raises(ValueError):
+        parse_url("invalid-single-word")
+    with pytest.raises(ValueError):
+        parse_url("owner/repo/extra")
+    with pytest.raises(ValueError):
+        parse_url("/owner/repo")
+
+
+def test_custom_excludes():
+    assert exclusion("docs/architecture.md", custom_excludes=["docs"]) == "custom user exclusion"
+    assert exclusion("tests/fixtures/sample.json", custom_excludes=["fixtures"]) == "custom user exclusion"
+    assert exclusion("src/main.py", custom_excludes=["docs", "fixtures"]) is None
+
+
 @pytest.mark.parametrize(
     "path,mode",
     [
@@ -540,6 +558,47 @@ def test_cover_letter_and_interview_chat():
         assert reset_res.status_code == 200
         cleared_history = c.get(f"/api/v1/analyses/{analysis_id}/interview/chat").json()
         assert len(cleared_history) == 0
+
+
+def test_job_posting_fetch_url(monkeypatch):
+    class FakeResponse:
+        status_code = 200
+        text = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Senior Backend Engineer - Acme Corp</title>
+            <style>body { color: red; }</style>
+            <script>console.log("secret");</script>
+        </head>
+        <body>
+            <header><nav><a href="/">Home</a></nav></header>
+            <main>
+                <h1>Job Description</h1>
+                <p>We are seeking a Senior Python & TypeScript engineer.</p>
+                <p>Requirements include FastAPI, React, and automated testing.</p>
+            </main>
+            <footer>Copyright 2026</footer>
+        </body>
+        </html>
+        """
+
+    def fake_get(url, **kwargs):
+        return FakeResponse()
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+    with TestClient(app) as c:
+        res = c.post("/api/v1/job-postings/fetch-url", json={"url": "https://example.com/jobs/senior-dev"})
+        assert res.status_code == 200
+        data = res.json()
+        assert data["title"] == "Senior Backend Engineer"
+        assert "Senior Python & TypeScript engineer" in data["text"]
+        assert "console.log" not in data["text"]
+        assert "Home" not in data["text"]
+
+        # Test invalid protocol
+        invalid_res = c.post("/api/v1/job-postings/fetch-url", json={"url": "ftp://example.com/job"})
+        assert invalid_res.status_code == 422 or invalid_res.status_code == 400
 
 
 
