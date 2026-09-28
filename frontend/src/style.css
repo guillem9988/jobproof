@@ -750,11 +750,34 @@ details .form {
     font-size: 1.3rem;
   }
   header {
-    height: 48px;
-    padding: 0 20px;
+    height: auto;
+    min-height: 48px;
+    padding: 10px 16px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  header .pill {
+    display: none;
+  }
+  .report-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .tab-group {
+    margin: 16px 0 20px;
+    gap: 4px;
+    max-width: 100%;
+  }
+  .tab-button {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+  .filters label {
+    min-width: 100%;
   }
   main {
-    padding: 29px 18px 40px;
+    padding: 20px 14px 40px;
   }
   h1 {
     font-size: 2rem;
@@ -939,4 +962,236 @@ details .form {
   padding-top: 16px;
   border-top: 1px solid #e2e8f0;
 }
+
+/* ==========================================================================
+   Dark Mode (Mode Nit)
+   ========================================================================== */
+html.dark,
+html.dark body {
+  background-color: #0b1120;
+  color: #f1f5f9;
+}
+
+html.dark .app {
+  background-color: #0b1120;
+}
+
+html.dark .sidebar {
+  background-color: #080d1a;
+  border-right-color: #1e293b;
+}
+
+html.dark .brand {
+  color: #f8fafc;
+}
+
+html.dark .workspace-label {
+  color: #64748b;
+}
+
+html.dark .nav {
+  color: #94a3b8;
+}
+
+html.dark .nav:hover {
+  background-color: #1e293b;
+  color: #f8fafc;
+}
+
+html.dark .nav.active {
+  background-color: #1e3a8a;
+  color: #93c5fd;
+}
+
+html.dark .sidebar-bottom {
+  color: #64748b;
+}
+
+html.dark .local {
+  border-top-color: #1e293b;
+}
+
+html.dark header {
+  background-color: #080d1a;
+  border-bottom-color: #1e293b;
+  color: #94a3b8;
+}
+
+html.dark h1,
+html.dark h2,
+html.dark h3 {
+  color: #f8fafc;
+}
+
+html.dark p {
+  color: #94a3b8;
+}
+
+html.dark small,
+html.dark .quiet {
+  color: #64748b;
+}
+
+html.dark .eyebrow {
+  color: #60a5fa;
+}
+
+html.dark .card {
+  background-color: #111c33;
+  border-color: #1e293b;
+  color: #f1f5f9;
+}
+
+html.dark .card.demo-card {
+  background: linear-gradient(135deg, #111c33 0%, #1e293b 100%);
+  border-color: #2563eb44;
+}
+
+html.dark .pill {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+html.dark button,
+html.dark .button {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+html.dark button:hover,
+html.dark .button:hover {
+  background-color: #334155;
+}
+
+html.dark button.primary {
+  background-color: #2563eb;
+  border-color: #1d4ed8;
+  color: #ffffff;
+}
+
+html.dark button.primary:hover {
+  background-color: #1d4ed8;
+}
+
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #0b1120;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+html.dark input:focus,
+html.dark textarea:focus,
+html.dark select:focus {
+  border-color: #60a5fa;
+  outline-color: #60a5fa;
+}
+
+html.dark .tab-group {
+  border-bottom-color: #1e293b;
+}
+
+html.dark .tab-button {
+  color: #94a3b8;
+}
+
+html.dark .tab-button:hover {
+  color: #f8fafc;
+}
+
+html.dark .tab-button.active {
+  color: #60a5fa;
+  border-bottom-color: #60a5fa;
+}
+
+html.dark .source-option {
+  background-color: #0b1120;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+html.dark .source-option.active {
+  background-color: #1e3a8a;
+  border-color: #3b82f6;
+  color: #bfdbfe;
+}
+
+html.dark .bullet-card {
+  background-color: #111c33;
+  border-color: #1e293b;
+  color: #f1f5f9;
+}
+
+html.dark .bullet-text {
+  color: #f1f5f9;
+}
+
+html.dark .bullet-meta {
+  color: #94a3b8;
+}
+
+html.dark .interview-card {
+  background-color: #111c33;
+  border-color: #1e293b;
+  color: #f1f5f9;
+}
+
+html.dark .timer-box {
+  background-color: #0b1120;
+  border-color: #1e293b;
+}
+
+html.dark .timer-display {
+  color: #60a5fa;
+}
+
+html.dark .count {
+  background-color: #111c33;
+  border-color: #1e293b;
+}
+
+html.dark .notice {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+html.dark .posting {
+  background-color: #0b1120;
+  color: #e2e8f0;
+  border-color: #1e293b;
+}
+
+html.dark .history > button {
+  border-bottom-color: #1e293b;
+}
+
+html.dark .history > button:hover {
+  background-color: #1e293b;
+}
+
+html.dark .evidence-panel {
+  background-color: #080d1a;
+  border-left-color: #1e293b;
+  color: #f1f5f9;
+}
+
+html.dark .evidence-panel::backdrop {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+html.dark .action-bar {
+  background-color: #080d1a;
+  border-color: #1e293b;
+  color: #f1f5f9;
+}
+
+html.dark footer {
+  border-top-color: #1e293b;
+  color: #64748b;
+}
+
 

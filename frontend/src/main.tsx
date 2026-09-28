@@ -23,6 +23,8 @@ import {
   Play,
   Pause,
   RotateCcw,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { translations, type Lang } from "./i18n";
 import { one, many, request, labels, counts } from "./api";
@@ -72,7 +74,17 @@ function App() {
     [revealedQuestions, setRevealedQuestions] = useState<Record<number, boolean>>({}),
     [lang, setLang] = useState<Lang>(
       (localStorage.getItem("jobproof-lang") as Lang) || "en",
-    );
+    ),
+    [theme, setTheme] = useState<"light" | "dark">(() => {
+      const saved = localStorage.getItem("jobproof-theme");
+      if (saved === "light" || saved === "dark") return saved;
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("jobproof-theme", theme);
+  }, [theme]);
   const t = translations[lang];
 
   useEffect(() => {
@@ -291,6 +303,16 @@ function App() {
               <option value="ca">Català</option>
               <option value="es">Español</option>
             </select>
+            <button
+              type="button"
+              className="button"
+              style={{ padding: "6px 10px", fontSize: "0.85rem" }}
+              aria-label={theme === "dark" ? t.themeToggleLight : t.themeToggleDark}
+              title={theme === "dark" ? t.themeToggleLight : t.themeToggleDark}
+              onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
+            >
+              {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+            </button>
             <span className="pill">Private · Local</span>
           </div>
         </header>

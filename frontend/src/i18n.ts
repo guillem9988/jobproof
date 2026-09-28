@@ -76,6 +76,9 @@ export interface Translations {
   hideAnswer: string;
   prevQuestion: string;
   nextQuestion: string;
+  // Theme
+  themeToggleDark: string;
+  themeToggleLight: string;
 }
 
 export const translations: Record<Lang, Translations> = {
@@ -157,6 +160,8 @@ export const translations: Record<Lang, Translations> = {
     hideAnswer: "Amagar detalls",
     prevQuestion: "Anterior",
     nextQuestion: "Següent",
+    themeToggleDark: "Mode fosc",
+    themeToggleLight: "Mode clar",
   },
   en: {
     brand: "JobProof",
@@ -236,6 +241,8 @@ export const translations: Record<Lang, Translations> = {
     hideAnswer: "Hide details",
     prevQuestion: "Previous",
     nextQuestion: "Next",
+    themeToggleDark: "Dark mode",
+    themeToggleLight: "Light mode",
   },
   es: {
     brand: "JobProof",
@@ -315,5 +322,7 @@ export const translations: Record<Lang, Translations> = {
     hideAnswer: "Ocultar detalles",
     prevQuestion: "Anterior",
     nextQuestion: "Siguiente",
+    themeToggleDark: "Modo oscuro",
+    themeToggleLight: "Modo claro",
   },
 };
