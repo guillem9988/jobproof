@@ -503,7 +503,7 @@ def test_settings_endpoints():
             "/api/v1/settings",
             json={
                 "llm_provider": "",
-                "llm_model": "claude-sonnet-4-6",
+                "llm_model": "",
                 "gemini_api_key": "",
                 "anthropic_api_key": "",
                 "openai_api_key": "",

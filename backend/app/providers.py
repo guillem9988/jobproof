@@ -121,7 +121,11 @@ class RealProvider(BaseLLMProvider):
         self.model = (
             settings.llm_model
             if settings.llm_model and "claude" in settings.llm_model
-            else "claude-sonnet-4-6"
+            else (
+                settings.llm_model
+                if settings.llm_model and not any(p in settings.llm_model for p in ("gemini", "gpt", "o1", "o3", "o4"))
+                else "claude-sonnet-4-6"
+            )
         )
         if not settings.anthropic_api_key:
             raise ValueError(
@@ -450,7 +454,15 @@ def to_gemini_schema(schema: dict) -> dict:
 
 class GeminiProvider(BaseLLMProvider):
     def __init__(self):
-        self.model = settings.llm_model if settings.llm_model.startswith("gemini-") else "gemini-2.5-flash"
+        self.model = (
+            settings.llm_model
+            if settings.llm_model and "gemini" in settings.llm_model
+            else (
+                settings.llm_model
+                if settings.llm_model and not any(p in settings.llm_model for p in ("claude", "gpt", "o1", "o3", "o4"))
+                else "gemini-2.5-flash"
+            )
+        )
         if not settings.gemini_api_key:
             raise ValueError(
                 "GEMINI_API_KEY is missing. Configure the server or explicitly use the fixture demo."
@@ -530,8 +542,12 @@ class OpenAIProvider(BaseLLMProvider):
         self.model = (
             settings.llm_model
             if settings.llm_model
-            and ("gpt" in settings.llm_model or "o1" in settings.llm_model or "o3" in settings.llm_model)
-            else "gpt-4o"
+            and any(k in settings.llm_model for k in ("gpt", "o1", "o3", "o4"))
+            else (
+                settings.llm_model
+                if settings.llm_model and not any(p in settings.llm_model for p in ("claude", "gemini"))
+                else "gpt-6-sol"
+            )
         )
         if not settings.openai_api_key:
             raise ValueError(

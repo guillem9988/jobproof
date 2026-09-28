@@ -50,9 +50,11 @@ def init_settings():
         settings.anthropic_api_key = cfg["anthropic_api_key"]
     if cfg.get("gemini_api_key") and not settings.gemini_api_key:
         settings.gemini_api_key = cfg["gemini_api_key"]
+    if cfg.get("openai_api_key") and not settings.openai_api_key:
+        settings.openai_api_key = cfg["openai_api_key"]
     if cfg.get("llm_provider") and not settings.llm_provider:
         settings.llm_provider = cfg["llm_provider"]
-    if cfg.get("llm_model") and (not settings.llm_model or settings.llm_model == "claude-sonnet-4-6"):
+    if cfg.get("llm_model") and (not settings.llm_model or settings.llm_model in ("claude-sonnet-4-6", "gpt-4o")):
         settings.llm_model = cfg["llm_model"]
     if cfg.get("github_token") and not settings.github_token:
         settings.github_token = cfg["github_token"]
@@ -138,7 +140,7 @@ def health():
     if pref == "gemini":
         default_model = "gemini-2.5-flash"
     elif pref == "openai":
-        default_model = "gpt-4o"
+        default_model = "gpt-6-sol"
     else:
         default_model = "claude-sonnet-4-6"
 
@@ -261,7 +263,7 @@ def get_settings():
     if provider_pref == "gemini":
         default_model = "gemini-2.5-flash"
     elif provider_pref == "openai":
-        default_model = "gpt-4o"
+        default_model = "gpt-6-sol"
     else:
         default_model = "claude-sonnet-4-6"
 
@@ -377,8 +379,8 @@ def test_settings(payload: SettingsTestRequest):
             if payload.model
             else (
                 settings.llm_model
-                if not settings.llm_model.startswith("gemini-")
-                else "claude-3-5-haiku-20241022"
+                if settings.llm_model and "claude" in settings.llm_model
+                else "claude-sonnet-4-6"
             )
         )
         start_t = time.perf_counter()
@@ -419,7 +421,15 @@ def test_settings(payload: SettingsTestRequest):
         key = payload.api_key.strip() if payload.api_key else settings.openai_api_key
         if not key:
             return SettingsTestResponse(success=False, message="No OpenAI API key provided or configured.")
-        model = payload.model.strip() if payload.model else "gpt-4o"
+        model = (
+            payload.model.strip()
+            if payload.model
+            else (
+                settings.llm_model
+                if settings.llm_model and any(k in settings.llm_model for k in ("gpt", "o1", "o3", "o4"))
+                else "gpt-6-sol"
+            )
+        )
         start_t = time.perf_counter()
         try:
             with httpx.Client(
@@ -449,7 +459,7 @@ def test_settings(payload: SettingsTestRequest):
                     if isinstance(err_json, dict) and "error" in err_json and "message" in err_json["error"]:
                         err_msg = str(err_json["error"]["message"])
                 except (ValueError, KeyError):
-                    pass
+                    err_msg = f"OpenAI returned HTTP {resp.status_code}"
                 return SettingsTestResponse(success=False, message=err_msg, latency_ms=latency)
         except (httpx.RequestError, httpx.HTTPError) as e:
             return SettingsTestResponse(success=False, message=f"Connection error: {e!s}")

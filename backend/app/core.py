@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     openai_api_key: str = ""
     llm_provider: str = ""
-    llm_model: str = "claude-sonnet-4-6"
+    llm_model: str = ""
     github_token: str = ""
     max_files: int = 150
     max_file_bytes: int = 100_000

@@ -197,6 +197,8 @@ export interface Translations {
   anthropicOption: string;
   openaiOption: string;
   modelLabel: string;
+  customModelLabel: string;
+  customModelHelp: string;
   geminiApiKeyLabel: string;
   anthropicApiKeyLabel: string;
   openaiApiKeyLabel: string;
@@ -457,6 +459,8 @@ export const translations: Record<Lang, Translations> = {
     anthropicOption: "Anthropic",
     openaiOption: "OpenAI",
     modelLabel: "Model d'IA",
+    customModelLabel: "Model d'IA (opcional)",
+    customModelHelp: "Deixa-ho en blanc per al model recomanat per defecte, o escriu qualsevol model suportat per la teva clau.",
     geminiApiKeyLabel: "Gemini API Key",
     anthropicApiKeyLabel: "Anthropic API Key",
     openaiApiKeyLabel: "OpenAI API Key",
@@ -713,6 +717,8 @@ export const translations: Record<Lang, Translations> = {
     anthropicOption: "Anthropic",
     openaiOption: "OpenAI",
     modelLabel: "AI Model",
+    customModelLabel: "AI Model (optional)",
+    customModelHelp: "Leave blank for the recommended default model, or specify any model supported by your key.",
     geminiApiKeyLabel: "Gemini API Key",
     anthropicApiKeyLabel: "Anthropic API Key",
     openaiApiKeyLabel: "OpenAI API Key",
@@ -969,6 +975,8 @@ export const translations: Record<Lang, Translations> = {
     anthropicOption: "Anthropic",
     openaiOption: "OpenAI",
     modelLabel: "Modelo de IA",
+    customModelLabel: "Modelo de IA (opcional)",
+    customModelHelp: "Déjalo en blanco para el modelo recomendado por defecto, o escribe cualquier modelo soportado por tu clave.",
     geminiApiKeyLabel: "Gemini API Key",
     anthropicApiKeyLabel: "Anthropic API Key",
     openaiApiKeyLabel: "OpenAI API Key",

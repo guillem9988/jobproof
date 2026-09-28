@@ -188,7 +188,7 @@ function App() {
     queryFn: () => one<AppSettings>("/settings"),
   });
   const [settingsProvider, setSettingsProvider] = useState<"gemini" | "anthropic" | "openai">("gemini");
-  const [settingsModel, setSettingsModel] = useState<string>("gemini-2.5-flash");
+  const [settingsModel, setSettingsModel] = useState<string>("");
   const [geminiKeyInput, setGeminiKeyInput] = useState<string>("");
   const [anthropicKeyInput, setAnthropicKeyInput] = useState<string>("");
   const [openaiKeyInput, setOpenaiKeyInput] = useState<string>("");
@@ -207,9 +207,7 @@ function App() {
     if (appSettings.data) {
       const p = (appSettings.data.llm_provider as "gemini" | "anthropic" | "openai") || "gemini";
       setSettingsProvider(p);
-      const defModel =
-        p === "openai" ? "gpt-4o" : p === "anthropic" ? "claude-sonnet-4-6" : "gemini-2.5-flash";
-      setSettingsModel(appSettings.data.llm_model || defModel);
+      setSettingsModel(appSettings.data.llm_model || "");
     }
   }, [appSettings.data]);
 
@@ -218,7 +216,7 @@ function App() {
     await act(async () => {
       const defModel =
         settingsProvider === "openai"
-          ? "gpt-4o"
+          ? "gpt-6-sol"
           : settingsProvider === "anthropic"
             ? "claude-sonnet-4-6"
             : "gemini-2.5-flash";
@@ -231,7 +229,7 @@ function App() {
         github_token?: string;
       }> = {
         llm_provider: settingsProvider,
-        llm_model: defModel,
+        llm_model: settingsModel.trim() || defModel,
       };
       if (geminiKeyInput) payload.gemini_api_key = geminiKeyInput;
       if (anthropicKeyInput) payload.anthropic_api_key = anthropicKeyInput;
@@ -261,10 +259,16 @@ function App() {
             : providerToTest === "openai"
               ? openaiKeyInput
               : githubTokenInput;
+      const defModel =
+        providerToTest === "openai"
+          ? "gpt-6-sol"
+          : providerToTest === "anthropic"
+            ? "claude-sonnet-4-6"
+            : "gemini-2.5-flash";
       const res = await one<SettingsTestResult>("/settings/test", {
         provider: providerToTest,
         api_key: key || undefined,
-        model: settingsModel || undefined,
+        model: settingsModel.trim() || defModel,
       });
       setTestStatus({ testing: false, result: res });
     } catch (err) {
@@ -1391,19 +1395,32 @@ function App() {
                     onChange={(e) => {
                       const p = e.target.value as "gemini" | "anthropic" | "openai";
                       setSettingsProvider(p);
-                      const defModel =
-                        p === "openai"
-                          ? "gpt-4o"
-                          : p === "anthropic"
-                            ? "claude-sonnet-4-6"
-                            : "gemini-2.5-flash";
-                      setSettingsModel(defModel);
                     }}
                   >
                     <option value="gemini">{t.geminiOption}</option>
                     <option value="anthropic">{t.anthropicOption}</option>
                     <option value="openai">{t.openaiOption}</option>
                   </select>
+                </label>
+
+                <label style={{ marginTop: 14 }}>
+                  {t.customModelLabel}
+                  <input
+                    type="text"
+                    placeholder={
+                      settingsProvider === "openai"
+                        ? "gpt-6-sol"
+                        : settingsProvider === "anthropic"
+                          ? "claude-sonnet-4-6"
+                          : "gemini-2.5-flash"
+                    }
+                    value={settingsModel}
+                    onChange={(e) => setSettingsModel(e.target.value)}
+                    style={{ fontFamily: "monospace", fontSize: "0.9rem" }}
+                  />
+                  <span className="quiet" style={{ fontSize: "0.8rem", marginTop: 4, display: "block" }}>
+                    {t.customModelHelp}
+                  </span>
                 </label>
 
                 <div style={{ marginTop: 14 }}>
