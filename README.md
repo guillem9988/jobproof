@@ -25,7 +25,7 @@ Instead of generating superficial "ATS match percentages" or hallucinated hiring
 
 ### 2. Smart Project & Job Ingestion
 - **GitHub Ingestion:** Supports shorthand `owner/repo` as well as full URLs.
-- **Private Repository Access:** Configurable GitHub Personal Access Token (`GITHUB_TOKEN`) enables higher rate limits (5,000 req/hr) and private repository analysis.
+- **Private Repository Access:** Configurable GitHub Personal Access Token (`GITHUB_TOKEN`) enables private repository analysis.
 - **Local Directory Import:** Point to local folders on your machine for zero-network analysis.
 - **Custom Exclusions:** Filter out unwanted files or directories (e.g. `docs, fixtures, temp, test`) per project.
 - **Job Ingestion:** Paste text directly, fetch clean job descriptions from public URLs (`/job-postings/fetch-url`), or upload `.txt` / `.md` job posting files.
