@@ -26,8 +26,8 @@ import {
   Moon,
   Sun,
 } from "lucide-react";
-import { translations, type Lang } from "./i18n";
-import { one, many, request, labels, counts } from "./api";
+import { translations, type Lang, getStatusLabels, type Translations } from "./i18n";
+import { one, many, request, counts } from "./api";
 import type {
   Analysis,
   Assessment,
@@ -86,6 +86,7 @@ function App() {
     localStorage.setItem("jobproof-theme", theme);
   }, [theme]);
   const t = translations[lang];
+  const statusLabels = getStatusLabels(t);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -313,7 +314,7 @@ function App() {
             >
               {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
             </button>
-            <span className="pill">Private · Local</span>
+            <span className="pill">{t.badgePrivateLocal}</span>
           </div>
         </header>
         <main>
@@ -327,13 +328,12 @@ function App() {
           )}
           {health.error && (
             <div role="alert" className="error">
-              Cannot reach the backend. Start the local API on port 8000, then
-              reload.
+              {t.backendUnreachable}
             </div>
           )}
           {page === "home" && (
             <>
-              <div className="eyebrow">YOUR WORK. YOUR EVIDENCE.</div>
+              <div className="eyebrow">{t.yourWorkYourEvidence}</div>
               <h1>{t.tagline}</h1>
               <p className="intro">{t.subtitle}</p>
               <div className="home-grid">
@@ -341,10 +341,9 @@ function App() {
                   <span className="icon-box">
                     <FileText />
                   </span>
-                  <h2>Prepare a stronger application</h2>
+                  <h2>{t.homeCardStartTitle}</h2>
                   <p>
-                    Start with a job posting and up to three public
-                    repositories. Review every conclusion against its source.
+                    {t.homeCardStartDesc}
                   </p>
                   <button
                     className="primary"
@@ -369,20 +368,21 @@ function App() {
                   <button disabled={busy} onClick={() => act(demo)}>
                     {t.tryDemo} <ArrowRight size={17} />
                   </button>
-                  <small>Deterministic fixtures · No external calls</small>
+                  <small>{t.deterministicFixtures}</small>
                 </section>
               </div>
               <section className="section-title">
-                <h2>Recent analyses</h2>
+                <h2>{t.recentAnalyses}</h2>
                 <button
                   className="text-button"
                   onClick={() => setPage("history")}
                 >
-                  View history <ArrowRight size={16} />
+                  {t.viewHistory} <ArrowRight size={16} />
                 </button>
               </section>
               <HistoryList
                 rows={(history.data || []).slice(0, 4)}
+                t={t}
                 open={(id) => {
                   setReportId(id);
                   setPage("report");
@@ -390,28 +390,22 @@ function App() {
               />
               <div className="principles">
                 <p>
-                  <strong>01 · Grounded in sources</strong>Every proof links to
-                  a file and exact lines.
+                  <strong>{t.principle1Title}</strong>{t.principle1Desc}
                 </p>
                 <p>
-                  <strong>02 · Honest about gaps</strong>Missing evidence never
-                  means missing ability.
+                  <strong>{t.principle2Title}</strong>{t.principle2Desc}
                 </p>
                 <p>
-                  <strong>03 · Yours to review</strong>Correct conclusions while
-                  preserving their origin.
+                  <strong>{t.principle3Title}</strong>{t.principle3Desc}
                 </p>
               </div>
             </>
           )}
           {page === "projects" && (
             <>
-              <div className="eyebrow">SOURCE MATERIAL</div>
-              <h1>Your projects</h1>
-              <p className="intro">
-                Import a public repository at a fixed commit. Imported code is
-                never executed.
-              </p>
+              <div className="eyebrow">{t.projectsEyebrow}</div>
+              <h1>{t.yourProjects}</h1>
+              <p className="intro">{t.projectsIntro}</p>
               <form
                 className="card form"
                 onSubmit={(e) => {
@@ -479,24 +473,24 @@ function App() {
                 )}
                 <div className="two">
                   <label>
-                    Project name (optional)
+                    {t.projectNameOptional}
                     <input name="name" />
                   </label>
                   {projectSource === "github" && (
                     <label>
-                      Branch or commit (optional)
+                      {t.branchOrCommitOptional}
                       <input name="ref" />
                     </label>
                   )}
                 </div>
                 <label>
-                  Your contribution (self-declared, unverified)
+                  {t.yourContribution}
                   <textarea name="contribution" rows={2} />
                 </label>
                 <button className="primary" disabled={busy}>
                   {projectSource === "local"
                     ? t.importLocalDir
-                    : "Import repository"}{" "}
+                    : t.importRepository}{" "}
                   <Plus size={17} />
                 </button>
               </form>
@@ -506,30 +500,30 @@ function App() {
                     <h2>{p.name}</h2>
                     <span className="pill">
                       {p.demo
-                        ? "Fixture"
+                        ? t.badgeFixture
                         : p.local
                           ? t.badgeLocalFolder
                           : t.badgePublicRepo}
                     </span>
                   </div>
                   <p>
-                    {p.contribution || "Personal contribution not declared."}
+                    {p.contribution || t.personalContributionNotDeclared}
                   </p>
                   {snapshots.data
                     ?.filter((s) => s.project_id === p.id)
                     .map((s) => (
                       <details key={s.id}>
                         <summary>
-                          {s.file_count} files · {s.status} ·{" "}
+                          {s.file_count} {t.files} · {s.status} ·{" "}
                           {s.partial
-                            ? "Partial import"
-                            : "All eligible fixture/tree files imported"}{" "}
+                            ? t.partialImport
+                            : t.allEligibleImported}{" "}
                           <code>{s.sha.slice(0, 12)}</code>
                         </summary>
-                        <p>Commit: {s.sha}</p>
+                        <p>{t.commitLabel}: {s.sha}</p>
                         <p>
-                          {s.bytes.toLocaleString()} bytes imported.{" "}
-                          {s.discarded.length} files excluded.
+                          {s.bytes.toLocaleString()} {t.bytesImported}{" "}
+                          {s.discarded.length} {t.filesExcluded}
                         </p>
                         <ul>
                           {s.discarded.map((d) => (
@@ -538,7 +532,7 @@ function App() {
                             </li>
                           ))}
                         </ul>
-                        <SnapshotFiles id={s.id} />
+                        <SnapshotFiles id={s.id} t={t} />
                       </details>
                     ))}
                   {!p.demo && (
@@ -554,7 +548,7 @@ function App() {
                         )
                       }
                     >
-                      Import new snapshot
+                      {t.importNewSnapshot}
                     </button>
                   )}
                 </section>
@@ -563,12 +557,10 @@ function App() {
           )}
           {page === "job" && (
             <>
-              <div className="eyebrow">APPLICATION WORKSPACE</div>
-              <h1>{job ? "Review the requirements" : "Start with the role"}</h1>
+              <div className="eyebrow">{t.applicationWorkspace}</div>
+              <h1>{job ? t.jobReviewTitle : t.jobStartTitle}</h1>
               <p className="intro">
-                {job
-                  ? "Keep alternatives and priorities intact. Select the requirements you want to examine."
-                  : "Paste the original job posting in English, Catalan, or Spanish."}
+                {job ? t.jobReviewIntro : t.jobStartIntro}
               </p>
               {!job ? (
                 <>
@@ -591,20 +583,20 @@ function App() {
                   >
                     <div className="two">
                       <label>
-                        Job title
+                        {t.jobTitleLabel}
                         <input name="title" required />
                       </label>
                       <label>
-                        Company (optional)
+                        {t.companyLabel}
                         <input name="company" />
                       </label>
                     </div>
                     <label>
-                      Reference URL (optional, never visited)
+                      {t.referenceUrlLabel}
                       <input name="url" type="url" />
                     </label>
                     <label>
-                      Language
+                      {t.languageLabel}
                       <select name="language">
                         <option value="en">English</option>
                         <option value="ca">Català</option>
@@ -612,18 +604,18 @@ function App() {
                       </select>
                     </label>
                     <label>
-                      Job posting
+                      {t.jobPostingLabel}
                       <textarea name="text" required minLength={10} rows={10} />
                     </label>
                     <button className="primary" disabled={busy}>
-                      Save posting <ArrowRight size={16} />
+                      {t.savePosting} <ArrowRight size={16} />
                     </button>
                   </form>
                   {jobs.data
                     ?.filter((j) => !j.demo)
                     .map((j) => (
                       <button key={j.id} onClick={() => setJob(j)}>
-                        Resume {j.title}
+                        {t.resumePosting} {j.title}
                       </button>
                     ))}
                 </>
@@ -631,11 +623,11 @@ function App() {
                 <>
                   <div className="notice">
                     {job.demo
-                      ? "FIXTURE DEMO — Results come from deterministic fixture rules. Edited requirements may not have a matching rule."
-                      : "Real analysis sends the posting and selected, redacted repository excerpts to the configured AI provider. Keys stay on the server."}
+                      ? t.fixtureDemoNotice
+                      : t.realAnalysisNotice}
                   </div>
                   <details className="card">
-                    <summary>{job.title} · Original posting</summary>
+                    <summary>{job.title} · {t.originalPostingSummary}</summary>
                     <pre className="posting">{job.canonical_text}</pre>
                   </details>
                   <button
@@ -654,8 +646,8 @@ function App() {
                       )
                     }
                   >
-                    Extract requirements
-                    {job.requirements.length ? " again" : ""}
+                    {t.extractRequirements}
+                    {job.requirements.length ? ` (${t.extractAgain})` : ""}
                   </button>
                   <div className="requirements">
                     {job.requirements.map((r, i) => (
@@ -672,10 +664,10 @@ function App() {
                                 changeReq(r.id, { selected: e.target.checked })
                               }
                             />
-                            Include in analysis
+                            {t.includeInAnalysis}
                           </label>
                           <label>
-                            Requirement
+                            {t.requirementLabel}
                             <input
                               value={r.text}
                               onChange={(e) =>
@@ -685,7 +677,7 @@ function App() {
                           </label>
                           <div className="two">
                             <label>
-                              Priority
+                              {t.priorityLabel}
                               <select
                                 value={r.priority}
                                 onChange={(e) =>
@@ -695,13 +687,13 @@ function App() {
                                   })
                                 }
                               >
-                                <option value="required">Required</option>
-                                <option value="preferred">Preferred</option>
-                                <option value="unspecified">Unspecified</option>
+                                <option value="required">{t.priorityRequired}</option>
+                                <option value="preferred">{t.priorityPreferred}</option>
+                                <option value="unspecified">{t.priorityUnspecified}</option>
                               </select>
                             </label>
                             <label>
-                              Verifiable from code
+                              {t.verifiableFromCode}
                               <select
                                 value={r.verifiability}
                                 onChange={(e) =>
@@ -711,18 +703,18 @@ function App() {
                                   })
                                 }
                               >
-                                <option value="code">Code evidence</option>
-                                <option value="limited">Limited</option>
+                                <option value="code">{t.codeEvidence}</option>
+                                <option value="limited">{t.limited}</option>
                                 <option value="external">
-                                  External evidence needed
+                                  {t.externalEvidenceNeeded}
                                 </option>
                               </select>
                             </label>
                           </div>
                           <small>
                             {r.provenance === "manual"
-                              ? "Manually added · no posting citation"
-                              : `Posting excerpt: “${r.quote}” · character ${r.offset}`}
+                              ? t.manuallyAddedNoCitation
+                              : `${t.postingExcerptPrefix} “${r.quote}” · ${t.characterPrefix} ${r.offset}`}
                           </small>
                         </div>
                         <button
@@ -765,11 +757,11 @@ function App() {
                     }
                   >
                     <Plus size={16} />
-                    Add manual requirement
+                    {t.addManualRequirement}
                   </button>
                   <section className="card project-picker">
-                    <h2>Select project snapshots</h2>
-                    <p>Up to three projects. One snapshot per project.</p>
+                    <h2>{t.selectProjectSnapshots}</h2>
+                    <p>{t.selectProjectDesc}</p>
                     {snapshots.data
                       ?.filter(
                         (s) => s.status === "complete" && (!job.demo || s.demo),
@@ -796,15 +788,15 @@ function App() {
                               }
                             </strong>
                             <small>
-                              {s.sha.slice(0, 12)} · {s.file_count} files ·{" "}
-                              {s.partial ? "Partial import" : "Imported"}
+                              {s.sha.slice(0, 12)} · {s.file_count} {t.files} ·{" "}
+                              {s.partial ? t.partialImport : t.allEligibleImported}
                             </small>
                           </span>
                         </label>
                       ))}
                     {!snapshots.data?.length && (
                       <button onClick={() => setPage("projects")}>
-                        Add a project
+                        {t.yourProjects}
                       </button>
                     )}
                   </section>
@@ -828,7 +820,7 @@ function App() {
                       })
                     }
                   >
-                    Save reviewed requirements
+                    {t.saveReviewedRequirements}
                   </button>
                   <div className="action-bar">
                     <span>
@@ -836,7 +828,7 @@ function App() {
                         job.requirements.filter((r) => r.selected ?? true)
                           .length
                       }{" "}
-                      / {job.requirements.length} requirements selected · max 15
+                      / {job.requirements.length} {t.maxRequirementsNote}
                     </span>
                     <button
                       disabled={
@@ -845,7 +837,7 @@ function App() {
                       className="primary"
                       onClick={() => act(start)}
                     >
-                      Analyze evidence <ArrowRight size={17} />
+                      {t.analyzeEvidence} <ArrowRight size={17} />
                     </button>
                   </div>
                 </>
@@ -859,16 +851,13 @@ function App() {
               </span>
               <h1>
                 {task.data?.status === "running"
-                  ? "Building your evidence report"
-                  : task.data?.status || "Preparing task"}
+                  ? t.progressBuildingReport
+                  : task.data?.status || t.progressPreparingTask}
               </h1>
               <p aria-live="polite">
-                {task.data?.stage || "Waiting for task status"}
+                {task.data?.stage || t.waitingForTaskStatus}
               </p>
-              <p>
-                Progress reflects completed stages. You can reload this page
-                safely.
-              </p>
+              <p>{t.progressNotice}</p>
               {["running", "queued"].includes(task.data?.status || "") ? (
                 <button
                   onClick={() =>
@@ -877,25 +866,23 @@ function App() {
                     })
                   }
                 >
-                  Cancel task
+                  {t.cancelTask}
                 </button>
               ) : (
                 <button onClick={() => setPage(job ? "job" : "projects")}>
-                  Return and retry explicitly
+                  {t.retryExplicitly}
                 </button>
               )}
             </section>
           )}
           {page === "history" && (
             <>
-              <div className="eyebrow">YOUR RESEARCH TRAIL</div>
-              <h1>Analysis history</h1>
-              <p className="intro">
-                Each report keeps its requirements, source snapshots and
-                original conclusions.
-              </p>
+              <div className="eyebrow">{t.historyEyebrow}</div>
+              <h1>{t.historyTitle}</h1>
+              <p className="intro">{t.historyDesc}</p>
               <HistoryList
                 rows={history.data || []}
+                t={t}
                 open={(id) => {
                   setReportId(id);
                   setPage("report");
@@ -909,15 +896,16 @@ function App() {
                 <div>
                   <div className="eyebrow">
                     {report.data.mode === "demo"
-                      ? "FIXTURE DEMO"
-                      : "EVIDENCE REPORT"}
+                      ? t.fixtureDemo
+                      : t.evidenceReport}
                   </div>
                   <h1>{report.data.title}</h1>
                   <p>
                     {new Date(report.data.created_at).toLocaleDateString()} ·{" "}
                     {report.data.requirements.filter((r) => r.selected).length}{" "}
-                    of {report.data.requirements.length} requirements ·{" "}
-                    {report.data.snapshots.length} projects
+                    {t.ofRequirements} {report.data.requirements.length}{" "}
+                    {t.requirementLabel.toLowerCase()}s ·{" "}
+                    {report.data.snapshots.length} {t.projectsCount}
                   </p>
                 </div>
                 <div className="exports">
@@ -986,8 +974,7 @@ function App() {
               </div>
               {report.data.status !== "complete" ? (
                 <div role="alert" className="notice">
-                  Analysis {report.data.status}. Partial results are not a
-                  complete report.
+                  {t.analysisPartialNotice}
                 </div>
               ) : reportTab === "evidence" ? (
                 <>
@@ -999,7 +986,7 @@ function App() {
                         onClick={() => setFilter(c.status)}
                       >
                         <span>{c.count}</span>
-                        {labels[c.status]}
+                        {statusLabels[c.status] || c.status}
                       </button>
                     ))}
                   </div>
@@ -1019,13 +1006,13 @@ function App() {
                       />
                     </label>
                     <label>
-                      Status
+                      {t.statusLabel}
                       <select
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
                       >
-                        <option value="all">All conclusions</option>
-                        {Object.entries(labels).map(([k, v]) => (
+                        <option value="all">{t.allConclusions}</option>
+                        {Object.entries(statusLabels).map(([k, v]) => (
                           <option key={k} value={k}>
                             {v}
                           </option>
@@ -1033,24 +1020,24 @@ function App() {
                       </select>
                     </label>
                     <label>
-                      Priority
+                      {t.priorityLabel}
                       <select
                         value={priority}
                         onChange={(e) => setPriority(e.target.value)}
                       >
-                        <option value="all">All priorities</option>
-                        <option value="required">Required</option>
-                        <option value="preferred">Preferred</option>
-                        <option value="unspecified">Unspecified</option>
+                        <option value="all">{t.allPriorities}</option>
+                        <option value="required">{t.priorityRequired}</option>
+                        <option value="preferred">{t.priorityPreferred}</option>
+                        <option value="unspecified">{t.priorityUnspecified}</option>
                       </select>
                     </label>
                     <label>
-                      Category
+                      {t.categoryLabel}
                       <select
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
                       >
-                        <option value="all">All categories</option>
+                        <option value="all">{t.allCategories}</option>
                         {[
                           ...new Set(
                             assessments.data?.map(
@@ -1063,12 +1050,12 @@ function App() {
                       </select>
                     </label>
                     <label>
-                      Project
+                      {t.projectLabel}
                       <select
                         value={projectFilter}
                         onChange={(e) => setProjectFilter(e.target.value)}
                       >
-                        <option value="all">All projects</option>
+                        <option value="all">{t.allProjects}</option>
                         {report.data.snapshots.map((s) => (
                           <option key={s.id} value={s.id}>
                             {projects.data?.find((p) => p.id === s.project_id)
@@ -1079,7 +1066,7 @@ function App() {
                     </label>
                   </div>
                   <h2>
-                    Requirements & evidence{" "}
+                    {t.requirementsAndEvidence}{" "}
                     <span className="muted">{visible.length}</span>
                   </h2>
                   {visible.map((a) => (
@@ -1087,6 +1074,7 @@ function App() {
                       key={a.id}
                       snapshotIds={report.data!.snapshots.map((s) => s.id)}
                       a={a}
+                      t={t}
                       evidence={setEvidence}
                       busy={busy}
                       review={(status, reason, remove, add) =>
@@ -1106,12 +1094,12 @@ function App() {
                   ))}
                   {!visible.length && (
                     <div className="card">
-                      No conclusions match these filters.
+                      {t.noMatchingConclusions}
                     </div>
                   )}
                   <section className="card preparation">
-                    <div className="eyebrow">TAKE IT INTO THE INTERVIEW</div>
-                    <h2>Prepare the conversation</h2>
+                    <div className="eyebrow">{t.takeItIntoInterview}</div>
+                    <h2>{t.interviewPrepTitle}</h2>
                     {report.data.preparation?.questions.map((q, i) => (
                       <p className="question" key={q}>
                         <span>0{i + 1}</span>
@@ -1127,20 +1115,27 @@ function App() {
                       ] as const
                     ).map((key) => (
                       <div key={key}>
-                        <h3>{key.replaceAll("_", " ")}</h3>
+                        <h3>
+                          {key === "technical_points"
+                            ? t.technicalPoints
+                            : key === "decisions"
+                              ? t.decisionsTradeoffs
+                              : key === "honest_limitations"
+                                ? t.honestLimitations
+                                : t.personalPrompts}
+                        </h3>
                         <ul>
-                          {report.data?.preparation?.[key].map((t) => (
-                            <li key={t}>{t}</li>
+                          {report.data?.preparation?.[key].map((item) => (
+                            <li key={item}>{item}</li>
                           ))}
                         </ul>
                       </div>
                     ))}
                   </section>
                   <section className="card">
-                    <h2>Next steps</h2>
+                    <h2>{t.nextSteps}</h2>
                     <p className="quiet">
-                      Generated from the original analysis. Reconsider these
-                      suggestions after a human review.
+                      {t.nextStepsDesc}
                     </p>
                     {report.data.preparation?.recommendations.map((r, i) => (
                       <div className="recommendation" key={i}>
@@ -1154,25 +1149,25 @@ function App() {
                         </strong>
                         <p>{r.action}</p>
                         <small>
-                          Expected: {r.observable_result} {r.effort_estimate}
+                          {t.expected} {r.observable_result} {r.effort_estimate}
                         </small>
                       </div>
                     ))}
                   </section>
                   <details className="card">
-                    <summary>Report provenance</summary>
+                    <summary>{t.reportProvenance}</summary>
                     <p>
                       Model: {report.data.model} · pipeline{" "}
                       {report.data.pipeline_version} · requirements v
                       {report.data.requirements_version}
                     </p>
                     <p>
-                      {report.data.usage?.calls || 0} logical calls ·{" "}
-                      {report.data.usage?.input_tokens || 0} input tokens ·{" "}
-                      {report.data.usage?.output_tokens || 0} output tokens
+                      {report.data.usage?.calls || 0} {t.logicalCalls} ·{" "}
+                      {report.data.usage?.input_tokens || 0} {t.inputTokens} ·{" "}
+                      {report.data.usage?.output_tokens || 0} {t.outputTokens}
                     </p>
                     {report.data.snapshots.map((s) => (
-                      <p key={s.id}>Commit {s.sha}</p>
+                      <p key={s.id}>{t.commitLabel} {s.sha}</p>
                     ))}
                   </details>
                 </>
@@ -1248,7 +1243,7 @@ function App() {
                           </div>
                           <div className="bullet-meta">
                             <span className={`pill ${a.status}`}>
-                              {labels[a.status]}
+                              {statusLabels[a.status] || a.status}
                             </span>
                             {firstEv && (
                               <button
@@ -1284,7 +1279,7 @@ function App() {
                     if (!questions.length) {
                       return (
                         <div className="card">
-                          No interview questions were generated for this report.
+                          {t.noInterviewQuestions}
                         </div>
                       );
                     }
@@ -1388,7 +1383,7 @@ function App() {
                               )}
                             </ul>
 
-                            <h3>Decisions & Trade-offs</h3>
+                            <h3>{t.decisionsTradeoffs}</h3>
                             <ul>
                               {report.data?.preparation?.decisions.map((d) => (
                                 <li key={d}>{d}</li>
@@ -1444,12 +1439,11 @@ function App() {
           )}
         </main>
         <footer>
-          JobProof · Evidence supports a conversation. It does not certify
-          professional competence.
+          {t.footerDisclaimer}
         </footer>
       </div>
       {evidence && (
-        <EvidencePanel e={evidence} close={() => setEvidence(null)} />
+        <EvidencePanel e={evidence} close={() => setEvidence(null)} t={t} />
       )}
     </div>
   );
@@ -1457,9 +1451,11 @@ function App() {
 function HistoryList({
   rows,
   open,
+  t,
 }: {
   rows: Analysis[];
   open: (id: string) => void;
+  t: Translations;
 }) {
   return (
     <div className="card history">
@@ -1471,7 +1467,7 @@ function HistoryList({
               <strong>{a.title}</strong>
               <small>
                 {new Date(a.created_at).toLocaleDateString()} ·{" "}
-                {a.mode === "demo" ? "Fixture demo" : "Real analysis"}
+                {a.mode === "demo" ? t.fixtureDemo : t.evidenceReport}
               </small>
             </span>
             <span className="pill">{a.status}</span>
@@ -1481,8 +1477,8 @@ function HistoryList({
       ) : (
         <div className="empty">
           <FileText size={26} />
-          <strong>Your first report starts here.</strong>
-          <p>Try the demo or add a job posting to begin.</p>
+          <strong>{t.emptyHistoryTitle}</strong>
+          <p>{t.emptyHistoryDesc}</p>
         </div>
       )}
     </div>
@@ -1494,14 +1490,22 @@ function AssessmentCard({
   review,
   busy,
   snapshotIds,
+  t,
 }: {
   snapshotIds: string[];
   a: Assessment;
   evidence: (e: Evidence) => void;
   review: (s: Status, r: string, remove: string[], add: string[]) => void;
   busy: boolean;
+  t: Translations;
 }) {
   const [editing, setEditing] = useState(false);
+  const statusLabels = getStatusLabels(t);
+  const priorityLabels: Record<string, string> = {
+    required: t.priorityRequired,
+    preferred: t.priorityPreferred,
+    unspecified: t.priorityUnspecified,
+  };
   const sources = useQuery({
     queryKey: ["sourceChunks", snapshotIds],
     enabled: editing,
@@ -1527,10 +1531,11 @@ function AssessmentCard({
               : a.status === "not_evidenced"
                 ? "−"
                 : "◇"}{" "}
-          {labels[a.status]}
+          {statusLabels[a.status] || a.status}
         </span>
         <span className="muted">
-          {a.requirement.priority} · {a.requirement.category}
+          {priorityLabels[a.requirement.priority] || a.requirement.priority} ·{" "}
+          {a.requirement.category}
         </span>
       </div>
       <h3>{a.requirement.text}</h3>
@@ -1545,7 +1550,7 @@ function AssessmentCard({
           <span>
             {e.path}
             <small>
-              Lines {e.start}–{e.end} · {e.type} · citation verified
+              {t.lines} {e.start}–{e.end} · {e.type} · {t.citationVerified}
             </small>
           </span>
           <ChevronRight size={16} />
@@ -1558,16 +1563,17 @@ function AssessmentCard({
       </ul>
       {a.invalid_citations.length > 0 && (
         <p className="error">
-          {a.invalid_citations.length} invalid citations rejected.
+          {a.invalid_citations.length} {t.invalidCitationsRejected}
         </p>
       )}
       {a.reviews.length > 0 && (
         <p className="reviewed">
-          Human reviewed · Original: {labels[a.original.status]}
+          {t.humanReviewed}{" "}
+          {statusLabels[a.original.status] || a.original.status}
         </p>
       )}
       <details onToggle={(e) => setEditing(e.currentTarget.open)}>
-        <summary>Review conclusion</summary>
+        <summary>{t.reviewConclusion}</summary>
         <form
           className="form"
           onSubmit={(e) => {
@@ -1582,9 +1588,9 @@ function AssessmentCard({
           }}
         >
           <label>
-            Effective conclusion
+            {t.effectiveConclusion}
             <select name="status" defaultValue={a.status}>
-              {Object.entries(labels).map(([k, v]) => (
+              {Object.entries(statusLabels).map(([k, v]) => (
                 <option key={k} value={k}>
                   {v}
                 </option>
@@ -1592,27 +1598,33 @@ function AssessmentCard({
             </select>
           </label>
           <label>
-            Reason
-            <textarea name="reason" required minLength={3} rows={2} />
+            {t.reasonLabel}
+            <textarea
+              name="reason"
+              placeholder={t.reasonPlaceholder}
+              required
+              minLength={3}
+              rows={2}
+            />
           </label>
           {a.evidence.map((e) => (
             <label key={e.chunk_id} className="check">
               <input type="checkbox" name="remove" value={e.chunk_id} />
-              Remove evidence: {e.path}
+              {t.removeEvidence} {e.path}
             </label>
           ))}
           <label>
-            Add evidence from an analyzed snapshot
+            {t.addEvidenceFromSnapshot}
             <select name="add">
-              <option value="">No additional evidence</option>
+              <option value="">{t.noAdditionalEvidence}</option>
               {sources.data?.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.path} · lines {c.start}–{c.end}
+                  {c.path} · {t.lines} {c.start}–{c.end}
                 </option>
               ))}
             </select>
           </label>
-          <button disabled={busy}>Save human review</button>
+          <button disabled={busy}>{t.saveReview}</button>
         </form>
         {a.reviews.map((r, i) => (
           <p key={i}>
@@ -1623,7 +1635,15 @@ function AssessmentCard({
     </section>
   );
 }
-function EvidencePanel({ e, close }: { e: Evidence; close: () => void }) {
+function EvidencePanel({
+  e,
+  close,
+  t,
+}: {
+  e: Evidence;
+  close: () => void;
+  t: Translations;
+}) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const d = ref.current;
@@ -1633,16 +1653,16 @@ function EvidencePanel({ e, close }: { e: Evidence; close: () => void }) {
   return (
     <dialog ref={ref} onCancel={close} className="evidence-panel">
       <div className="section-title">
-        <span className="eyebrow">SOURCE EVIDENCE</span>
-        <button aria-label="Close evidence" onClick={close}>
+        <span className="eyebrow">{t.sourceEvidence}</span>
+        <button aria-label={t.closeEvidence} onClick={close}>
           <X size={18} />
         </button>
       </div>
       <h2>{e.path}</h2>
       <p>
-        Lines {e.start}–{e.end} · {e.type}
+        {t.lines} {e.start}–{e.end} · {e.type}
       </p>
-      <span className="status supported">✓ Exact citation verified</span>
+      <span className="status supported">✓ {t.exactCitationVerified}</span>
       <p>{e.relation}</p>
       <div className="code">
         {e.source_text.split("\n").map((line, i) => (
@@ -1660,15 +1680,14 @@ function EvidencePanel({ e, close }: { e: Evidence; close: () => void }) {
         ))}
       </div>
       <p className="quiet">
-        Text presence is verified. Relevance and correctness still require
-        judgment. Imported code was not run.
+        {t.codeVerificationNotice}
       </p>
       {e.url ? (
         <a href={e.url} target="_blank" rel="noreferrer" className="button">
-          Open fixed GitHub commit <ExternalLink size={15} />
+          {t.openGithubCommit} <ExternalLink size={15} />
         </a>
       ) : (
-        <span className="pill">Local fixture · No GitHub source</span>
+        <span className="pill">{t.localFixtureNoGithub}</span>
       )}
     </dialog>
   );
@@ -1681,7 +1700,7 @@ createRoot(document.getElementById("root")!).render(
   </React.StrictMode>,
 );
 
-function SnapshotFiles({ id }: { id: string }) {
+function SnapshotFiles({ id, t }: { id: string; t: Translations }) {
   const [open, setOpen] = useState(false);
   const query = useQuery({
     queryKey: ["snapshotFiles", id],
@@ -1694,13 +1713,13 @@ function SnapshotFiles({ id }: { id: string }) {
   return (
     <div>
       <button onClick={() => setOpen(!open)}>
-        {open ? "Hide" : "Show"} imported file inventory
+        {open ? t.hideFilesInventory : t.showFilesInventory}
       </button>
       {open && (
         <ul>
           {query.data?.files.map((f) => (
             <li key={f.id}>
-              {f.path} · {f.line_count} lines · {f.type}
+              {f.path} · {f.line_count} {t.lines} · {f.type}
             </li>
           ))}
         </ul>

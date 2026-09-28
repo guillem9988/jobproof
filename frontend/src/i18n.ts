@@ -45,6 +45,7 @@ export interface Translations {
   openGithubCommit: string;
   closeEvidence: string;
   exactCitationVerified: string;
+  citationVerified: string;
   // Local project
   sourceTypeGithub: string;
   sourceTypeLocal: string;
@@ -79,6 +80,113 @@ export interface Translations {
   // Theme
   themeToggleDark: string;
   themeToggleLight: string;
+  // Additional comprehensive UI labels
+  priorityRequired: string;
+  priorityPreferred: string;
+  priorityUnspecified: string;
+  statusLabel: string;
+  priorityLabel: string;
+  categoryLabel: string;
+  projectLabel: string;
+  requirementsAndEvidence: string;
+  noMatchingConclusions: string;
+  nextSteps: string;
+  nextStepsDesc: string;
+  expected: string;
+  reportProvenance: string;
+  logicalCalls: string;
+  inputTokens: string;
+  outputTokens: string;
+  commitLabel: string;
+  footerDisclaimer: string;
+  removeEvidence: string;
+  addEvidenceFromSnapshot: string;
+  noAdditionalEvidence: string;
+  humanReviewed: string;
+  invalidCitationsRejected: string;
+  sourceEvidence: string;
+  codeVerificationNotice: string;
+  localFixtureNoGithub: string;
+  progressBuildingReport: string;
+  progressPreparingTask: string;
+  progressNotice: string;
+  cancelTask: string;
+  retryExplicitly: string;
+  historyTitle: string;
+  historyEyebrow: string;
+  historyDesc: string;
+  emptyHistoryTitle: string;
+  emptyHistoryDesc: string;
+  recentAnalyses: string;
+  viewHistory: string;
+  jobReviewTitle: string;
+  jobStartTitle: string;
+  jobReviewIntro: string;
+  jobStartIntro: string;
+  jobTitleLabel: string;
+  companyLabel: string;
+  referenceUrlLabel: string;
+  languageLabel: string;
+  jobPostingLabel: string;
+  savePosting: string;
+  resumePosting: string;
+  extractRequirements: string;
+  extractAgain: string;
+  includeInAnalysis: string;
+  requirementLabel: string;
+  verifiableFromCode: string;
+  codeEvidence: string;
+  limited: string;
+  externalEvidenceNeeded: string;
+  addManualRequirement: string;
+  selectProjectSnapshots: string;
+  selectProjectDesc: string;
+  saveReviewedRequirements: string;
+  analyzeEvidence: string;
+  maxRequirementsNote: string;
+  yourProjects: string;
+  projectsEyebrow: string;
+  projectsIntro: string;
+  projectNameOptional: string;
+  branchOrCommitOptional: string;
+  yourContribution: string;
+  importRepository: string;
+  personalContributionNotDeclared: string;
+  importNewSnapshot: string;
+  files: string;
+  filesExcluded: string;
+  bytesImported: string;
+  allEligibleImported: string;
+  partialImport: string;
+  showFilesInventory: string;
+  hideFilesInventory: string;
+  decisionsTradeoffs: string;
+  badgePrivateLocal: string;
+  backendUnreachable: string;
+  deterministicFixtures: string;
+  homeCardStartTitle: string;
+  homeCardStartDesc: string;
+  principle1Title: string;
+  principle1Desc: string;
+  principle2Title: string;
+  principle2Desc: string;
+  principle3Title: string;
+  principle3Desc: string;
+  badgeFixture: string;
+  fixtureDemoNotice: string;
+  realAnalysisNotice: string;
+  originalPostingSummary: string;
+  manuallyAddedNoCitation: string;
+  postingExcerptPrefix: string;
+  characterPrefix: string;
+  analysisPartialNotice: string;
+  takeItIntoInterview: string;
+  noInterviewQuestions: string;
+  ofRequirements: string;
+  projectsCount: string;
+  yourWorkYourEvidence: string;
+  applicationWorkspace: string;
+  waitingForTaskStatus: string;
 }
 
 export const translations: Record<Lang, Translations> = {
@@ -129,6 +237,7 @@ export const translations: Record<Lang, Translations> = {
     openGithubCommit: "Obrir commit fixat a GitHub",
     closeEvidence: "Tancar evidència",
     exactCitationVerified: "Cita exacta verificada",
+    citationVerified: "cita verificada",
     // Local project
     sourceTypeGithub: "Repositori públic de GitHub",
     sourceTypeLocal: "Carpeta local (directori)",
@@ -160,8 +269,116 @@ export const translations: Record<Lang, Translations> = {
     hideAnswer: "Amagar detalls",
     prevQuestion: "Anterior",
     nextQuestion: "Següent",
+    // Theme
     themeToggleDark: "Mode fosc",
     themeToggleLight: "Mode clar",
+    // Additional UI labels
+    priorityRequired: "Requerit",
+    priorityPreferred: "Preferible",
+    priorityUnspecified: "Sense especificar",
+    statusLabel: "Estat",
+    priorityLabel: "Prioritat",
+    categoryLabel: "Categoria",
+    projectLabel: "Projecte",
+    requirementsAndEvidence: "Requisits i evidències",
+    noMatchingConclusions: "Cap conclusió coincideix amb aquests filtres.",
+    nextSteps: "Passos següents",
+    nextStepsDesc: "Generat a partir de l'anàlisi original. Revisa aquests suggeriments després de la teva valoració.",
+    expected: "Esperat:",
+    reportProvenance: "Procedència de l'informe",
+    logicalCalls: "crides lògiques",
+    inputTokens: "tokens d'entrada",
+    outputTokens: "tokens de sortida",
+    commitLabel: "Commit",
+    footerDisclaimer: "JobProof · L'evidència recolza una conversa honesta. No certifica competència professional.",
+    removeEvidence: "Eliminar evidència:",
+    addEvidenceFromSnapshot: "Afegir evidència d'un fragment analitzat",
+    noAdditionalEvidence: "Sense evidència addicional",
+    humanReviewed: "Revisat per una persona · Original:",
+    invalidCitationsRejected: "cites no vàlides rebutjades.",
+    sourceEvidence: "EVIDÈNCIA DEL CODI FONT",
+    codeVerificationNotice: "La presència del text està verificada. La rellevància i correcció requereixen criteri professional. El codi importat mai s'ha executat.",
+    localFixtureNoGithub: "Projecte local · Sense enllaç a GitHub",
+    progressBuildingReport: "Generant el teu informe d'evidències",
+    progressPreparingTask: "Preparant tasca",
+    progressNotice: "El progrés reflecteix les etapes completades. Pots recarregar aquesta pàgina amb seguretat.",
+    cancelTask: "Cancel·lar tasca",
+    retryExplicitly: "Tornar i reintentar",
+    historyTitle: "Historial d'anàlisis",
+    historyEyebrow: "LA TEVA TRAÇABILITAT",
+    historyDesc: "Cada informe conserva els seus requisits, versions del codi i conclusions originals.",
+    emptyHistoryTitle: "El teu primer informe comença aquí.",
+    emptyHistoryDesc: "Prova la demo o afegeix una oferta de feina per començar.",
+    recentAnalyses: "Anàlisis recents",
+    viewHistory: "Veure historial",
+    jobReviewTitle: "Revisa els requisits",
+    jobStartTitle: "Comença amb la posició",
+    jobReviewIntro: "Conserva prioritats i alternatives. Tria quins requisits vols analitzar.",
+    jobStartIntro: "Enganxa l'oferta de feina original en català, anglès o castellà.",
+    jobTitleLabel: "Títol de la posició",
+    companyLabel: "Empresa (opcional)",
+    referenceUrlLabel: "URL de referència (opcional, mai visitada)",
+    languageLabel: "Idioma",
+    jobPostingLabel: "Text de l'oferta de feina",
+    savePosting: "Desar oferta",
+    resumePosting: "Reprendre",
+    extractRequirements: "Extreure requisits",
+    extractAgain: "Extreure de nou",
+    includeInAnalysis: "Incloure a l'anàlisi",
+    requirementLabel: "Requisit",
+    verifiableFromCode: "Verificable per codi",
+    codeEvidence: "Evidència al codi",
+    limited: "Limitada",
+    externalEvidenceNeeded: "Cal evidència externa",
+    addManualRequirement: "Afegir requisit manual",
+    selectProjectSnapshots: "Selecciona versions dels projectes",
+    selectProjectDesc: "Fins a tres projectes. Una versió per projecte.",
+    saveReviewedRequirements: "Desar requisits revisats",
+    analyzeEvidence: "Analitzar evidències",
+    maxRequirementsNote: "requisits seleccionats · màxim 15",
+    yourProjects: "Els teus projectes",
+    projectsEyebrow: "MATERIAL DE FONT",
+    projectsIntro: "Importa un repositori públic o carpeta local. El codi importat mai s'executa.",
+    projectNameOptional: "Nom del projecte (opcional)",
+    branchOrCommitOptional: "Branca o commit (opcional)",
+    yourContribution: "La teva contribució (auto-declarada, no verificada)",
+    importRepository: "Importar repositori",
+    personalContributionNotDeclared: "Contribució personal no declarada.",
+    importNewSnapshot: "Importar nova versió",
+    files: "fitxers",
+    filesExcluded: "fitxers exclosos.",
+    bytesImported: "bytes importats.",
+    allEligibleImported: "Tots els fitxers aptes importats",
+    partialImport: "Importació parcial",
+    showFilesInventory: "Mostrar inventari de fitxers importats",
+    hideFilesInventory: "Amagar inventari de fitxers importats",
+    decisionsTradeoffs: "Decisions i compromisos d'arquitectura",
+    badgePrivateLocal: "Privat · Local",
+    backendUnreachable: "No es pot connectar amb el backend. Inicia l'API local al port 8000 i recarrega.",
+    deterministicFixtures: "Fixtures deterministes · Sense crides externes",
+    homeCardStartTitle: "Prepara una candidatura més sòlida",
+    homeCardStartDesc: "Comença amb una oferta de feina i fins a tres projectes. Revisa cada conclusió contrastant-la amb la seva font original.",
+    principle1Title: "01 · Fonamentat en fonts",
+    principle1Desc: "Cada prova enllaça a un fitxer i línies exactes.",
+    principle2Title: "02 · Honest amb les mancances",
+    principle2Desc: "La manca d'evidència mai no significa manca de competència.",
+    principle3Title: "03 · Tu tens el control",
+    principle3Desc: "Corregeix conclusions conservant-ne la traçabilitat original.",
+    badgeFixture: "Fixture",
+    fixtureDemoNotice: "DEMO DE FIXTURES — Els resultats provenen de regles deterministes. Els requisits editats podrien no tenir una regla coincident.",
+    realAnalysisNotice: "L'anàlisi real envia l'oferta i fragments seleccionats i anonimizats del teu repositori al proveïdor d'IA configurat. Les claus no surten del servidor.",
+    originalPostingSummary: "Oferta original",
+    manuallyAddedNoCitation: "Afegit manualment · sense cita a l'oferta",
+    postingExcerptPrefix: "Fragment de l'oferta:",
+    characterPrefix: "caràcter",
+    analysisPartialNotice: "Anàlisi parcial. Els resultats incomplets no constitueixen un informe definitiu.",
+    takeItIntoInterview: "PORTA-HO A L'ENTREVISTA",
+    noInterviewQuestions: "No s'han generat preguntes d'entrevista per a aquest informe.",
+    ofRequirements: "de",
+    projectsCount: "projectes",
+    yourWorkYourEvidence: "LA TEVA FEINA. LES TEVES EVIDÈNCIES.",
+    applicationWorkspace: "ESPAI DE CANDIDATURA",
+    waitingForTaskStatus: "Esperant l'estat de la tasca",
   },
   en: {
     brand: "JobProof",
@@ -210,6 +427,7 @@ export const translations: Record<Lang, Translations> = {
     openGithubCommit: "Open fixed GitHub commit",
     closeEvidence: "Close evidence",
     exactCitationVerified: "Exact citation verified",
+    citationVerified: "citation verified",
     // Local project
     sourceTypeGithub: "Public GitHub repository",
     sourceTypeLocal: "Local directory (folder)",
@@ -241,8 +459,116 @@ export const translations: Record<Lang, Translations> = {
     hideAnswer: "Hide details",
     prevQuestion: "Previous",
     nextQuestion: "Next",
+    // Theme
     themeToggleDark: "Dark mode",
     themeToggleLight: "Light mode",
+    // Additional UI labels
+    priorityRequired: "Required",
+    priorityPreferred: "Preferred",
+    priorityUnspecified: "Unspecified",
+    statusLabel: "Status",
+    priorityLabel: "Priority",
+    categoryLabel: "Category",
+    projectLabel: "Project",
+    requirementsAndEvidence: "Requirements & evidence",
+    noMatchingConclusions: "No conclusions match these filters.",
+    nextSteps: "Next steps",
+    nextStepsDesc: "Generated from the original analysis. Reconsider these suggestions after a human review.",
+    expected: "Expected:",
+    reportProvenance: "Report provenance",
+    logicalCalls: "logical calls",
+    inputTokens: "input tokens",
+    outputTokens: "output tokens",
+    commitLabel: "Commit",
+    footerDisclaimer: "JobProof · Evidence supports a conversation. It does not certify professional competence.",
+    removeEvidence: "Remove evidence:",
+    addEvidenceFromSnapshot: "Add evidence from an analyzed snapshot",
+    noAdditionalEvidence: "No additional evidence",
+    humanReviewed: "Human reviewed · Original:",
+    invalidCitationsRejected: "invalid citations rejected.",
+    sourceEvidence: "SOURCE EVIDENCE",
+    codeVerificationNotice: "Text presence is verified. Relevance and correctness still require judgment. Imported code was not run.",
+    localFixtureNoGithub: "Local fixture · No GitHub source",
+    progressBuildingReport: "Building your evidence report",
+    progressPreparingTask: "Preparing task",
+    progressNotice: "Progress reflects completed stages. You can reload this page safely.",
+    cancelTask: "Cancel task",
+    retryExplicitly: "Return and retry explicitly",
+    historyTitle: "Analysis history",
+    historyEyebrow: "YOUR RESEARCH TRAIL",
+    historyDesc: "Each report keeps its requirements, source snapshots and original conclusions.",
+    emptyHistoryTitle: "Your first report starts here.",
+    emptyHistoryDesc: "Try the demo or add a job posting to begin.",
+    recentAnalyses: "Recent analyses",
+    viewHistory: "View history",
+    jobReviewTitle: "Review the requirements",
+    jobStartTitle: "Start with the role",
+    jobReviewIntro: "Keep alternatives and priorities intact. Select the requirements you want to examine.",
+    jobStartIntro: "Paste the original job posting in English, Catalan, or Spanish.",
+    jobTitleLabel: "Job title",
+    companyLabel: "Company (optional)",
+    referenceUrlLabel: "Reference URL (optional, never visited)",
+    languageLabel: "Language",
+    jobPostingLabel: "Job posting",
+    savePosting: "Save posting",
+    resumePosting: "Resume",
+    extractRequirements: "Extract requirements",
+    extractAgain: "Extract again",
+    includeInAnalysis: "Include in analysis",
+    requirementLabel: "Requirement",
+    verifiableFromCode: "Verifiable from code",
+    codeEvidence: "Code evidence",
+    limited: "Limited",
+    externalEvidenceNeeded: "External evidence needed",
+    addManualRequirement: "Add manual requirement",
+    selectProjectSnapshots: "Select project snapshots",
+    selectProjectDesc: "Up to three projects. One snapshot per project.",
+    saveReviewedRequirements: "Save reviewed requirements",
+    analyzeEvidence: "Analyze evidence",
+    maxRequirementsNote: "requirements selected · max 15",
+    yourProjects: "Your projects",
+    projectsEyebrow: "SOURCE MATERIAL",
+    projectsIntro: "Import a public repository at a fixed commit. Imported code is never executed.",
+    projectNameOptional: "Project name (optional)",
+    branchOrCommitOptional: "Branch or commit (optional)",
+    yourContribution: "Your contribution (self-declared, unverified)",
+    importRepository: "Import repository",
+    personalContributionNotDeclared: "Personal contribution not declared.",
+    importNewSnapshot: "Import new snapshot",
+    files: "files",
+    filesExcluded: "files excluded.",
+    bytesImported: "bytes imported.",
+    allEligibleImported: "All eligible fixture/tree files imported",
+    partialImport: "Partial import",
+    showFilesInventory: "Show imported file inventory",
+    hideFilesInventory: "Hide imported file inventory",
+    decisionsTradeoffs: "Decisions & Trade-offs",
+    badgePrivateLocal: "Private · Local",
+    backendUnreachable: "Cannot reach the backend. Start the local API on port 8000, then reload.",
+    deterministicFixtures: "Deterministic fixtures · No external calls",
+    homeCardStartTitle: "Prepare a stronger application",
+    homeCardStartDesc: "Start with a job posting and up to three projects. Review every conclusion against its source.",
+    principle1Title: "01 · Grounded in sources",
+    principle1Desc: "Every proof links to a file and exact lines.",
+    principle2Title: "02 · Honest about gaps",
+    principle2Desc: "Missing evidence never means missing ability.",
+    principle3Title: "03 · Yours to review",
+    principle3Desc: "Correct conclusions while preserving their origin.",
+    badgeFixture: "Fixture",
+    fixtureDemoNotice: "FIXTURE DEMO — Results come from deterministic fixture rules. Edited requirements may not have a matching rule.",
+    realAnalysisNotice: "Real analysis sends the posting and selected, redacted repository excerpts to the configured AI provider. Keys stay on the server.",
+    originalPostingSummary: "Original posting",
+    manuallyAddedNoCitation: "Manually added · no posting citation",
+    postingExcerptPrefix: "Posting excerpt:",
+    characterPrefix: "character",
+    analysisPartialNotice: "Analysis partial. Partial results are not a complete report.",
+    takeItIntoInterview: "TAKE IT INTO THE INTERVIEW",
+    noInterviewQuestions: "No interview questions were generated for this report.",
+    ofRequirements: "of",
+    projectsCount: "projects",
+    yourWorkYourEvidence: "YOUR WORK. YOUR EVIDENCE.",
+    applicationWorkspace: "APPLICATION WORKSPACE",
+    waitingForTaskStatus: "Waiting for task status",
   },
   es: {
     brand: "JobProof",
@@ -291,6 +617,7 @@ export const translations: Record<Lang, Translations> = {
     openGithubCommit: "Abrir commit fijado en GitHub",
     closeEvidence: "Cerrar evidencia",
     exactCitationVerified: "Cita exacta verificada",
+    citationVerified: "cita verificada",
     // Local project
     sourceTypeGithub: "Repositorio público de GitHub",
     sourceTypeLocal: "Carpeta local (directorio)",
@@ -322,7 +649,124 @@ export const translations: Record<Lang, Translations> = {
     hideAnswer: "Ocultar detalles",
     prevQuestion: "Anterior",
     nextQuestion: "Siguiente",
+    // Theme
     themeToggleDark: "Modo oscuro",
     themeToggleLight: "Modo claro",
+    // Additional UI labels
+    priorityRequired: "Requerido",
+    priorityPreferred: "Preferible",
+    priorityUnspecified: "Sin especificar",
+    statusLabel: "Estado",
+    priorityLabel: "Prioridad",
+    categoryLabel: "Categoría",
+    projectLabel: "Proyecto",
+    requirementsAndEvidence: "Requisitos y evidencias",
+    noMatchingConclusions: "Ninguna conclusión coincide con estos filtros.",
+    nextSteps: "Siguientes pasos",
+    nextStepsDesc: "Generado a partir del análisis original. Reconsidera estas sugerencias tras una revisión humana.",
+    expected: "Esperado:",
+    reportProvenance: "Procedencia del informe",
+    logicalCalls: "llamadas lógicas",
+    inputTokens: "tokens de entrada",
+    outputTokens: "tokens de salida",
+    commitLabel: "Commit",
+    footerDisclaimer: "JobProof · La evidencia apoya una conversación honesta. No certifica competencia profesional.",
+    removeEvidence: "Eliminar evidencia:",
+    addEvidenceFromSnapshot: "Añadir evidencia de un fragmento analizado",
+    noAdditionalEvidence: "Sin evidencia adicional",
+    humanReviewed: "Revisado por una persona · Original:",
+    invalidCitationsRejected: "citas no válidas rechazadas.",
+    sourceEvidence: "EVIDENCIA DEL CÓDIGO FUENTE",
+    codeVerificationNotice: "La presencia del texto está verificada. La relevancia y corrección requieren criterio profesional. El código importado no se ha ejecutado.",
+    localFixtureNoGithub: "Proyecto local · Sin enlace a GitHub",
+    progressBuildingReport: "Generando tu informe de evidencias",
+    progressPreparingTask: "Preparando tarea",
+    progressNotice: "El progreso refleja las etapas completadas. Puedes recargar esta página de forma segura.",
+    cancelTask: "Cancelar tarea",
+    retryExplicitly: "Volver y reintentar",
+    historyTitle: "Historial de análisis",
+    historyEyebrow: "TU RASTRO DE INVESTIGACIÓN",
+    historyDesc: "Cada informe conserva sus requisitos, versiones de código y conclusiones originales.",
+    emptyHistoryTitle: "Tu primer informe comienza aquí.",
+    emptyHistoryDesc: "Prueba la demo o añade una oferta de empleo para comenzar.",
+    recentAnalyses: "Análisis recientes",
+    viewHistory: "Ver historial",
+    jobReviewTitle: "Revisa los requisitos",
+    jobStartTitle: "Comienza con la posición",
+    jobReviewIntro: "Conserva prioridades y alternativas. Elige qué requisitos quieres analizar.",
+    jobStartIntro: "Pega la oferta de empleo original en catalán, inglés o español.",
+    jobTitleLabel: "Título de la posición",
+    companyLabel: "Empresa (opcional)",
+    referenceUrlLabel: "URL de referencia (opcional, nunca visitada)",
+    languageLabel: "Idioma",
+    jobPostingLabel: "Texto de la oferta de empleo",
+    savePosting: "Guardar oferta",
+    resumePosting: "Reanudar",
+    extractRequirements: "Extraer requisitos",
+    extractAgain: "Extraer de nuevo",
+    includeInAnalysis: "Incluir en el análisis",
+    requirementLabel: "Requisito",
+    verifiableFromCode: "Verificable por código",
+    codeEvidence: "Evidencia en código",
+    limited: "Limitada",
+    externalEvidenceNeeded: "Se requiere evidencia externa",
+    addManualRequirement: "Añadir requisito manual",
+    selectProjectSnapshots: "Selecciona versiones de los proyectos",
+    selectProjectDesc: "Hasta tres proyectos. Una versión por proyecto.",
+    saveReviewedRequirements: "Guardar requisitos revisados",
+    analyzeEvidence: "Analizar evidencias",
+    maxRequirementsNote: "requisitos seleccionados · máximo 15",
+    yourProjects: "Tus proyectos",
+    projectsEyebrow: "MATERIAL DE ORIGEN",
+    projectsIntro: "Importa un repositorio público o carpeta local. El código importado nunca se ejecuta.",
+    projectNameOptional: "Nombre del proyecto (opcional)",
+    branchOrCommitOptional: "Rama o commit (opcional)",
+    yourContribution: "Tu contribución (autodeclarada, no verificada)",
+    importRepository: "Importar repositorio",
+    personalContributionNotDeclared: "Contribución personal no declarada.",
+    importNewSnapshot: "Importar nueva versión",
+    files: "archivos",
+    filesExcluded: "archivos excluidos.",
+    bytesImported: "bytes importados.",
+    allEligibleImported: "Todos los archivos válidos importados",
+    partialImport: "Importación parcial",
+    showFilesInventory: "Mostrar inventario de archivos importados",
+    hideFilesInventory: "Ocultar inventario de archivos importados",
+    decisionsTradeoffs: "Decisiones y compromisos técnicos",
+    badgePrivateLocal: "Privado · Local",
+    backendUnreachable: "No se puede conectar con el backend. Inicia la API local en el puerto 8000 y recarga.",
+    deterministicFixtures: "Fixtures deterministas · Sin llamadas externas",
+    homeCardStartTitle: "Prepara una candidatura más sólida",
+    homeCardStartDesc: "Empieza con una oferta de empleo y hasta tres proyectos. Revisa cada conclusión contrastándola con su fuente original.",
+    principle1Title: "01 · Fundamentado en fuentes",
+    principle1Desc: "Cada prueba enlaza a un archivo y líneas exactas.",
+    principle2Title: "02 · Honesto con las carencias",
+    principle2Desc: "La falta de evidencia nunca significa falta de competencia.",
+    principle3Title: "03 · Tú tienes el control",
+    principle3Desc: "Corrige conclusiones conservando su origen.",
+    badgeFixture: "Fixture",
+    fixtureDemoNotice: "DEMO DE FIXTURES — Los resultados provienen de reglas deterministas. Los requisitos editados podrían no tener una regla coincidente.",
+    realAnalysisNotice: "El análisis real envía la oferta y fragmentos seleccionados y anonimizados de tu repositorio al proveedor de IA configurado. Las claves permanecen en el servidor.",
+    originalPostingSummary: "Oferta original",
+    manuallyAddedNoCitation: "Añadido manualmente · sin cita en la oferta",
+    postingExcerptPrefix: "Fragmento de la oferta:",
+    characterPrefix: "carácter",
+    analysisPartialNotice: "Análisis parcial. Los resultados incompletos no constituyen un informe definitivo.",
+    takeItIntoInterview: "LLÉVALO A LA ENTREVISTA",
+    noInterviewQuestions: "No se generaron preguntas de entrevista para este informe.",
+    ofRequirements: "de",
+    projectsCount: "proyectos",
+    yourWorkYourEvidence: "TU TRABAJO. TUS EVIDENCIAS.",
+    applicationWorkspace: "ESPACIO DE CANDIDATURA",
+    waitingForTaskStatus: "Esperando el estado de la tarea",
   },
 };
+
+export function getStatusLabels(t: Translations): Record<string, string> {
+  return {
+    supported: t.statusSupported,
+    partial: t.statusPartial,
+    not_evidenced: t.statusNotEvidenced,
+    not_verifiable_from_code: t.statusNotVerifiable,
+  };
+}
