@@ -13,6 +13,11 @@ from pydantic import Field
 
 from . import tasks
 from .core import (
+    ChatMessage,
+    CoverLetterRequest,
+    GeneratedCoverLetter,
+    InterviewChatReply,
+    InterviewChatRequest,
     Requirement,
     Requirements,
     Schema,
@@ -903,6 +908,74 @@ def export(id: str, format: Literal["markdown", "json"] = "markdown"):
             "Content-Disposition": f'attachment; filename="jobproof-{id}.{"md" if format == "markdown" else "json"}"'
         },
     )
+
+
+@app.post("/api/v1/analyses/{id}/cover-letter", response_model=GeneratedCoverLetter)
+def generate_cover_letter_endpoint(id: str, body: CoverLetterRequest):
+    a = get(id, "analysis")
+    if a["status"] != "complete":
+        raise HTTPException(status_code=400, detail="Cover letter requires a completed analysis.")
+    job = get(a["job_id"], "job")
+    assessment_rows = [get(x, "assessment") for x in a["assessments"]]
+    p = provider(a.get("mode", "demo"))
+    letter = p.generate_cover_letter(
+        job_title=job["title"],
+        job_text=job["text"],
+        assessments=assessment_rows,
+        language=body.language,
+        tone=body.tone,
+    )
+    save("analysis", {**a, "cover_letter": letter.model_dump()}, id)
+    return letter
+
+
+@app.get("/api/v1/analyses/{id}/cover-letter", response_model=GeneratedCoverLetter | None)
+def get_cover_letter_endpoint(id: str):
+    a = get(id, "analysis")
+    cl = a.get("cover_letter")
+    if not cl:
+        return None
+    return GeneratedCoverLetter.model_validate(cl)
+
+
+@app.post("/api/v1/analyses/{id}/interview/chat", response_model=InterviewChatReply)
+def interview_chat_endpoint(id: str, body: InterviewChatRequest):
+    a = get(id, "analysis")
+    if a["status"] != "complete":
+        raise HTTPException(status_code=400, detail="Interview simulation requires a completed analysis.")
+    job = get(a["job_id"], "job")
+    assessment_rows = [get(x, "assessment") for x in a["assessments"]]
+    p = provider(a.get("mode", "demo"))
+    reply = p.chat_interview(
+        job_title=job["title"],
+        assessments=assessment_rows,
+        messages=[m.model_dump() for m in body.messages],
+        language=body.language,
+    )
+    chat_history = [m.model_dump() for m in body.messages]
+    chat_history.append({
+        "id": uid(),
+        "role": "interviewer",
+        "content": reply.interviewer_reply,
+        "feedback": reply.evaluation_feedback,
+        "created_at": now(),
+    })
+    save("analysis", {**a, "interview_chat": chat_history}, id)
+    return reply
+
+
+@app.get("/api/v1/analyses/{id}/interview/chat", response_model=list[ChatMessage])
+def get_interview_chat_endpoint(id: str):
+    a = get(id, "analysis")
+    chat = a.get("interview_chat", [])
+    return [ChatMessage.model_validate(m) for m in chat]
+
+
+@app.post("/api/v1/analyses/{id}/interview/reset", response_model=dict[str, bool])
+def reset_interview_chat_endpoint(id: str):
+    a = get(id, "analysis")
+    save("analysis", {**a, "interview_chat": []}, id)
+    return {"ok": True}
 
 
 # Serve static frontend SPA in production if built

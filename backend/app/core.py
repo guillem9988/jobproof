@@ -188,3 +188,35 @@ class Preparation(Schema):
     honest_limitations: list[str]
     personal_prompts: list[str]
     recommendations: list[Recommendation]
+
+
+class GeneratedCoverLetter(Schema):
+    subject: str
+    body: str
+    key_evidence_highlighted: list[str] = Field(default_factory=list)
+
+
+class CoverLetterRequest(Schema):
+    language: Literal["en", "ca", "es"] = "en"
+    tone: Literal["balanced", "technical", "concise"] = "balanced"
+    candidate_name: str = ""
+
+
+class ChatMessage(Schema):
+    id: str = Field(default_factory=uid)
+    role: Literal["interviewer", "candidate"]
+    content: str = Field(max_length=6000)
+    feedback: str = Field(default="", max_length=2000)
+    created_at: str = Field(default_factory=now)
+
+
+class InterviewChatReply(Schema):
+    evaluation_feedback: str = Field(default="", max_length=2000)
+    interviewer_reply: str = Field(max_length=4000)
+    is_wrap_up: bool = False
+
+
+class InterviewChatRequest(Schema):
+    messages: list[ChatMessage] = Field(default_factory=list, max_length=30)
+    language: Literal["en", "ca", "es"] = "en"
+

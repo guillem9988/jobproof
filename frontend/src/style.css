@@ -1222,4 +1222,204 @@ html.dark footer {
   color: #64748b;
 }
 
+/* Cover Letter & Mock Interview Chat Styles */
+.cover-letter-card {
+  padding: 28px 32px;
+  max-width: 840px;
+  margin: 0 auto;
+  background: #ffffff;
+  border: 1px solid #e1e8f3;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.cover-letter-header {
+  border-bottom: 1px solid #edf2f7;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+.cover-letter-body {
+  line-height: 1.75;
+  font-size: 0.95rem;
+  color: #1e293b;
+}
+.interview-chat-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 840px;
+  margin: 0 auto;
+}
+.chat-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.chat-message {
+  display: flex;
+  gap: 12px;
+  max-width: 88%;
+}
+.chat-message.interviewer {
+  align-self: flex-start;
+}
+.chat-message.candidate {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+.chat-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #e2e8f0;
+  color: #475569;
+}
+.chat-message.candidate .chat-avatar {
+  background: #254dd2;
+  color: #ffffff;
+}
+.chat-bubble-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 100%;
+}
+.chat-author {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 2px;
+}
+.chat-message.candidate .chat-author {
+  text-align: right;
+}
+.chat-bubble {
+  padding: 14px 18px;
+  border-radius: 12px;
+  font-size: 0.925rem;
+  line-height: 1.55;
+  word-break: break-word;
+}
+.chat-message.interviewer .chat-bubble {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-top-left-radius: 2px;
+}
+.chat-message.candidate .chat-bubble {
+  background: #254dd2;
+  color: #ffffff;
+  border-top-right-radius: 2px;
+}
+.chat-bubble.thinking {
+  font-style: italic;
+  opacity: 0.85;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.chat-feedback {
+  margin-top: 8px;
+  padding: 10px 14px;
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #92400e;
+}
+.chat-feedback-pill {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #b45309;
+  display: block;
+  margin-bottom: 4px;
+}
+.interview-completed-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 14px;
+  border-radius: 8px;
+  color: #065f46;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin: 16px 0;
+}
+.chat-input-form {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px;
+}
+.chat-input-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Dark Mode Overrides */
+html.dark .cover-letter-card {
+  background-color: #0b1120;
+  border-color: #1e293b;
+}
+html.dark .cover-letter-header {
+  border-bottom-color: #1e293b;
+}
+html.dark .cover-letter-body {
+  color: #e2e8f0;
+}
+html.dark .chat-avatar {
+  background: #1e293b;
+  color: #cbd5e1;
+}
+html.dark .chat-message.candidate .chat-avatar {
+  background: #3b82f6;
+  color: #ffffff;
+}
+html.dark .chat-author {
+  color: #94a3b8;
+}
+html.dark .chat-message.interviewer .chat-bubble {
+  background: #1e293b;
+  color: #f1f5f9;
+}
+html.dark .chat-message.candidate .chat-bubble {
+  background: #3b82f6;
+  color: #ffffff;
+}
+html.dark .chat-feedback {
+  background: #241a06;
+  border-color: #5c3e0a;
+  color: #fde68a;
+}
+html.dark .interview-completed-banner {
+  background: #064e3b;
+  border-color: #047857;
+  color: #a7f3d0;
+}
+html.dark .chat-input-form {
+  background: #0b1120;
+  border-color: #1e293b;
+}
+
+@media (max-width: 700px) {
+  .chat-message {
+    max-width: 96%;
+  }
+  .cover-letter-card {
+    padding: 18px 16px;
+  }
+}
+
+
 

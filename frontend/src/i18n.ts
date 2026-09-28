@@ -213,6 +213,35 @@ export interface Translations {
   activeBadge: string;
   openSettingsButton: string;
   securityNote: string;
+  // Cover Letter
+  tabCoverLetter: string;
+  coverLetterTitle: string;
+  coverLetterDesc: string;
+  generateCoverLetter: string;
+  regenerateCoverLetter: string;
+  generatingCoverLetter: string;
+  copyCoverLetter: string;
+  copiedCoverLetter: string;
+  downloadCoverLetter: string;
+  toneLabel: string;
+  toneBalanced: string;
+  toneTechnical: string;
+  toneConcise: string;
+  evidenceHighlighted: string;
+  coverLetterHonestyNotice: string;
+  // Interactive Mock Interview
+  interviewModeCards: string;
+  interviewModeChat: string;
+  startInterviewChat: string;
+  interviewChatIntro: string;
+  candidateInputPlaceholder: string;
+  sendAnswer: string;
+  interviewerRole: string;
+  candidateRole: string;
+  feedbackFromInterviewer: string;
+  resetInterview: string;
+  interviewCompletedBadge: string;
+  interviewThinking: string;
 }
 
 export const translations: Record<Lang, Translations> = {
@@ -431,6 +460,33 @@ export const translations: Record<Lang, Translations> = {
     activeBadge: "Actiu",
     openSettingsButton: "Configurar claus d'IA",
     securityNote: "Privacitat garantida: les claus s'emmagatzemen a la teva base de dades SQLite local (jobproof.db) i al fitxer .env. Només s'utilitzen per fer peticions directes a l'API del proveïdor seleccionat quan analitzes una oferta.",
+    tabCoverLetter: "Carta de presentació",
+    coverLetterTitle: "Carta de presentació honesta",
+    coverLetterDesc: "Carta basada en evidències reals que cita els teus fitxers de codi i reconeix les limitacions comprovades.",
+    generateCoverLetter: "Generar carta de presentació",
+    regenerateCoverLetter: "Tornar a generar",
+    generatingCoverLetter: "Generant carta...",
+    copyCoverLetter: "Copiar carta",
+    copiedCoverLetter: "Copiat!",
+    downloadCoverLetter: "Descarregar (.md)",
+    toneLabel: "To de redacció",
+    toneBalanced: "Equilibrat i professional",
+    toneTechnical: "Tècnic i detallat",
+    toneConcise: "Concís i directe",
+    evidenceHighlighted: "Evidències clau destacades en aquesta carta:",
+    coverLetterHonestyNotice: "Aquesta carta només afirma allò verificat al teu codi. Revisa-la i personalitza-la abans d'enviar-la.",
+    interviewModeCards: "Targetes de preguntes",
+    interviewModeChat: "Simulacre interactiu amb IA",
+    startInterviewChat: "Començar simulacre d'entrevista",
+    interviewChatIntro: "Practica responent preguntes en viu d'un entrevistador tècnic basades en la teva auditoria de codi.",
+    candidateInputPlaceholder: "Escriu la teva resposta explicant el teu enfocament tècnic...",
+    sendAnswer: "Enviar resposta",
+    interviewerRole: "Entrevistador tècnic",
+    candidateRole: "Tu (Candidat)",
+    feedbackFromInterviewer: "Avaluació de la teva resposta",
+    resetInterview: "Reiniciar entrevista",
+    interviewCompletedBadge: "Simulacre completat",
+    interviewThinking: "L'entrevistador està avaluant...",
   },
   en: {
     brand: "JobProof",
@@ -647,6 +703,33 @@ export const translations: Record<Lang, Translations> = {
     activeBadge: "Active",
     openSettingsButton: "Configure AI keys",
     securityNote: "Privacy guarantee: keys are stored in your local SQLite database (jobproof.db) and .env file. They are only used to make direct API calls to your selected provider when running an analysis.",
+    tabCoverLetter: "Cover Letter",
+    coverLetterTitle: "Honest Evidence Cover Letter",
+    coverLetterDesc: "Evidence-grounded letter citing real repository files and acknowledging verified boundaries.",
+    generateCoverLetter: "Generate Cover Letter",
+    regenerateCoverLetter: "Regenerate",
+    generatingCoverLetter: "Generating letter...",
+    copyCoverLetter: "Copy Letter",
+    copiedCoverLetter: "Copied!",
+    downloadCoverLetter: "Download (.md)",
+    toneLabel: "Writing tone",
+    toneBalanced: "Balanced & Professional",
+    toneTechnical: "Technical & Deep",
+    toneConcise: "Concise & Direct",
+    evidenceHighlighted: "Key evidence highlighted in this letter:",
+    coverLetterHonestyNotice: "This letter only claims what is verified in your code. Review and customize before sending.",
+    interviewModeCards: "Question Cards",
+    interviewModeChat: "Interactive AI Mock Interview",
+    startInterviewChat: "Start Mock Interview",
+    interviewChatIntro: "Practice answering live questions from a technical interviewer based on your code audit.",
+    candidateInputPlaceholder: "Type your answer explaining your technical approach...",
+    sendAnswer: "Send Answer",
+    interviewerRole: "Technical Interviewer",
+    candidateRole: "You (Candidate)",
+    feedbackFromInterviewer: "Feedback on your answer",
+    resetInterview: "Reset Interview",
+    interviewCompletedBadge: "Interview Complete",
+    interviewThinking: "Interviewer is evaluating...",
   },
   es: {
     brand: "JobProof",
@@ -863,6 +946,33 @@ export const translations: Record<Lang, Translations> = {
     activeBadge: "Activo",
     openSettingsButton: "Configurar claves de IA",
     securityNote: "Privacidad garantizada: las claves se almacenan en tu base de datos SQLite local (jobproof.db) y en el archivo .env. Solo se utilizan para hacer llamadas directas a la API del proveedor seleccionado al analizar una oferta.",
+    tabCoverLetter: "Carta de presentación",
+    coverLetterTitle: "Carta de presentación honesta",
+    coverLetterDesc: "Carta basada en evidencias reales que cita tus archivos de código y reconoce las limitaciones comprobadas.",
+    generateCoverLetter: "Generar carta de presentación",
+    regenerateCoverLetter: "Regenerar",
+    generatingCoverLetter: "Generando carta...",
+    copyCoverLetter: "Copiar carta",
+    copiedCoverLetter: "¡Copiado!",
+    downloadCoverLetter: "Descargar (.md)",
+    toneLabel: "Tono de redacción",
+    toneBalanced: "Equilibrado y profesional",
+    toneTechnical: "Técnico y detallado",
+    toneConcise: "Conciso y directo",
+    evidenceHighlighted: "Evidencias clave destacadas en esta carta:",
+    coverLetterHonestyNotice: "Esta carta solo afirma lo verificado en tu código. Revísala y personalízala antes de enviarla.",
+    interviewModeCards: "Tarjetas de preguntas",
+    interviewModeChat: "Simulacro interactivo con IA",
+    startInterviewChat: "Comenzar simulacro de entrevista",
+    interviewChatIntro: "Practica respondiendo preguntas en vivo de un entrevistador técnico basadas en tu auditoría de código.",
+    candidateInputPlaceholder: "Escribe tu respuesta explicando tu enfoque técnico...",
+    sendAnswer: "Enviar respuesta",
+    interviewerRole: "Entrevistador técnico",
+    candidateRole: "Tú (Candidato)",
+    feedbackFromInterviewer: "Evaluación de tu respuesta",
+    resetInterview: "Reiniciar entrevista",
+    interviewCompletedBadge: "Simulacro completado",
+    interviewThinking: "El entrevistador está evaluando...",
   },
 };
 

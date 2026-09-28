@@ -29,6 +29,12 @@ import {
   Key,
   Eye,
   EyeOff,
+  Mail,
+  Send,
+  MessageSquare,
+  Bot,
+  User,
+  Sparkles,
 } from "lucide-react";
 import { translations, type Lang, getStatusLabels, type Translations } from "./i18n";
 import { one, many, request, counts } from "./api";
@@ -44,6 +50,9 @@ import type {
   Task,
   AppSettings,
   SettingsTestResult,
+  GeneratedCoverLetter,
+  ChatMessage,
+  InterviewChatReply,
 } from "./types";
 import "./style.css";
 const qc = new QueryClient();
@@ -72,7 +81,16 @@ function App() {
     [copied, setCopied] = useState(false),
     [copiedBullets, setCopiedBullets] = useState(false),
     [projectSource, setProjectSource] = useState<"github" | "local">("github"),
-    [reportTab, setReportTab] = useState<"evidence" | "resume" | "interview">("evidence"),
+    [reportTab, setReportTab] = useState<"evidence" | "resume" | "interview" | "cover_letter">("evidence"),
+    [interviewSubMode, setInterviewSubMode] = useState<"cards" | "chat">("chat"),
+    [interviewChatMessages, setInterviewChatMessages] = useState<ChatMessage[]>([]),
+    [interviewChatInput, setInterviewChatInput] = useState(""),
+    [interviewChatBusy, setInterviewChatBusy] = useState(false),
+    [interviewCompleted, setInterviewCompleted] = useState(false),
+    [coverLetterTone, setCoverLetterTone] = useState<"balanced" | "technical" | "concise">("balanced"),
+    [currentCoverLetter, setCurrentCoverLetter] = useState<GeneratedCoverLetter | null>(null),
+    [generatingCoverLetter, setGeneratingCoverLetter] = useState(false),
+    [copiedCoverLetter, setCopiedCoverLetter] = useState(false),
     [interviewIndex, setInterviewIndex] = useState(0),
     [interviewTimer, setInterviewTimer] = useState(0),
     [timerActive, setTimerActive] = useState(false),
@@ -252,6 +270,147 @@ function App() {
       setTestStatus({ testing: false, result: null });
     });
   }
+
+  useEffect(() => {
+    if (report.data) {
+      if (report.data.cover_letter) {
+        setCurrentCoverLetter(report.data.cover_letter);
+      } else {
+        setCurrentCoverLetter(null);
+      }
+      if (report.data.interview_chat && report.data.interview_chat.length > 0) {
+        setInterviewChatMessages(report.data.interview_chat);
+        const last = report.data.interview_chat[report.data.interview_chat.length - 1];
+        if (
+          last.role === "interviewer" &&
+          (last.content.toLowerCase().includes("conclu") ||
+            last.content.toLowerCase().includes("complet"))
+        ) {
+          setInterviewCompleted(true);
+        } else {
+          setInterviewCompleted(false);
+        }
+      } else {
+        setInterviewChatMessages([]);
+        setInterviewCompleted(false);
+      }
+    }
+  }, [report.data]);
+
+  async function handleGenerateCoverLetter(tone: "balanced" | "technical" | "concise") {
+    if (!report.data) return;
+    setGeneratingCoverLetter(true);
+    try {
+      const res = await request<GeneratedCoverLetter>(`/analyses/${report.data.id}/cover-letter`, {
+        language: lang,
+        tone,
+      });
+      setCurrentCoverLetter(res);
+      await qc.invalidateQueries({ queryKey: ["report", report.data.id] });
+    } catch (err) {
+      console.error("Error generating cover letter:", err);
+    } finally {
+      setGeneratingCoverLetter(false);
+    }
+  }
+
+  function handleCopyCoverLetter() {
+    if (!currentCoverLetter) return;
+    const fullText = `${currentCoverLetter.subject}\n\n${currentCoverLetter.body}`;
+    navigator.clipboard.writeText(fullText);
+    setCopiedCoverLetter(true);
+    setTimeout(() => setCopiedCoverLetter(false), 2000);
+  }
+
+  function handleDownloadCoverLetter() {
+    if (!currentCoverLetter || !report.data) return;
+    const blob = new Blob([`${currentCoverLetter.subject}\n\n${currentCoverLetter.body}`], {
+      type: "text/markdown;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `cover-letter-${report.data.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleStartInterviewChat() {
+    if (!report.data) return;
+    setInterviewChatBusy(true);
+    try {
+      const res = await request<InterviewChatReply>(`/analyses/${report.data.id}/interview/chat`, {
+        messages: [],
+        language: lang,
+      });
+      const initialMsg: ChatMessage = {
+        id: "msg-" + Date.now(),
+        role: "interviewer",
+        content: res.interviewer_reply,
+        feedback: res.evaluation_feedback,
+        created_at: new Date().toISOString(),
+      };
+      setInterviewChatMessages([initialMsg]);
+      if (res.is_wrap_up) setInterviewCompleted(true);
+    } catch (err) {
+      console.error("Error starting interview chat:", err);
+    } finally {
+      setInterviewChatBusy(false);
+    }
+  }
+
+  async function handleSendCandidateAnswer() {
+    if (!report.data || !interviewChatInput.trim() || interviewChatBusy) return;
+    const answerText = interviewChatInput.trim();
+    setInterviewChatInput("");
+    const candidateMsg: ChatMessage = {
+      id: "msg-" + Date.now(),
+      role: "candidate",
+      content: answerText,
+      created_at: new Date().toISOString(),
+    };
+    const updatedMessages = [...interviewChatMessages, candidateMsg];
+    setInterviewChatMessages(updatedMessages);
+    setInterviewChatBusy(true);
+    try {
+      const res = await request<InterviewChatReply>(`/analyses/${report.data.id}/interview/chat`, {
+        messages: updatedMessages,
+        language: lang,
+      });
+      if (res.evaluation_feedback) {
+        candidateMsg.feedback = res.evaluation_feedback;
+      }
+      const replyMsg: ChatMessage = {
+        id: "msg-" + (Date.now() + 1),
+        role: "interviewer",
+        content: res.interviewer_reply,
+        feedback: "",
+        created_at: new Date().toISOString(),
+      };
+      setInterviewChatMessages([...updatedMessages, replyMsg]);
+      if (res.is_wrap_up) setInterviewCompleted(true);
+      await qc.invalidateQueries({ queryKey: ["report", report.data.id] });
+    } catch (err) {
+      console.error("Error sending interview answer:", err);
+    } finally {
+      setInterviewChatBusy(false);
+    }
+  }
+
+  async function handleResetInterviewChat() {
+    if (!report.data) return;
+    try {
+      await request(`/analyses/${report.data.id}/interview/reset`, {});
+      setInterviewChatMessages([]);
+      setInterviewCompleted(false);
+      await qc.invalidateQueries({ queryKey: ["report", report.data.id] });
+    } catch (err) {
+      console.error("Error resetting interview chat:", err);
+    }
+  }
+
 
   async function act(fn: () => Promise<void>) {
     setBusy(true);
@@ -1470,6 +1629,16 @@ function App() {
                   <Play size={16} />
                   {t.tabInterviewMode}
                 </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={reportTab === "cover_letter"}
+                  className={`tab-button ${reportTab === "cover_letter" ? "active" : ""}`}
+                  onClick={() => setReportTab("cover_letter")}
+                >
+                  <Mail size={16} />
+                  {t.tabCoverLetter}
+                </button>
               </div>
               {report.data.status !== "complete" ? (
                 <div role="alert" className="notice">
@@ -1764,6 +1933,118 @@ function App() {
                     });
                   })()}
                 </>
+              ) : reportTab === "cover_letter" ? (
+                <>
+                  <div className="section-title">
+                    <div>
+                      <h2>{t.coverLetterTitle}</h2>
+                      <p className="intro">{t.coverLetterDesc}</p>
+                    </div>
+                    <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                      <label style={{ margin: 0, display: "flex", alignItems: "center", gap: 6, fontSize: "0.85rem", fontWeight: 600 }}>
+                        {t.toneLabel}:
+                        <select
+                          aria-label={t.toneLabel}
+                          value={coverLetterTone}
+                          onChange={(e) => setCoverLetterTone(e.target.value as "balanced" | "technical" | "concise")}
+                          style={{ width: "auto", padding: "4px 8px", fontSize: "0.85rem" }}
+                        >
+                          <option value="balanced">{t.toneBalanced}</option>
+                          <option value="technical">{t.toneTechnical}</option>
+                          <option value="concise">{t.toneConcise}</option>
+                        </select>
+                      </label>
+                      <button
+                        className="primary"
+                        disabled={generatingCoverLetter}
+                        onClick={() => handleGenerateCoverLetter(coverLetterTone)}
+                      >
+                        <Sparkles size={16} />
+                        {generatingCoverLetter
+                          ? t.generatingCoverLetter
+                          : currentCoverLetter
+                            ? t.regenerateCoverLetter
+                            : t.generateCoverLetter}
+                      </button>
+                      {currentCoverLetter && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={handleCopyCoverLetter}
+                            title={t.copyCoverLetter}
+                          >
+                            {copiedCoverLetter ? <Check size={16} /> : <Copy size={16} />}
+                            {copiedCoverLetter ? t.copiedCoverLetter : t.copyCoverLetter}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleDownloadCoverLetter}
+                            title={t.downloadCoverLetter}
+                          >
+                            <Download size={16} />
+                            {t.downloadCoverLetter}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {!currentCoverLetter && !generatingCoverLetter && (
+                    <div className="card start" style={{ textAlign: "center", padding: "48px 24px" }}>
+                      <span className="icon-box" style={{ margin: "0 auto 16px" }}>
+                        <Mail size={32} />
+                      </span>
+                      <h2>{t.coverLetterTitle}</h2>
+                      <p style={{ maxWidth: 540, margin: "0 auto 20px" }}>{t.coverLetterDesc}</p>
+                      <button
+                        className="primary"
+                        onClick={() => handleGenerateCoverLetter(coverLetterTone)}
+                        style={{ margin: "0 auto" }}
+                      >
+                        <Sparkles size={16} />
+                        {t.generateCoverLetter}
+                      </button>
+                    </div>
+                  )}
+
+                  {generatingCoverLetter && (
+                    <div className="card" style={{ textAlign: "center", padding: 40 }}>
+                      <p className="intro">{t.generatingCoverLetter}</p>
+                    </div>
+                  )}
+
+                  {currentCoverLetter && (
+                    <div className="card cover-letter-card">
+                      <div className="cover-letter-header">
+                        <span className="eyebrow">SUBJECT</span>
+                        <h3 style={{ margin: "4px 0 12px", fontSize: "1.1rem" }}>{currentCoverLetter.subject}</h3>
+                      </div>
+
+                      {currentCoverLetter.key_evidence_highlighted && currentCoverLetter.key_evidence_highlighted.length > 0 && (
+                        <div className="cover-letter-evidence" style={{ marginBottom: 18 }}>
+                          <span className="quiet" style={{ fontSize: "0.8rem", display: "block", marginBottom: 6 }}>
+                            {t.evidenceHighlighted}
+                          </span>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                            {currentCoverLetter.key_evidence_highlighted.map((ev, i) => (
+                              <span key={i} className="pill supported" style={{ fontSize: "0.78rem" }}>
+                                ✓ {ev}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="cover-letter-body" style={{ whiteSpace: "pre-line", lineHeight: 1.7, fontSize: "0.95rem" }}>
+                        {currentCoverLetter.body}
+                      </div>
+
+                      <div className="notice" style={{ marginTop: 24, marginBottom: 0 }}>
+                        <p>💡 {t.coverLetterHonestyNotice}</p>
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
                 <>
                   <div className="section-title">
@@ -1771,167 +2052,302 @@ function App() {
                       <h2>{t.interviewSimTitle}</h2>
                       <p className="intro">{t.interviewSimDesc}</p>
                     </div>
+                    <div className="sub-mode-toggle" style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        className={`tab-button ${interviewSubMode === "chat" ? "active" : ""}`}
+                        onClick={() => setInterviewSubMode("chat")}
+                        style={{ padding: "6px 12px", fontSize: "0.85rem" }}
+                      >
+                        <MessageSquare size={15} />
+                        {t.interviewModeChat}
+                      </button>
+                      <button
+                        type="button"
+                        className={`tab-button ${interviewSubMode === "cards" ? "active" : ""}`}
+                        onClick={() => setInterviewSubMode("cards")}
+                        style={{ padding: "6px 12px", fontSize: "0.85rem" }}
+                      >
+                        <Play size={15} />
+                        {t.interviewModeCards}
+                      </button>
+                      {interviewSubMode === "chat" && interviewChatMessages.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleResetInterviewChat}
+                          title={t.resetInterview}
+                          style={{ padding: "6px 10px", fontSize: "0.85rem" }}
+                        >
+                          <RotateCcw size={15} />
+                          {t.resetInterview}
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  {(() => {
-                    const questions =
-                      report.data.preparation?.questions || [];
-                    if (!questions.length) {
-                      return (
-                        <div className="card">
-                          {t.noInterviewQuestions}
-                        </div>
-                      );
-                    }
-                    const qIndex = Math.min(
-                      interviewIndex,
-                      questions.length - 1,
-                    );
-                    const qText = questions[qIndex];
-                    const isRevealed = !!revealedQuestions[qIndex];
-                    const mins = String(
-                      Math.floor(interviewTimer / 60),
-                    ).padStart(2, "0");
-                    const secs = String(interviewTimer % 60).padStart(2, "0");
 
-                    return (
-                      <div className="interview-card">
-                        <div className="eyebrow">
-                          {t.questionOf} {qIndex + 1} / {questions.length}
+                  {interviewSubMode === "chat" ? (
+                    <div className="interview-chat-container">
+                      {interviewChatMessages.length === 0 ? (
+                        <div className="card start" style={{ textAlign: "center", padding: "40px 20px" }}>
+                          <span className="icon-box" style={{ margin: "0 auto 16px" }}>
+                            <Bot size={32} />
+                          </span>
+                          <h2>{t.interviewModeChat}</h2>
+                          <p style={{ maxWidth: 520, margin: "0 auto 20px" }}>{t.interviewChatIntro}</p>
+                          <button
+                            className="primary"
+                            onClick={handleStartInterviewChat}
+                            disabled={interviewChatBusy}
+                            style={{ margin: "0 auto" }}
+                          >
+                            <Play size={16} />
+                            {interviewChatBusy ? t.interviewThinking : t.startInterviewChat}
+                          </button>
                         </div>
-                        <h2 style={{ fontSize: "1.35rem", marginTop: 8 }}>
-                          {qText}
-                        </h2>
+                      ) : (
+                        <div className="chat-thread">
+                          {interviewChatMessages.map((msg) => (
+                            <div key={msg.id} className={`chat-message ${msg.role}`}>
+                              <div className="chat-avatar">
+                                {msg.role === "interviewer" ? <Bot size={18} /> : <User size={18} />}
+                              </div>
+                              <div className="chat-bubble-wrap">
+                                <div className="chat-author">
+                                  {msg.role === "interviewer" ? t.interviewerRole : t.candidateRole}
+                                </div>
+                                <div className="chat-bubble">
+                                  {msg.content}
+                                </div>
+                                {msg.feedback && (
+                                  <div className="chat-feedback">
+                                    <span className="chat-feedback-pill">💡 {t.feedbackFromInterviewer}</span>
+                                    <p>{msg.feedback}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
 
-                        <div className="timer-box">
-                          <div className="timer-display">
-                            ⏱️ {mins}:{secs}
-                          </div>
-                          <div className="timer-controls">
-                            <button
-                              type="button"
-                              className={timerActive ? "" : "primary"}
-                              onClick={() => setTimerActive(!timerActive)}
-                            >
-                              {timerActive ? (
-                                <Pause size={16} />
-                              ) : (
-                                <Play size={16} />
-                              )}
-                              {timerActive ? t.timerPause : t.timerStart}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setTimerActive(false);
-                                setInterviewTimer(0);
+                          {interviewChatBusy && (
+                            <div className="chat-message interviewer">
+                              <div className="chat-avatar">
+                                <Bot size={18} />
+                              </div>
+                              <div className="chat-bubble-wrap">
+                                <div className="chat-author">{t.interviewerRole}</div>
+                                <div className="chat-bubble thinking">
+                                  {t.interviewThinking}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {interviewCompleted && (
+                            <div className="interview-completed-banner">
+                              ✓ {t.interviewCompletedBadge}
+                            </div>
+                          )}
+
+                          {!interviewCompleted && (
+                            <form
+                              className="chat-input-form"
+                              onSubmit={(e) => {
+                                e.preventDefault();
+                                handleSendCandidateAnswer();
                               }}
                             >
-                              <RotateCcw size={16} />
-                              {t.timerReset}
-                            </button>
+                              <textarea
+                                rows={3}
+                                placeholder={t.candidateInputPlaceholder}
+                                value={interviewChatInput}
+                                onChange={(e) => setInterviewChatInput(e.target.value)}
+                                disabled={interviewChatBusy}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSendCandidateAnswer();
+                                  }
+                                }}
+                              />
+                              <div className="chat-input-actions">
+                                <button
+                                  type="submit"
+                                  className="primary"
+                                  disabled={interviewChatBusy || !interviewChatInput.trim()}
+                                >
+                                  <Send size={15} />
+                                  {t.sendAnswer}
+                                </button>
+                              </div>
+                            </form>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      {(() => {
+                        const questions =
+                          report.data.preparation?.questions || [];
+                        if (!questions.length) {
+                          return (
+                            <div className="card">
+                              {t.noInterviewQuestions}
+                            </div>
+                          );
+                        }
+                        const qIndex = Math.min(
+                          interviewIndex,
+                          questions.length - 1,
+                        );
+                        const qText = questions[qIndex];
+                        const isRevealed = !!revealedQuestions[qIndex];
+                        const mins = String(
+                          Math.floor(interviewTimer / 60),
+                        ).padStart(2, "0");
+                        const secs = String(interviewTimer % 60).padStart(2, "0");
+
+                        return (
+                          <div className="interview-card">
+                            <div className="eyebrow">
+                              {t.questionOf} {qIndex + 1} / {questions.length}
+                            </div>
+                            <h2 style={{ fontSize: "1.35rem", marginTop: 8 }}>
+                              {qText}
+                            </h2>
+
+                            <div className="timer-box">
+                              <div className="timer-display">
+                                ⏱️ {mins}:{secs}
+                              </div>
+                              <div className="timer-controls">
+                                <button
+                                  type="button"
+                                  className={timerActive ? "" : "primary"}
+                                  onClick={() => setTimerActive(!timerActive)}
+                                >
+                                  {timerActive ? (
+                                    <Pause size={16} />
+                                  ) : (
+                                    <Play size={16} />
+                                  )}
+                                  {timerActive ? t.timerPause : t.timerStart}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setTimerActive(false);
+                                    setInterviewTimer(0);
+                                  }}
+                                >
+                                  <RotateCcw size={16} />
+                                  {t.timerReset}
+                                </button>
+                              </div>
+                            </div>
+
+                            <label style={{ marginTop: 16 }}>
+                              {t.draftYourAnswer}
+                              <textarea
+                                rows={4}
+                                placeholder={t.draftPlaceholder}
+                                value={interviewNotes[qIndex] || ""}
+                                onChange={(e) =>
+                                  setInterviewNotes((prev) => ({
+                                    ...prev,
+                                    [qIndex]: e.target.value,
+                                  }))
+                                }
+                              />
+                            </label>
+
+                            <div style={{ marginTop: 20 }}>
+                              <button
+                                type="button"
+                                className="button"
+                                onClick={() =>
+                                  setRevealedQuestions((prev) => ({
+                                    ...prev,
+                                    [qIndex]: !prev[qIndex],
+                                  }))
+                                }
+                              >
+                                <ShieldCheck size={16} />
+                                {isRevealed ? t.hideAnswer : t.revealAnswer}
+                              </button>
+                            </div>
+
+                            {isRevealed && (
+                              <div
+                                style={{
+                                  marginTop: 20,
+                                  padding: 16,
+                                  background: "#f8fafc",
+                                  borderRadius: 8,
+                                  border: "1px solid #e2e8f0",
+                                }}
+                              >
+                                <h3>{t.technicalPoints}</h3>
+                                <ul>
+                                  {report.data?.preparation?.technical_points.map(
+                                    (pt) => (
+                                      <li key={pt}>{pt}</li>
+                                    ),
+                                  )}
+                                </ul>
+
+                                <h3>{t.decisionsTradeoffs}</h3>
+                                <ul>
+                                  {report.data?.preparation?.decisions.map((d) => (
+                                    <li key={d}>{d}</li>
+                                  ))}
+                                </ul>
+
+                                <h3>{t.honestLimitations}</h3>
+                                <ul>
+                                  {report.data?.preparation?.honest_limitations.map(
+                                    (lim) => (
+                                      <li key={lim}>{lim}</li>
+                                    ),
+                                  )}
+                                </ul>
+                              </div>
+                            )}
+
+                            <div className="interview-nav">
+                              <button
+                                type="button"
+                                disabled={qIndex === 0}
+                                onClick={() => {
+                                  setInterviewIndex((i) => Math.max(0, i - 1));
+                                  setInterviewTimer(0);
+                                  setTimerActive(false);
+                                }}
+                              >
+                                ← {t.prevQuestion}
+                              </button>
+                              <span>
+                                {qIndex + 1} / {questions.length}
+                              </span>
+                              <button
+                                type="button"
+                                disabled={qIndex >= questions.length - 1}
+                                onClick={() => {
+                                  setInterviewIndex((i) =>
+                                    Math.min(questions.length - 1, i + 1),
+                                  );
+                                  setInterviewTimer(0);
+                                  setTimerActive(false);
+                                }}
+                              >
+                                {t.nextQuestion} →
+                              </button>
+                            </div>
                           </div>
-                        </div>
-
-                        <label style={{ marginTop: 16 }}>
-                          {t.draftYourAnswer}
-                          <textarea
-                            rows={4}
-                            placeholder={t.draftPlaceholder}
-                            value={interviewNotes[qIndex] || ""}
-                            onChange={(e) =>
-                              setInterviewNotes((prev) => ({
-                                ...prev,
-                                [qIndex]: e.target.value,
-                              }))
-                            }
-                          />
-                        </label>
-
-                        <div style={{ marginTop: 20 }}>
-                          <button
-                            type="button"
-                            className="button"
-                            onClick={() =>
-                              setRevealedQuestions((prev) => ({
-                                ...prev,
-                                [qIndex]: !prev[qIndex],
-                              }))
-                            }
-                          >
-                            <ShieldCheck size={16} />
-                            {isRevealed ? t.hideAnswer : t.revealAnswer}
-                          </button>
-                        </div>
-
-                        {isRevealed && (
-                          <div
-                            style={{
-                              marginTop: 20,
-                              padding: 16,
-                              background: "#f8fafc",
-                              borderRadius: 8,
-                              border: "1px solid #e2e8f0",
-                            }}
-                          >
-                            <h3>{t.technicalPoints}</h3>
-                            <ul>
-                              {report.data?.preparation?.technical_points.map(
-                                (pt) => (
-                                  <li key={pt}>{pt}</li>
-                                ),
-                              )}
-                            </ul>
-
-                            <h3>{t.decisionsTradeoffs}</h3>
-                            <ul>
-                              {report.data?.preparation?.decisions.map((d) => (
-                                <li key={d}>{d}</li>
-                              ))}
-                            </ul>
-
-                            <h3>{t.honestLimitations}</h3>
-                            <ul>
-                              {report.data?.preparation?.honest_limitations.map(
-                                (lim) => (
-                                  <li key={lim}>{lim}</li>
-                                ),
-                              )}
-                            </ul>
-                          </div>
-                        )}
-
-                        <div className="interview-nav">
-                          <button
-                            type="button"
-                            disabled={qIndex === 0}
-                            onClick={() => {
-                              setInterviewIndex((i) => Math.max(0, i - 1));
-                              setInterviewTimer(0);
-                              setTimerActive(false);
-                            }}
-                          >
-                            ← {t.prevQuestion}
-                          </button>
-                          <span>
-                            {qIndex + 1} / {questions.length}
-                          </span>
-                          <button
-                            type="button"
-                            disabled={qIndex >= questions.length - 1}
-                            onClick={() => {
-                              setInterviewIndex((i) =>
-                                Math.min(questions.length - 1, i + 1),
-                              );
-                              setInterviewTimer(0);
-                              setTimerActive(false);
-                            }}
-                          >
-                            {t.nextQuestion} →
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })()}
+                        );
+                      })()}
+                    </>
+                  )}
                 </>
               )}
             </>

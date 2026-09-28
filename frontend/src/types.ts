@@ -105,6 +105,8 @@ export type Analysis = {
       effort_estimate: string;
     }[];
   };
+  cover_letter?: GeneratedCoverLetter;
+  interview_chat?: ChatMessage[];
 };
 
 export type AppSettings = {
@@ -124,5 +126,25 @@ export type SettingsTestResult = {
   success: boolean;
   message: string;
   latency_ms: number;
+};
+
+export type GeneratedCoverLetter = {
+  subject: string;
+  body: string;
+  key_evidence_highlighted: string[];
+};
+
+export type ChatMessage = {
+  id: string;
+  role: "interviewer" | "candidate";
+  content: string;
+  feedback?: string;
+  created_at: string;
+};
+
+export type InterviewChatReply = {
+  evaluation_feedback: string;
+  interviewer_reply: string;
+  is_wrap_up: boolean;
 };
 

@@ -85,3 +85,51 @@ test("completed extraction resumes its posting after reload", async ({
   ).toBeVisible({ timeout: 10000 });
   await expect(page.getByLabel("Requirement", { exact: true })).toHaveCount(8);
 });
+
+test("cover letter generation and interactive mock interview chat", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Try fixture demo" }).click();
+  await page.getByRole("button", { name: "Analyze evidence" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Requirements & evidence" }),
+  ).toBeVisible({ timeout: 20000 });
+
+  // 1. Cover Letter Tab
+  await page.getByRole("tab", { name: "Cover Letter" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Honest Evidence Cover Letter" }).first(),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Generate Cover Letter" }).first().click();
+  await expect(page.locator(".cover-letter-card")).toBeVisible();
+  await expect(page.locator(".cover-letter-body")).toContainText("SignalBoard");
+  await expect(page.locator(".cover-letter-body")).toContainText("app/api.py");
+
+  // 2. Interview Tab & Mock Interview Chat
+  await page.getByRole("tab", { name: "Interview Practice Mode" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Interview Practice Mode" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Start Mock Interview" }).first().click();
+  await expect(page.locator(".chat-message.interviewer")).toBeVisible();
+  await expect(page.locator(".chat-message.interviewer .chat-bubble")).toContainText(
+    "app/api.py",
+  );
+
+  // Candidate sends response
+  await page
+    .getByPlaceholder("Type your answer explaining your technical approach...")
+    .fill("I implemented the owner check to protect endpoint data and tested 403.");
+  await page.getByRole("button", { name: "Send Answer" }).click();
+  await expect(page.locator(".chat-message.candidate")).toBeVisible();
+
+  // Interviewer responds with question 2 and feedback
+  await expect(page.locator(".chat-feedback").first()).toBeVisible();
+  await expect(page.locator(".chat-message.interviewer")).toHaveCount(2);
+
+  // Reset interview
+  await page.getByTitle("Reset Interview").click();
+  await expect(page.locator(".chat-message")).toHaveCount(0);
+});
+

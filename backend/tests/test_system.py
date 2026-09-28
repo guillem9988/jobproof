@@ -472,3 +472,74 @@ def test_settings_endpoints():
         )
 
 
+def test_cover_letter_and_interview_chat():
+    with TestClient(app) as c:
+        d = c.post("/api/v1/demo", json={}).json()
+        body = {**d, "mode": "demo", "request_id": "test-ai-tools-req"}
+        res = c.post("/api/v1/analyses", json=body)
+        task = wait_task(c, res.json()["id"])
+        assert task["status"] == "complete"
+        analysis_id = task["analysis_id"]
+
+        # 1. Test Cover Letter Generation (English and Catalan)
+        cl_en = c.post(
+            f"/api/v1/analyses/{analysis_id}/cover-letter",
+            json={"language": "en", "tone": "balanced"},
+        )
+        assert cl_en.status_code == 200
+        en_data = cl_en.json()
+        assert "Junior product engineer" in en_data["subject"]
+        assert "SignalBoard" in en_data["body"]
+        assert "app/api.py" in en_data["body"]
+        assert len(en_data["key_evidence_highlighted"]) > 0
+
+        cl_ca = c.post(
+            f"/api/v1/analyses/{analysis_id}/cover-letter",
+            json={"language": "ca", "tone": "technical"},
+        )
+        assert cl_ca.status_code == 200
+        ca_data = cl_ca.json()
+        assert "Candidatura" in ca_data["subject"]
+        assert "SignalBoard" in ca_data["body"]
+
+        # 2. Test Get Saved Cover Letter
+        cl_saved = c.get(f"/api/v1/analyses/{analysis_id}/cover-letter")
+        assert cl_saved.status_code == 200
+        assert cl_saved.json()["subject"] == ca_data["subject"]
+
+        # 3. Test Interview Chat Opening
+        chat_start = c.post(
+            f"/api/v1/analyses/{analysis_id}/interview/chat",
+            json={"messages": [], "language": "ca"},
+        )
+        assert chat_start.status_code == 200
+        start_res = chat_start.json()
+        assert "app/api.py" in start_res["interviewer_reply"]
+        assert not start_res["is_wrap_up"]
+
+        # 4. Test Interview Candidate Answer
+        candidate_msg = {
+            "role": "candidate",
+            "content": "Vaig implementar la comprovació a l'endpoint per assegurar que només el propietari del recurs pot accedir-hi, i ho vam validar amb un test que retorna 403.",
+        }
+        chat_step1 = c.post(
+            f"/api/v1/analyses/{analysis_id}/interview/chat",
+            json={"messages": [candidate_msg], "language": "ca"},
+        )
+        assert chat_step1.status_code == 200
+        step1_res = chat_step1.json()
+        assert len(step1_res["interviewer_reply"]) > 10
+        assert len(step1_res["evaluation_feedback"]) > 5
+
+        # 5. Check stored chat history
+        history = c.get(f"/api/v1/analyses/{analysis_id}/interview/chat").json()
+        assert len(history) >= 2
+
+        # 6. Test Interview Reset
+        reset_res = c.post(f"/api/v1/analyses/{analysis_id}/interview/reset")
+        assert reset_res.status_code == 200
+        cleared_history = c.get(f"/api/v1/analyses/{analysis_id}/interview/chat").json()
+        assert len(cleared_history) == 0
+
+
+
