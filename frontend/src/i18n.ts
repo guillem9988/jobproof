@@ -169,6 +169,10 @@ export interface Translations {
   homeCardProjectsTitle: string;
   homeCardProjectsDesc: string;
   projectsConfigured: string;
+  homeCardSetupRunTitle: string;
+  homeCardSetupRunDesc: string;
+  buttonSetupAndRun: string;
+  homeCardSetupRunNote: string;
   principle1Title: string;
   principle1Desc: string;
   principle2Title: string;
@@ -209,6 +213,7 @@ export interface Translations {
   modelBadgeFast: string;
   modelBadgeReasoning: string;
   modelBadgeMaxPower: string;
+  modelBadgeAgentic: string;
   modelPresetsLabel: string;
   customModelLabel: string;
   customModelHelp: string;
@@ -444,6 +449,10 @@ export const translations: Record<Lang, Translations> = {
     homeCardProjectsTitle: "Projectes i repositoris",
     homeCardProjectsDesc: "Importa repositoris de GitHub o carpetes locals. JobProof n'extreu fragments de codi immutables per verificar les teves competències.",
     projectsConfigured: "projectes registrats",
+    homeCardSetupRunTitle: "Execució ràpida (1-Clic)",
+    homeCardSetupRunDesc: "Carrega un projecte i oferta d'exemple a l'espai de treball i llança l'anàlisi d'evidències directament.",
+    buttonSetupAndRun: "⚡ Setup & Run (Prova 1-clic)",
+    homeCardSetupRunNote: "Ideal per provar el flux complet i veure l'informe d'evidències a l'instant.",
     principle1Title: "01 · Fonamentat en fonts",
     principle1Desc: "Cada prova enllaça a un fitxer i línies exactes.",
     principle2Title: "02 · Honest amb les mancances",
@@ -484,6 +493,7 @@ export const translations: Record<Lang, Translations> = {
     modelBadgeFast: "Ràpid i econòmic",
     modelBadgeReasoning: "Raonament profund",
     modelBadgeMaxPower: "Màxima potència",
+    modelBadgeAgentic: "Agentic / Codi",
     modelPresetsLabel: "Models disponibles i recomanats",
     customModelLabel: "Model d'IA personalitzat",
     customModelHelp: "Escriu l'identificador exacte del model suportat per la teva clau d'API.",
@@ -715,6 +725,10 @@ export const translations: Record<Lang, Translations> = {
     homeCardProjectsTitle: "Projects & Repositories",
     homeCardProjectsDesc: "Import GitHub repositories or local directories. JobProof extracts immutable code chunks to verify your competencies.",
     projectsConfigured: "projects registered",
+    homeCardSetupRunTitle: "Quick Setup & Run (1-Click)",
+    homeCardSetupRunDesc: "Loads a sample project and job posting into your workspace and launches the evidence analysis directly.",
+    buttonSetupAndRun: "⚡ Setup & Run (1-Click)",
+    homeCardSetupRunNote: "Perfect for testing the complete pipeline and viewing an evidence report immediately.",
     principle1Title: "01 · Grounded in sources",
     principle1Desc: "Every proof links to a file and exact lines.",
     principle2Title: "02 · Honest about gaps",
@@ -755,6 +769,7 @@ export const translations: Record<Lang, Translations> = {
     modelBadgeFast: "Fast & economical",
     modelBadgeReasoning: "Deep reasoning",
     modelBadgeMaxPower: "Maximum power",
+    modelBadgeAgentic: "Agentic / Code",
     modelPresetsLabel: "Available & recommended models",
     customModelLabel: "Custom AI Model",
     customModelHelp: "Enter the exact model identifier supported by your API key.",
@@ -986,6 +1001,10 @@ export const translations: Record<Lang, Translations> = {
     homeCardProjectsTitle: "Proyectos y repositorios",
     homeCardProjectsDesc: "Importa repositorios de GitHub o carpetas locales. JobProof extrae fragmentos de código inmutables para verificar tus competencias.",
     projectsConfigured: "proyectos registrados",
+    homeCardSetupRunTitle: "Ejecución rápida (1-Clic)",
+    homeCardSetupRunDesc: "Carga un proyecto y oferta de prueba en el espacio de trabajo y lanza el análisis de evidencias directamente.",
+    buttonSetupAndRun: "⚡ Setup & Run (Prueba 1-clic)",
+    homeCardSetupRunNote: "Ideal para probar el flujo completo y ver el informe de evidencias al instante.",
     principle1Title: "01 · Fundamentado en fuentes",
     principle1Desc: "Cada prueba enlaza a un archivo y líneas exactas.",
     principle2Title: "02 · Honesto con las carencias",
@@ -1026,6 +1045,7 @@ export const translations: Record<Lang, Translations> = {
     modelBadgeFast: "Rápido y económico",
     modelBadgeReasoning: "Razonamiento profundo",
     modelBadgeMaxPower: "Máxima potencia",
+    modelBadgeAgentic: "Agentic / Código",
     modelPresetsLabel: "Modelos disponibles y recomendados",
     customModelLabel: "Modelo de IA personalizado",
     customModelHelp: "Introduce el identificador exacto del modelo soportado por tu clave de API.",

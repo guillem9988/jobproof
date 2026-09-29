@@ -124,7 +124,7 @@ class RealProvider(BaseLLMProvider):
             else (
                 settings.llm_model
                 if settings.llm_model and not any(p in settings.llm_model for p in ("gemini", "gpt", "o1", "o3", "o4"))
-                else "claude-sonnet-4-6"
+                else "claude-sonnet-5-5"
             )
         )
         if not settings.anthropic_api_key:

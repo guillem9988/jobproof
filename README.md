@@ -16,10 +16,10 @@ Instead of generating superficial "ATS match percentages" or hallucinated hiring
 ## Key Features
 
 ### 1. Multi-LLM Provider Architecture
-- **Native Support for 3 Top Providers:**
-  - **Google Gemini API:** Structured output via REST (`gemini-3.8-flash`, `gemini-2.5-flash`, `gemini-2.5-pro`).
-  - **Anthropic Claude:** Official Anthropic SDK with Pydantic structured parsing (`claude-sonnet-4-6`, `claude-3-7-sonnet`).
-  - **OpenAI:** Official JSON schema structured completions (`gpt-6-sol`, `gpt-6-luna`, `gpt-6-astra`, `o-series`).
+- **Native Support for 3 Top Providers (Latest 2026 Generation):**
+  - **Google Gemini API:** Structured output via REST (`gemini-3.8-flash`, `gemini-3.8-flash-lite`, `gemini-3.7-flash`, `gemini-3.1-pro`).
+  - **Anthropic Claude:** Official Anthropic SDK with Pydantic structured parsing (`claude-sonnet-5-5`, `claude-opus-5-5`, `claude-fable-5-1`, `claude-haiku-4-5`).
+  - **OpenAI:** Official JSON schema structured completions (`gpt-6-sol`, `gpt-6-astra`, `gpt-6-luna`, `o4-mini`).
 - **Flexible Model Configuration:** Automatic modern defaults per provider, with an optional custom model ID input in Settings.
 - **In-App Settings & Key Management:** Secure local SQLite/`.env` persistence, live connection latency testers, and masked key previews.
 
@@ -58,42 +58,27 @@ Instead of generating superficial "ATS match percentages" or hallucinated hiring
 - **Python 3.12+** (tested on 3.12, 3.13, 3.14)
 - **Node.js 22+** and **pnpm**
 
-### Installation
+### Quick Start (One Command)
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/guillem9988/jobproof.git
-   cd jobproof
-   ```
+After cloning the repository, simply run:
 
-2. **Set up the backend environment:**
-   ```bash
-   python3 -m venv .venv
-   .venv/bin/python -m pip install --upgrade pip
-   .venv/bin/python -m pip install -r backend/requirements.lock
-   cp .env.example .env
-   ```
+```bash
+# Automatically sets up dependencies and launches both backend and frontend:
+./run.sh
+```
 
-3. **Set up the frontend:**
-   ```bash
-   cd frontend
-   pnpm install --frozen-lockfile
-   cd ..
-   ```
+Or run the setup and servers individually:
 
-4. **Start the development servers:**
-   - In terminal 1 (Backend):
-     ```bash
-     ./scripts/start-backend.sh
-     ```
-   - In terminal 2 (Frontend):
-     ```bash
-     ./scripts/start-frontend.sh
-     ```
+```bash
+# Automated environment & database setup:
+./setup.sh
 
-5. **Open JobProof:**
-   - Web Application: [http://127.0.0.1:5173](http://127.0.0.1:5173)
-   - Interactive OpenAPI Docs: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+# Or start services directly:
+./scripts/start-backend.sh   # Terminal 1 (Backend: http://127.0.0.1:8000)
+./scripts/start-frontend.sh  # Terminal 2 (Frontend: http://127.0.0.1:5173)
+```
+
+Open JobProof at **[http://127.0.0.1:5173](http://127.0.0.1:5173)**. In the UI, click **⚡ Setup & Run** to load sample projects and verify the entire evidence pipeline with 1 click!
 
 ---
 

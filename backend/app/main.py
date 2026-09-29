@@ -142,7 +142,7 @@ def health():
     elif pref == "openai":
         default_model = "gpt-6-sol"
     else:
-        default_model = "claude-sonnet-4-6"
+        default_model = "claude-sonnet-5-5"
 
     model = settings.llm_model if settings.llm_model else default_model
 
@@ -265,7 +265,7 @@ def get_settings():
     elif provider_pref == "openai":
         default_model = "gpt-6-sol"
     else:
-        default_model = "claude-sonnet-4-6"
+        default_model = "claude-sonnet-5-5"
 
     current_model = settings.llm_model if settings.llm_model else default_model
 
@@ -380,7 +380,7 @@ def test_settings(payload: SettingsTestRequest):
             else (
                 settings.llm_model
                 if settings.llm_model and "claude" in settings.llm_model
-                else "claude-sonnet-4-6"
+                else "claude-sonnet-5-5"
             )
         )
         start_t = time.perf_counter()

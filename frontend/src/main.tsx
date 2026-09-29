@@ -69,7 +69,7 @@ const copy = {
 interface ModelPreset {
   id: string;
   name: string;
-  tag: "flagship" | "balanced" | "fast" | "reasoning" | "max_power";
+  tag: "flagship" | "balanced" | "fast" | "reasoning" | "max_power" | "agentic";
   desc: {
     ca: string;
     en: string;
@@ -90,33 +90,33 @@ const PROVIDER_MODELS: Record<"gemini" | "anthropic" | "openai", ModelPreset[]> 
       },
     },
     {
-      id: "gemini-2.5-flash",
-      name: "Gemini 2.5 Flash",
-      tag: "balanced",
-      desc: {
-        ca: "Versió 2.5 estable multimodal de gran context i velocitat.",
-        en: "Stable multimodal 2.5 version with large context and high speed.",
-        es: "Versión 2.5 estable multimodal de gran contexto y velocidad.",
-      },
-    },
-    {
-      id: "gemini-2.5-flash-lite",
-      name: "Gemini 2.5 Flash-Lite",
+      id: "gemini-3.8-flash-lite",
+      name: "Gemini 3.8 Flash-Lite",
       tag: "fast",
       desc: {
-        ca: "Model lleuger dissenyat per a consum mínim de quota i costos baixos.",
-        en: "Lightweight model designed for minimal quota usage and low costs.",
-        es: "Modelo ligero diseñado para consumo mínimo de cuota y bajo coste.",
+        ca: "Model lleuger optimitzat per a velocitat màxima i consum mínim de quota.",
+        en: "Lightweight model optimized for maximum speed and minimal quota usage.",
+        es: "Modelo ligero optimizado para máxima velocidad y consumo mínimo de cuota.",
       },
     },
     {
-      id: "gemini-2.5-pro",
-      name: "Gemini 2.5 Pro",
+      id: "gemini-3.7-flash",
+      name: "Gemini 3.7 Flash",
+      tag: "agentic",
+      desc: {
+        ca: "Optimitzat per a fluxos agentic i comprensió profunda de projectes.",
+        en: "Optimized for agentic workflows and deep project understanding.",
+        es: "Optimizado para flujos agentic y comprensión profunda de proyectos.",
+      },
+    },
+    {
+      id: "gemini-3.1-pro",
+      name: "Gemini 3.1 Pro",
       tag: "reasoning",
       desc: {
-        ca: "Màxim raonament per a repositoris complexos i lògica avançada.",
-        en: "Maximum reasoning capacity for complex repositories and advanced logic.",
-        es: "Máximo razonamiento para repositorios complejos y lógica avanzada.",
+        ca: "Màxim raonament per a auditories de repositoris complexos i arquitectura.",
+        en: "Maximum reasoning capacity for complex repositories and architecture audits.",
+        es: "Máximo razonamiento para auditorías de repositorios complejos y arquitectura.",
       },
     },
   ],
@@ -132,23 +132,23 @@ const PROVIDER_MODELS: Record<"gemini" | "anthropic" | "openai", ModelPreset[]> 
       },
     },
     {
-      id: "gpt-6-luna",
-      name: "GPT-6 Luna",
-      tag: "fast",
-      desc: {
-        ca: "Model àgil i ultra econòmic per a anàlisis ràpides i estables.",
-        en: "Agile and economical model for rapid, stable analyses.",
-        es: "Modelo ágil y ultra económico para análisis rápidos y estables.",
-      },
-    },
-    {
       id: "gpt-6-astra",
       name: "GPT-6 Astra",
       tag: "max_power",
       desc: {
-        ca: "Màxima potència multimodal i capacitat per a problemes complexos.",
-        en: "Maximum multimodal power and capability for complex tasks.",
-        es: "Máxima potencia multimodal y capacidad para problemas complejos.",
+        ca: "Frontier model insígnia per a tasques d'enginyeria, raonament i multimodalitat.",
+        en: "Frontier flagship model for engineering, reasoning, and multimodality.",
+        es: "Frontier model insignia para tareas de ingeniería, razonamiento y multimodalidad.",
+      },
+    },
+    {
+      id: "gpt-6-luna",
+      name: "GPT-6 Luna",
+      tag: "fast",
+      desc: {
+        ca: "Model àgil i ultra econòmic dissenyat per a respostes d'alta velocitat.",
+        en: "Agile, economical model designed for high-speed responses.",
+        es: "Modelo ágil y ultra económico diseñado para respuestas de alta velocidad.",
       },
     },
     {
@@ -161,46 +161,46 @@ const PROVIDER_MODELS: Record<"gemini" | "anthropic" | "openai", ModelPreset[]> 
         es: "Especializado en razonamiento matemático, lógica de código y seguridad.",
       },
     },
-    {
-      id: "gpt-4o",
-      name: "GPT-4o",
-      tag: "balanced",
-      desc: {
-        ca: "Model de referència multimodal versàtil i àmpliament provat.",
-        en: "Versatile, widely tested multimodal reference model.",
-        es: "Modelo de referencia multimodal versátil y ampliamente probado.",
-      },
-    },
   ],
   anthropic: [
     {
-      id: "claude-sonnet-4-6",
-      name: "Claude Sonnet 4.6",
+      id: "claude-sonnet-5-5",
+      name: "Claude Sonnet 5.5",
       tag: "flagship",
       desc: {
-        ca: "Líder d'Anthropic en comprensió de codi, arquitectura i proves.",
-        en: "Anthropic's leader in code understanding, architecture, and tests.",
-        es: "Líder de Anthropic en comprensión de código, arquitectura y pruebas.",
+        ca: "Darrera generació 5.5 d'Anthropic, líder en anàlisi de codi i arquitectura.",
+        en: "Anthropic's latest 5.5 generation, leader in code analysis and architecture.",
+        es: "Última generación 5.5 de Anthropic, líder en análisis de código y arquitectura.",
       },
     },
     {
-      id: "claude-3-7-sonnet-20250219",
-      name: "Claude 3.7 Sonnet",
+      id: "claude-opus-5-5",
+      name: "Claude Opus 5.5",
+      tag: "max_power",
+      desc: {
+        ca: "Model SOTA d'alta capacitat per a lògica i raonament exigent.",
+        en: "SOTA high-capacity model for demanding logic and reasoning.",
+        es: "Modelo SOTA de alta capacidad para lógica y razonamiento exigente.",
+      },
+    },
+    {
+      id: "claude-fable-5-1",
+      name: "Claude Fable 5.1",
       tag: "reasoning",
       desc: {
-        ca: "Raonament híbrid pas a pas per a lògica complexa i auditoria exigent.",
-        en: "Hybrid step-by-step reasoning for complex logic and thorough auditing.",
-        es: "Razonamiento híbrido paso a paso para lógica compleja y auditoría exigente.",
+        ca: "Raonament avançat per a tasques d'enginyeria de programari i auditoria.",
+        en: "Advanced reasoning for software engineering and code auditing tasks.",
+        es: "Razonamiento avanzado para tareas de ingeniería de software y auditoría.",
       },
     },
     {
-      id: "claude-3-5-haiku-20241022",
-      name: "Claude 3.5 Haiku",
+      id: "claude-haiku-4-5",
+      name: "Claude Haiku 4.5",
       tag: "fast",
       desc: {
-        ca: "Execució ultraràpida i baix cost per a tasques lleugeres.",
-        en: "Ultra-fast execution and low cost for lightweight tasks.",
-        es: "Ejecución ultrarrápida y bajo coste para tareas ligeras.",
+        ca: "Execució ultraràpida i baix cost per a tasques d'alt volum.",
+        en: "Ultra-fast execution and low cost for high-throughput tasks.",
+        es: "Ejecución ultrarrápida y bajo coste para tareas de alto volumen.",
       },
     },
   ],
@@ -218,6 +218,8 @@ function getModelTagBadge(tag: ModelPreset["tag"], t: typeof translations["ca"])
       return t.modelBadgeReasoning;
     case "max_power":
       return t.modelBadgeMaxPower;
+    case "agentic":
+      return t.modelBadgeAgentic;
   }
 }
 
@@ -693,6 +695,33 @@ function App() {
     setSelected(d.snapshot_ids);
     setPage("job");
   }
+  async function handleSetupAndRun() {
+    await act(async () => {
+      const d = await request<{ job_id: string; snapshot_ids: string[] }>(
+        "/demo",
+        {},
+      );
+      const loadedJob = await one<Job>("/job-postings/" + d.job_id);
+      setJob(loadedJob);
+      setSelected(d.snapshot_ids);
+      const saved = await one<Job>(
+        "/job-postings/" + loadedJob.id + "/requirements",
+        {
+          requirements: loadedJob.requirements.map((r) => ({ ...r, reviewed: true })),
+          version: loadedJob.requirements_version,
+        },
+        "PUT",
+      );
+      setJob(saved);
+      const tsk = await one<Task>("/analyses", {
+        job_id: loadedJob.id,
+        snapshot_ids: d.snapshot_ids,
+        mode: loadedJob.demo ? "demo" : "real",
+        request_id: crypto.randomUUID(),
+      });
+      track(tsk);
+    });
+  }
   async function start() {
     if (!job) return;
     const saved = await one<Job>(
@@ -908,6 +937,36 @@ function App() {
                     onClick={() => act(demo)}
                   />
                 </section>
+                <section
+                  className="card highlight"
+                  style={{
+                    border: "2px solid var(--accent, #3b82f6)",
+                    background: "rgba(59, 130, 246, 0.04)",
+                  }}
+                >
+                  <span
+                    className="icon-box"
+                    style={{
+                      background: "rgba(59, 130, 246, 0.12)",
+                      color: "var(--accent, #3b82f6)",
+                    }}
+                  >
+                    <Play size={20} fill="currentColor" />
+                  </span>
+                  <h2>{t.homeCardSetupRunTitle}</h2>
+                  <p>{t.homeCardSetupRunDesc}</p>
+                  <button
+                    className="primary"
+                    disabled={busy}
+                    onClick={handleSetupAndRun}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+                  >
+                    <Play size={16} fill="currentColor" /> {t.buttonSetupAndRun}
+                  </button>
+                  <div className="quiet" style={{ marginTop: 12 }}>
+                    <span>{t.homeCardSetupRunNote}</span>
+                  </div>
+                </section>
               </div>
               {(history.data || []).length > 0 && (
                 <>
@@ -1122,6 +1181,39 @@ function App() {
               </p>
               {!job ? (
                 <>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 16,
+                      padding: "10px 14px",
+                      borderRadius: 8,
+                      background: "rgba(59, 130, 246, 0.05)",
+                      border: "1px dashed var(--accent, #3b82f6)",
+                      flexWrap: "wrap",
+                      gap: 10,
+                    }}
+                  >
+                    <span style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
+                      {t.homeCardSetupRunDesc}
+                    </span>
+                    <button
+                      type="button"
+                      className="primary"
+                      onClick={handleSetupAndRun}
+                      disabled={busy}
+                      style={{
+                        fontSize: "0.85rem",
+                        padding: "6px 14px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                    >
+                      <Play size={14} fill="currentColor" /> {t.buttonSetupAndRun}
+                    </button>
+                  </div>
                   <div className="card" style={{ marginBottom: 16 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                       <Globe size={18} />

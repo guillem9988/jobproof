@@ -31,7 +31,7 @@ def provider_with_response(monkeypatch, content, stop_reason="end_turn", status=
                 "id": "msg_test",
                 "type": "message",
                 "role": "assistant",
-                "model": "claude-sonnet-4-6",
+                "model": "claude-sonnet-5-5",
                 "content": [{"type": "text", "text": content}],
                 "stop_reason": stop_reason,
                 "stop_sequence": None,
