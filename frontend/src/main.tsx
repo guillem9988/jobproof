@@ -151,16 +151,6 @@ const PROVIDER_MODELS: Record<"gemini" | "anthropic" | "openai", ModelPreset[]> 
         es: "Modelo ágil y ultra económico diseñado para respuestas de alta velocidad.",
       },
     },
-    {
-      id: "o4-mini",
-      name: "o4-mini",
-      tag: "reasoning",
-      desc: {
-        ca: "Especialitzat en raonament matemàtic, lògica de codi i seguretat.",
-        en: "Specialized in reasoning, code logic, and security verification.",
-        es: "Especializado en razonamiento matemático, lógica de código y seguridad.",
-      },
-    },
   ],
   anthropic: [
     {

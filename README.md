@@ -19,7 +19,7 @@ Instead of generating superficial "ATS match percentages" or hallucinated hiring
 - **Native Support for 3 Top Providers (Latest 2026 Generation):**
   - **Google Gemini API:** Structured output via REST (`gemini-3.8-flash`, `gemini-3.8-flash-lite`, `gemini-3.7-flash`, `gemini-3.1-pro`).
   - **Anthropic Claude:** Official Anthropic SDK with Pydantic structured parsing (`claude-sonnet-5-5`, `claude-opus-5-5`, `claude-fable-5-1`, `claude-haiku-4-5`).
-  - **OpenAI:** Official JSON schema structured completions (`gpt-6-sol`, `gpt-6-astra`, `gpt-6-luna`, `o4-mini`).
+  - **OpenAI:** Official JSON schema structured completions (`gpt-6-sol`, `gpt-6-astra`, `gpt-6-luna`).
 - **Flexible Model Configuration:** Automatic modern defaults per provider, with an optional custom model ID input in Settings.
 - **In-App Settings & Key Management:** Secure local SQLite/`.env` persistence, live connection latency testers, and masked key previews.
 
