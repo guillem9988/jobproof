@@ -5,11 +5,11 @@ WORKDIR /app/frontend
 
 RUN corepack enable && corepack prepare pnpm@9 --activate
 
-COPY frontend/package.json frontend/pnpm-lock.yaml ./
+COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml* ./
 RUN pnpm install --frozen-lockfile
 
 COPY frontend/ ./
-RUN pnpm build
+RUN pnpm run build
 
 # Stage 2: Runtime image with Python 3.12
 FROM python:3.12-slim AS runner
