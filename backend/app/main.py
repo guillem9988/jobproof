@@ -647,6 +647,11 @@ def snapshots(id: str):
     return [doc(s) for s in all_records("snapshot") if s["project_id"] == id]
 
 
+@app.get("/api/v1/snapshots", response_model=list[Document])
+def snapshots_all():
+    return [doc(s) for s in all_records("snapshot")]
+
+
 @app.get("/api/v1/snapshots/{id}", response_model=Document)
 def snapshot_get(id: str):
     s = get(id, "snapshot")

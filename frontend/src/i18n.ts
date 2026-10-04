@@ -1,6 +1,32 @@
 export type Lang = "ca" | "en" | "es";
 
 export interface Translations {
+  workspaceLabel: string;
+  breadcrumbWorkspace: string;
+  sidebarTitle: string;
+  sidebarNote: string;
+  sidebarLocal: string;
+  skipToContent: string;
+  languageSelector: string;
+  dismiss: string;
+  resetFilters: string;
+  filterActiveHint: string;
+  filterClickHint: string;
+  copyBullet: string;
+  toggleKeyVisibility: string;
+  expandAll: string;
+  collapseAll: string;
+  showDetails: string;
+  hideDetails: string;
+  sourcesCount: string;
+  tabNextSteps: string;
+  loadingLabel: string;
+  emptyProjectsTitle: string;
+  emptyProjectsDesc: string;
+  reportLoadError: string;
+  reportTabs: string;
+  primaryNav: string;
+  backendRetry: string;
   brand: string;
   tagline: string;
   subtitle: string;
@@ -282,6 +308,32 @@ export interface Translations {
 
 export const translations: Record<Lang, Translations> = {
   ca: {
+    workspaceLabel: "ESPAI PERSONAL",
+    breadcrumbWorkspace: "Espai de treball",
+    sidebarTitle: "Evidència, amb context.",
+    sidebarNote: "Sense puntuacions de selecció. Sense experiència inventada.",
+    sidebarLocal: "Espai local · Un sol usuari",
+    skipToContent: "Salta al contingut",
+    languageSelector: "Selector d'idioma",
+    dismiss: "Tanca",
+    resetFilters: "Restableix els filtres",
+    filterActiveHint: "Filtre actiu (clica per desfer)",
+    filterClickHint: "Clica per filtrar",
+    copyBullet: "Copia el punt",
+    toggleKeyVisibility: "Mostra o amaga la clau",
+    expandAll: "Desplega-ho tot",
+    collapseAll: "Plega-ho tot",
+    showDetails: "Mostra detalls",
+    hideDetails: "Amaga detalls",
+    sourcesCount: "fonts",
+    tabNextSteps: "Passos següents",
+    loadingLabel: "Carregant…",
+    emptyProjectsTitle: "Encara no hi ha projectes",
+    emptyProjectsDesc: "Importa un repositori de GitHub o una carpeta local perquè JobProof pugui trobar-hi evidències.",
+    reportLoadError: "No s'ha pogut carregar l'informe.",
+    reportTabs: "Seccions de l'informe",
+    primaryNav: "Navegació principal",
+    backendRetry: "Torna-ho a provar",
     brand: "JobProof",
     tagline: "Fes que la teva experiència sigui explicable.",
     subtitle:
@@ -561,6 +613,32 @@ export const translations: Record<Lang, Translations> = {
     fileLoadedSuccess: "Fitxer d'oferta carregat correctament!",
   },
   en: {
+    workspaceLabel: "PERSONAL WORKSPACE",
+    breadcrumbWorkspace: "Workspace",
+    sidebarTitle: "Evidence, with context.",
+    sidebarNote: "No hiring scores. No invented experience.",
+    sidebarLocal: "Local workspace · Single user",
+    skipToContent: "Skip to content",
+    languageSelector: "Language selector",
+    dismiss: "Dismiss",
+    resetFilters: "Reset filters",
+    filterActiveHint: "Filter active (click to clear)",
+    filterClickHint: "Click to filter",
+    copyBullet: "Copy bullet",
+    toggleKeyVisibility: "Show or hide key",
+    expandAll: "Expand all",
+    collapseAll: "Collapse all",
+    showDetails: "Show details",
+    hideDetails: "Hide details",
+    sourcesCount: "sources",
+    tabNextSteps: "Next steps",
+    loadingLabel: "Loading…",
+    emptyProjectsTitle: "No projects yet",
+    emptyProjectsDesc: "Import a GitHub repository or a local folder so JobProof can find evidence in it.",
+    reportLoadError: "Could not load the report.",
+    reportTabs: "Report sections",
+    primaryNav: "Primary navigation",
+    backendRetry: "Retry",
     brand: "JobProof",
     tagline: "Make your experience explainable.",
     subtitle:
@@ -840,6 +918,32 @@ export const translations: Record<Lang, Translations> = {
     fileLoadedSuccess: "Job posting file loaded successfully!",
   },
   es: {
+    workspaceLabel: "ESPACIO PERSONAL",
+    breadcrumbWorkspace: "Espacio de trabajo",
+    sidebarTitle: "Evidencia, con contexto.",
+    sidebarNote: "Sin puntuaciones de selección. Sin experiencia inventada.",
+    sidebarLocal: "Espacio local · Un solo usuario",
+    skipToContent: "Saltar al contenido",
+    languageSelector: "Selector de idioma",
+    dismiss: "Cerrar",
+    resetFilters: "Restablecer filtros",
+    filterActiveHint: "Filtro activo (clic para quitar)",
+    filterClickHint: "Clic para filtrar",
+    copyBullet: "Copiar punto",
+    toggleKeyVisibility: "Mostrar u ocultar la clave",
+    expandAll: "Expandir todo",
+    collapseAll: "Contraer todo",
+    showDetails: "Mostrar detalles",
+    hideDetails: "Ocultar detalles",
+    sourcesCount: "fuentes",
+    tabNextSteps: "Siguientes pasos",
+    loadingLabel: "Cargando…",
+    emptyProjectsTitle: "Aún no hay proyectos",
+    emptyProjectsDesc: "Importa un repositorio de GitHub o una carpeta local para que JobProof pueda encontrar evidencias.",
+    reportLoadError: "No se pudo cargar el informe.",
+    reportTabs: "Secciones del informe",
+    primaryNav: "Navegación principal",
+    backendRetry: "Reintentar",
     brand: "JobProof",
     tagline: "Haz que tu experiencia sea explicable.",
     subtitle:

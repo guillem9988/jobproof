@@ -257,6 +257,13 @@ def test_full_demo_review_export_duplicate():
         assert len(all_records("analysis")) == 1
 
 
+def test_snapshots_listed_in_one_call():
+    with TestClient(app) as c:
+        d = c.post("/api/v1/demo", json={}).json()
+        rows = c.get("/api/v1/snapshots").json()
+        assert {r["id"] for r in rows} >= set(d["snapshot_ids"])
+
+
 def test_injection():
     d = load_demo()
     r = get(d["job_id"])["requirements"][2]
