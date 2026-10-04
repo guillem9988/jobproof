@@ -15,8 +15,10 @@ from pydantic import Field
 
 from . import tasks
 from .core import (
+    Base,
     ChatMessage,
     CoverLetterRequest,
+    engine,
     GeneratedCoverLetter,
     InterviewChatReply,
     InterviewChatRequest,
@@ -52,7 +54,7 @@ PIPELINE = "1.1"
 def init_settings():
     try:
         cfg = get("config", kind="settings")
-    except (ValueError, KeyError):
+    except Exception:
         return
     if cfg.get("anthropic_api_key") and not settings.anthropic_api_key:
         settings.anthropic_api_key = cfg["anthropic_api_key"]
@@ -70,6 +72,10 @@ def init_settings():
 
 @asynccontextmanager
 async def lifespan(app):
+    try:
+        Base.metadata.create_all(engine)
+    except Exception:
+        pass
     init_settings()
     tasks.recover()
     yield
