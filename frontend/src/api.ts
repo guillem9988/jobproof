@@ -8,7 +8,12 @@ export async function request<T>(
     headers: { "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
   });
-  const data: unknown = await r.json();
+  // A sleeping or restarting host answers with an HTML error page, not JSON.
+  const data: unknown = await r.json().catch(() => null);
+  if (data === null)
+    throw new Error(
+      `The server did not answer correctly (HTTP ${r.status}). Try again in a moment.`,
+    );
   if (!r.ok) {
     const e = data as { error?: { message: string }; detail?: unknown };
     throw new Error(

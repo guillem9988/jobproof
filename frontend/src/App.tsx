@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Check,
   ChevronRight,
+  Loader2,
   FileText,
   FolderGit2,
   History,
@@ -15,6 +16,7 @@ import { one, request } from "./api";
 import { AppContext, emptyJobDraft, type AppContextValue } from "./app-context";
 import { useHealth, useHistory, useProjects, useTask } from "./hooks/queries";
 import { useRoute, type Page, type ReportTab } from "./hooks/useRoute";
+import { useSlow } from "./hooks/useSlow";
 import { useTheme } from "./hooks/useTheme";
 import { translations, type Lang } from "./i18n";
 import { HistoryPage } from "./pages/HistoryPage";
@@ -67,6 +69,9 @@ export function App() {
   const history = useHistory();
   const task = useTask(taskId);
   const hosted = !!health.data?.hosted;
+  // No answer yet: either the request is slow or it already failed and is being retried.
+  const slow = useSlow(health.isPending);
+  const waking = !health.data && !health.isError && (slow || health.failureCount > 0);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -347,7 +352,16 @@ export function App() {
                 </button>
               </div>
             )}
-            {health.error && (
+            {waking && (
+              <div className="notice waking-notice" role="status" aria-live="polite">
+                <Loader2 size={18} className="spin" aria-hidden="true" />
+                <div>
+                  <strong>{t.serverWakingTitle}</strong>
+                  <p>{t.serverWakingDesc}</p>
+                </div>
+              </div>
+            )}
+            {health.isError && (
               <div role="alert" className="error">
                 {t.backendUnreachable}
                 <button onClick={() => void health.refetch()}>{t.backendRetry}</button>

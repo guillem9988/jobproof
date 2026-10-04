@@ -2,9 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { many, one, request } from "../api";
 import type { Analysis, AppSettings, Assessment, Job, Project, Snapshot, Task } from "../types";
 
+/** Free hosting sleeps when idle and can take a minute to wake: retry for ~40 s before failing. */
 export const useHealth = () =>
   useQuery({
     queryKey: ["health"],
+    retry: 10,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
     queryFn: () =>
       request<{
         real_provider_configured: boolean;
