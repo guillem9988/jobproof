@@ -777,17 +777,31 @@ function App() {
               key={String(id)}
               className={page === id ? "nav active" : "nav"}
               onClick={() => setPage(String(id))}
+              aria-label={String(title)}
             >
               {React.createElement(Icon, { size: 19 })}
-              {String(title)}
+              <span style={{ flex: 1, textAlign: "left" }}>{String(title)}</span>
+              {id === "projects" && (projects.data?.length ?? 0) > 0 && (
+                <span className="pill" aria-hidden="true" style={{ padding: "1px 7px", fontSize: "0.7rem", opacity: 0.85 }}>
+                  {projects.data?.length}
+                </span>
+              )}
+              {id === "history" && (history.data?.length ?? 0) > 0 && (
+                <span className="pill" aria-hidden="true" style={{ padding: "1px 7px", fontSize: "0.7rem", opacity: 0.85 }}>
+                  {history.data?.length}
+                </span>
+              )}
             </button>
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <ShieldCheck size={21} />
+          <ShieldCheck size={21} style={{ color: "var(--color-primary)" }} />
           <strong>Evidence, with context.</strong>
           <p>No hiring scores. No invented experience.</p>
-          <span className="local">Local workspace · Single user</span>
+          <span className="local">
+            <span className="pulse-dot" style={{ width: 6, height: 6 }} />
+            Local workspace · Single user
+          </span>
         </div>
       </aside>
       <div className="main">
@@ -827,7 +841,16 @@ function App() {
             >
               {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
             </button>
-            <span className="pill">{t.badgePrivateLocal}</span>
+            {health.data?.real_provider_configured ? (
+              <span className="pill supported" title={health.data.model} style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+                <span className="pulse-dot" />
+                <span>{health.data.active_provider ? (health.data.active_provider === "gemini" ? "Gemini" : health.data.active_provider === "openai" ? "OpenAI" : "Claude") : "IA"}</span>
+                <span style={{ opacity: 0.55 }}>·</span>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem" }}>{health.data.model}</span>
+              </span>
+            ) : (
+              <span className="pill">{t.badgePrivateLocal}</span>
+            )}
           </div>
         </header>
         <main>
@@ -2258,8 +2281,9 @@ function App() {
                     {counts(assessments.data || []).map((c) => (
                       <button
                         key={c.status}
-                        className={"count " + c.status}
-                        onClick={() => setFilter(c.status)}
+                        className={"count " + c.status + (filter === c.status ? " active-filter" : "")}
+                        onClick={() => setFilter(filter === c.status ? "all" : c.status)}
+                        title={filter === c.status ? "Filtre actiu (clica per desfer)" : "Clica per filtrar"}
                       >
                         <span>{c.count}</span>
                         {statusLabels[c.status] || c.status}
@@ -2341,10 +2365,29 @@ function App() {
                       </select>
                     </label>
                   </div>
-                  <h2>
-                    {t.requirementsAndEvidence}{" "}
-                    <span className="muted">{visible.length}</span>
-                  </h2>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "24px 0 14px", flexWrap: "wrap", gap: 10 }}>
+                    <h2 style={{ margin: 0 }}>
+                      {t.requirementsAndEvidence}{" "}
+                      <span className="muted">{visible.length}</span>
+                    </h2>
+                    {(filter !== "all" || priority !== "all" || category !== "all" || projectFilter !== "all" || searchQuery.trim()) && (
+                      <button
+                        type="button"
+                        className="text-button"
+                        style={{ fontSize: "0.82rem", display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 8px" }}
+                        onClick={() => {
+                          setFilter("all");
+                          setPriority("all");
+                          setCategory("all");
+                          setProjectFilter("all");
+                          setSearchQuery("");
+                        }}
+                      >
+                        <X size={14} />
+                        {lang === "ca" ? "Restablir filtres" : lang === "es" ? "Restablecer filtros" : "Reset filters"}
+                      </button>
+                    )}
+                  </div>
                   {visible.map((a) => (
                     <AssessmentCard
                       key={a.id}
