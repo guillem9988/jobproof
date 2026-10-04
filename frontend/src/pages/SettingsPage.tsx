@@ -3,13 +3,9 @@ import { Check, X } from "lucide-react";
 import { one } from "../api";
 import { useApp } from "../app-context";
 import { ApiKeyField } from "../components/ApiKeyField";
+import { HostedNotice } from "../components/HostedNotice";
 import { useAppSettings } from "../hooks/queries";
-import {
-  PROVIDER_MODELS,
-  getDefaultModelForProvider,
-  getModelTagBadge,
-  type Provider,
-} from "../models";
+import { PROVIDER_MODELS, getDefaultModelForProvider, getModelTagBadge, type Provider } from "../models";
 import { qc } from "../queryClient";
 import type { AppSettings, SettingsTestResult } from "../types";
 
@@ -17,7 +13,7 @@ type KeyName = "gemini" | "anthropic" | "openai" | "github";
 const emptyKeys: Record<KeyName, string> = { gemini: "", anthropic: "", openai: "", github: "" };
 
 export function SettingsPage() {
-  const { t, lang, busy, act } = useApp();
+  const { t, lang, busy, hosted, act } = useApp();
   const appSettings = useAppSettings();
   const s = appSettings.data;
   const providerId = useId();
@@ -114,6 +110,16 @@ export function SettingsPage() {
     !s?.github_token_configured;
   const result = testStatus.result;
 
+  if (hosted) {
+    return (
+      <>
+        <div className="eyebrow">{t.settingsEyebrow}</div>
+        <h1>{t.settingsTitle}</h1>
+        <HostedNotice />
+      </>
+    );
+  }
+
   return (
     <>
       <div className="eyebrow">{t.settingsEyebrow}</div>
@@ -126,7 +132,12 @@ export function SettingsPage() {
             <Check size={18} />
             {t.settingsSaved}
           </span>
-          <button type="button" className="banner-close" aria-label={t.dismiss} onClick={() => setSaved(false)}>
+          <button
+            type="button"
+            className="banner-close"
+            aria-label={t.dismiss}
+            onClick={() => setSaved(false)}
+          >
             <X size={16} />
           </button>
         </div>

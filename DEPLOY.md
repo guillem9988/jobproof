@@ -1,5 +1,7 @@
 # Guia de desplegament de JobProof (100% Gratuït · 0,00 €)
 
+> **Important:** JobProof no té comptes d'usuari. Un desplegament públic **ha d'usar el mode hosted** (`HOSTED_MODE=true`), que només ofereix la demo amb dades d'exemple i desactiva importacions, configuració de claus i IA real. Sense aquest mode, qualsevol visitant podria llegir fitxers del servidor, gastar la teva quota d'IA i sobreescriure les claus. Mira la secció [Mode hosted](#mode-hosted-demo-pública) i [`docs/security.md`](docs/security.md).
+
 Aquesta guia explica com publicar **JobProof** a internet **sense pagar absolutament res** (0 € de servidor i 0 € d'intel·ligència artificial).
 
 ---
@@ -65,3 +67,19 @@ Vercel és fantàstic i gratuït per a aplicacions web estàtiques (com el front
 Les funcions serverless gratuïtes de Vercel són efímeres (la base de dades SQLite s'esborraria contínuament) i tenen límits curts de temps d'execució.
 
 Per tant, utilitzar el **Dockerfile tot-en-un a Render o Hugging Face Spaces** és la solució més neta, senzilla i 100% gratuïta.
+
+---
+
+## Mode hosted (demo pública)
+
+Per publicar una demo pública (Render + Vercel):
+
+1. **Render (backend):** a *Environment* afegeix
+   - `HOSTED_MODE` = `true`
+   - `ALLOWED_ORIGINS` = l'URL del teu frontend, p. ex. `https://jobproof-web.vercel.app` (no `*`)
+   - `DATABASE_URL` = `sqlite:////tmp/jobproof-hosted.db` (base de dades nova; al pla gratuït és efímera)
+   - **No** hi posis `GEMINI_API_KEY`, `ANTHROPIC_API_KEY` ni `GITHUB_TOKEN`: en mode hosted s'ignoren i no cal que siguin al servidor.
+2. **Vercel (frontend):** no cal cap canvi; el proxy `/api` de `frontend/vercel.json` apunta al backend de Render.
+3. Comprova-ho: `GET /api/v1/health` ha de retornar `"hosted": true`, i `POST /api/v1/settings` ha de respondre 403.
+
+Per fer servir JobProof amb els teus repositoris, ofertes i claus d'IA, executa'l en local.

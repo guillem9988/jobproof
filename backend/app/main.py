@@ -1,5 +1,7 @@
+import hashlib
 import html as html_lib
 import json
+import logging
 import os
 import re
 import time
@@ -44,6 +46,14 @@ from .core import (
     uid,
 )
 from .demo import load_demo
+from .hosted import (
+    HOSTED_MESSAGE,
+    RateLimiter,
+    client_key,
+    is_blocked,
+    is_demo_record,
+    safe_get,
+)
 from .ingestion import FORBIDDEN_PREFIXES, GitHub, import_local_dir, parse_url
 from .providers import PROMPT_VERSION, provider
 from .retrieval import retrieve, validate_assessment
@@ -52,6 +62,8 @@ PIPELINE = "1.1"
 
 
 def init_settings():
+    if settings.hosted_mode:
+        return  # hosted mode never reads credentials stored by the UI
     try:
         cfg = get("config", kind="settings")
     except Exception:  # noqa: BLE001 - settings table may not exist yet on first boot
@@ -93,8 +105,27 @@ app.add_middleware(
 )
 
 
+write_limiter = RateLimiter(settings.hosted_write_limit_per_min)
+if settings.hosted_mode and "*" in configured_origins:
+    logging.getLogger("jobproof").warning(
+        "HOSTED_MODE with ALLOWED_ORIGINS=* accepts writes from any website; set it to your frontend origin."
+    )
+
+
 @app.middleware("http")
 async def protect(request: Request, call_next):
+    if settings.hosted_mode and request.method in {"POST", "PUT", "DELETE"}:
+        if is_blocked(request.method, request.url.path):
+            return JSONResponse({"error": {"code": "hosted_mode", "message": HOSTED_MESSAGE}}, 403)
+        key = client_key(
+            request.headers.get("x-forwarded-for"), request.client.host if request.client else None
+        )
+        if not write_limiter.allow(key):
+            return JSONResponse(
+                {"error": {"code": "rate_limited", "message": "Too many requests. Try again in a minute."}},
+                429,
+                headers={"Retry-After": "60"},
+            )
     if request.method in {"POST", "PUT", "DELETE"}:
         origin = request.headers.get("origin")
         allowed = set(get_allowed_origins())
@@ -120,18 +151,47 @@ def doc(row):
     return Document(id=row["id"], data={k: v for k, v in row.items() if k != "id"})
 
 
+def get_visible(id, kind):
+    """`get`, but hosted mode only exposes fixture data."""
+    row = get(id, kind)
+    if settings.hosted_mode and not is_demo_record(kind, row):
+        raise ValueError("Record not found")
+    return row
+
+
+def visible_records(kind):
+    rows = all_records(kind)
+    return [r for r in rows if is_demo_record(kind, r)] if settings.hosted_mode else rows
+
+
 class Health(Schema):
     status: str
     real_provider_configured: bool
     active_provider: str = ""
     model: str
     demo_available: bool
+    hosted: bool = False
     limits: dict[str, int]
 
 
 @app.get("/health", response_model=Health)
 @app.get("/api/v1/health", response_model=Health)
 def health():
+    if settings.hosted_mode:
+        return Health(
+            status="ok",
+            real_provider_configured=False,
+            model="demo",
+            demo_available=True,
+            hosted=True,
+            limits={
+                "projects": 0,
+                "requirements": settings.max_requirements,
+                "files": settings.max_files,
+                "file_bytes": settings.max_file_bytes,
+                "project_bytes": settings.max_project_bytes,
+            },
+        )
     eff_gemini = get_effective_gemini_key()
     eff_openai = get_effective_openai_key()
     eff_anthropic = get_effective_anthropic_key()
@@ -263,6 +323,21 @@ class SettingsTestResponse(Schema):
 
 @app.get("/api/v1/settings", response_model=SettingsView)
 def get_settings():
+    if settings.hosted_mode:
+        return SettingsView(
+            llm_provider="",
+            llm_model="demo",
+            gemini_api_key_configured=False,
+            gemini_api_key_preview="",
+            anthropic_api_key_configured=False,
+            anthropic_api_key_preview="",
+            openai_api_key_configured=False,
+            openai_api_key_preview="",
+            github_token_configured=False,
+            github_token_preview="",
+            real_provider_configured=False,
+            active_provider="",
+        )
     eff_gemini = get_effective_gemini_key()
     eff_openai = get_effective_openai_key()
     eff_anthropic = get_effective_anthropic_key()
@@ -606,12 +681,12 @@ def project_create(body: ProjectInput):
 
 @app.get("/api/v1/projects", response_model=list[Document])
 def projects():
-    return [doc(p) for p in all_records("project")]
+    return [doc(p) for p in visible_records("project")]
 
 
 @app.get("/api/v1/projects/{id}", response_model=Document)
 def project_get(id: str):
-    return doc(get(id, "project"))
+    return doc(get_visible(id, "project"))
 
 
 class ImportInput(Schema):
@@ -643,17 +718,17 @@ def import_project(id: str, body: ImportInput):
 
 @app.get("/api/v1/projects/{id}/snapshots", response_model=list[Document])
 def snapshots(id: str):
-    return [doc(s) for s in all_records("snapshot") if s["project_id"] == id]
+    return [doc(s) for s in visible_records("snapshot") if s["project_id"] == id]
 
 
 @app.get("/api/v1/snapshots", response_model=list[Document])
 def snapshots_all():
-    return [doc(s) for s in all_records("snapshot")]
+    return [doc(s) for s in visible_records("snapshot")]
 
 
 @app.get("/api/v1/snapshots/{id}", response_model=Document)
 def snapshot_get(id: str):
-    s = get(id, "snapshot")
+    s = get_visible(id, "snapshot")
     s["files"] = [
         {k: f[k] for k in ["id", "path", "hash", "line_count", "type"]}
         for f in all_records("file")
@@ -691,12 +766,12 @@ def job_create(body: JobInput):
 
 @app.get("/api/v1/job-postings", response_model=list[Document])
 def jobs():
-    return [doc(j) for j in all_records("job")]
+    return [doc(j) for j in visible_records("job")]
 
 
 @app.get("/api/v1/job-postings/{id}", response_model=Document)
 def job_get(id: str):
-    return doc(get(id, "job"))
+    return doc(get_visible(id, "job"))
 
 
 class JobUrlFetchRequest(Schema):
@@ -714,10 +789,8 @@ def fetch_job_url(body: JobUrlFetchRequest):
     if not body.url.startswith(("http://", "https://")):
         raise ValueError("URL must start with http:// or https://")
     try:
-        resp = httpx.get(
+        status_code, html = safe_get(
             body.url,
-            follow_redirects=True,
-            timeout=15,
             headers={
                 "User-Agent": (
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -728,10 +801,9 @@ def fetch_job_url(body: JobUrlFetchRequest):
     except (httpx.RequestError, httpx.HTTPError) as e:
         raise HTTPException(status_code=400, detail=f"Failed to reach URL: {e!s}")
 
-    if resp.status_code != 200:
-        raise HTTPException(status_code=400, detail=f"Website returned HTTP {resp.status_code}")
+    if status_code != 200:
+        raise HTTPException(status_code=400, detail=f"Website returned HTTP {status_code}")
 
-    html = resp.text
     clean = re.sub(
         r"<(script|style|nav|footer|header|noscript)[^>]*>.*?</\1>",
         " ",
@@ -825,7 +897,9 @@ class RequirementsUpdate(Requirements):
 @app.put("/api/v1/job-postings/{id}/requirements", response_model=Document)
 def update_requirements(id: str, body: RequirementsUpdate):
     with tasks.lock:
-        job = get(id, "job")
+        job = get_visible(id, "job")
+        if settings.hosted_mode:
+            return doc(job)  # the fixture posting is shared and read-only
         if body.version != job["requirements_version"]:
             raise HTTPException(409, "Requirements changed; reload before saving.")
         rows = check_requirements(body.requirements, job["canonical_text"])
@@ -882,8 +956,14 @@ def analyze(a, p, check):
 
 @app.post("/api/v1/analyses", response_model=Document)
 def analysis_create(body: AnalysisInput):
+    if settings.hosted_mode and body.mode != "demo":
+        raise ValueError(HOSTED_MESSAGE)
     with tasks.lock:
         key = "analysis:" + body.request_id
+        if settings.hosted_mode:
+            # One shared analysis per fixture input instead of one per click.
+            fingerprint = f"{body.job_id}:{','.join(sorted(set(body.snapshot_ids)))}:{PIPELINE}"
+            key = "analysis:hosted:" + hashlib.sha256(fingerprint.encode()).hexdigest()
         duplicate = next((t for t in all_records("task") if t["key"] == key), None)
         if duplicate:
             previous = get(duplicate["analysis_id"], "analysis")
@@ -899,7 +979,7 @@ def analysis_create(body: AnalysisInput):
                     409, "Request ID already belongs to different inputs. Retry with a new request ID."
                 )
             return doc(duplicate)
-        job = get(body.job_id, "job")
+        job = get_visible(body.job_id, "job")
         reqs = [r for r in job["requirements"] if r.get("selected", True)]
         if not 1 <= len(reqs) <= settings.max_requirements:
             raise ValueError(
@@ -953,16 +1033,17 @@ def analysis_create(body: AnalysisInput):
 
 @app.get("/api/v1/analyses", response_model=list[Document])
 def analyses():
-    return [doc(a) for a in reversed(all_records("analysis"))]
+    return [doc(a) for a in reversed(visible_records("analysis"))]
 
 
 @app.get("/api/v1/analyses/{id}", response_model=Document)
 def analysis_get(id: str):
-    return doc(get(id, "analysis"))
+    return doc(get_visible(id, "analysis"))
 
 
 @app.get("/api/v1/analyses/{id}/assessments", response_model=list[Document])
 def assessments(id: str):
+    get_visible(id, "analysis")
     return [doc(a) for a in all_records("assessment") if a["analysis_id"] == id]
 
 
@@ -1024,7 +1105,7 @@ def review(id: str, body: ReviewInput):
 
 @app.get("/api/v1/snapshots/{id}/chunks", response_model=list[Document])
 def chunks(id: str):
-    get(id, "snapshot")
+    get_visible(id, "snapshot")
     return [doc(c) for c in all_records("chunk") if c["snapshot_id"] == id]
 
 
@@ -1057,7 +1138,7 @@ def demo():
 
 
 def export_report(id):
-    a = get(id, "analysis")
+    a = get_visible(id, "analysis")
     if a["status"] != "complete":
         raise ValueError("An incomplete analysis cannot be exported as a completed report.")
     rows = [get(x, "assessment") for x in a["assessments"]]
@@ -1130,7 +1211,7 @@ def export(id: str, format: Literal["markdown", "json"] = "markdown"):
 
 @app.post("/api/v1/analyses/{id}/cover-letter", response_model=GeneratedCoverLetter)
 def generate_cover_letter_endpoint(id: str, body: CoverLetterRequest):
-    a = get(id, "analysis")
+    a = get_visible(id, "analysis")
     if a["status"] != "complete":
         raise HTTPException(status_code=400, detail="Cover letter requires a completed analysis.")
     job = get(a["job_id"], "job")
@@ -1143,13 +1224,14 @@ def generate_cover_letter_endpoint(id: str, body: CoverLetterRequest):
         language=body.language,
         tone=body.tone,
     )
-    save("analysis", {**a, "cover_letter": letter.model_dump()}, id)
+    if not settings.hosted_mode:  # hosted reports are shared, so visitors don't write to them
+        save("analysis", {**a, "cover_letter": letter.model_dump()}, id)
     return letter
 
 
 @app.get("/api/v1/analyses/{id}/cover-letter", response_model=GeneratedCoverLetter | None)
 def get_cover_letter_endpoint(id: str):
-    a = get(id, "analysis")
+    a = get_visible(id, "analysis")
     cl = a.get("cover_letter")
     if not cl:
         return None
@@ -1158,7 +1240,7 @@ def get_cover_letter_endpoint(id: str):
 
 @app.post("/api/v1/analyses/{id}/interview/chat", response_model=InterviewChatReply)
 def interview_chat_endpoint(id: str, body: InterviewChatRequest):
-    a = get(id, "analysis")
+    a = get_visible(id, "analysis")
     if a["status"] != "complete":
         raise HTTPException(status_code=400, detail="Interview simulation requires a completed analysis.")
     job = get(a["job_id"], "job")
@@ -1180,21 +1262,23 @@ def interview_chat_endpoint(id: str, body: InterviewChatRequest):
             "created_at": now(),
         }
     )
-    save("analysis", {**a, "interview_chat": chat_history}, id)
+    if not settings.hosted_mode:
+        save("analysis", {**a, "interview_chat": chat_history}, id)
     return reply
 
 
 @app.get("/api/v1/analyses/{id}/interview/chat", response_model=list[ChatMessage])
 def get_interview_chat_endpoint(id: str):
-    a = get(id, "analysis")
+    a = get_visible(id, "analysis")
     chat = a.get("interview_chat", [])
     return [ChatMessage.model_validate(m) for m in chat]
 
 
 @app.post("/api/v1/analyses/{id}/interview/reset", response_model=dict[str, bool])
 def reset_interview_chat_endpoint(id: str):
-    a = get(id, "analysis")
-    save("analysis", {**a, "interview_chat": []}, id)
+    a = get_visible(id, "analysis")
+    if not settings.hosted_mode:
+        save("analysis", {**a, "interview_chat": []}, id)
     return {"ok": True}
 
 

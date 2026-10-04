@@ -3,13 +3,14 @@ import { Folder, FolderGit2, Plus } from "lucide-react";
 import { one } from "../api";
 import { useApp } from "../app-context";
 import { EmptyState } from "../components/EmptyState";
+import { HostedNotice } from "../components/HostedNotice";
 import { Skeleton } from "../components/Skeleton";
 import { SnapshotFiles } from "../components/SnapshotFiles";
 import { useAppSettings, useProjects, useSnapshots } from "../hooks/queries";
 import type { Project, Task } from "../types";
 
 export function ProjectsPage() {
-  const { t, busy, act, track } = useApp();
+  const { t, busy, hosted, act, track } = useApp();
   const [source, setSource] = useState<"github" | "local">("github");
   const projects = useProjects();
   const snapshots = useSnapshots();
@@ -42,80 +43,79 @@ export function ProjectsPage() {
       <div className="eyebrow">{t.projectsEyebrow}</div>
       <h1>{t.yourProjects}</h1>
       <p className="intro">{t.projectsIntro}</p>
-      <form
-        className="card form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          importFromForm(e.currentTarget);
-        }}
-      >
-        <div className="source-toggle">
-          <button
-            type="button"
-            aria-pressed={source === "github"}
-            className={`source-option ${source === "github" ? "active" : ""}`}
-            onClick={() => setSource("github")}
-          >
-            <FolderGit2 size={18} />
-            {t.sourceTypeGithub}
-          </button>
-          <button
-            type="button"
-            aria-pressed={source === "local"}
-            className={`source-option ${source === "local" ? "active" : ""}`}
-            onClick={() => setSource("local")}
-          >
-            <Folder size={18} />
-            {t.sourceTypeLocal}
-          </button>
-        </div>
-        {source === "github" ? (
-          <>
-            <label>
+      {hosted && <HostedNotice />}
+      {!hosted && (
+        <form
+          className="card form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            importFromForm(e.currentTarget);
+          }}
+        >
+          <div className="source-toggle">
+            <button
+              type="button"
+              aria-pressed={source === "github"}
+              className={`source-option ${source === "github" ? "active" : ""}`}
+              onClick={() => setSource("github")}
+            >
+              <FolderGit2 size={18} />
               {t.sourceTypeGithub}
-              <input name="url" placeholder={t.githubUrlPlaceholder} required />
-            </label>
-            {appSettings.data?.github_token_configured && (
-              <div className="field-success">✓ {t.privateRepoTokenNotice}</div>
-            )}
-          </>
-        ) : (
-          <label>
-            {t.localPathLabel}
-            <input name="local_path" placeholder={t.localPathPlaceholder} required />
-          </label>
-        )}
-        <div className="two">
-          <label>
-            {t.projectNameOptional}
-            <input name="name" />
-          </label>
-          {source === "github" && (
+            </button>
+            <button
+              type="button"
+              aria-pressed={source === "local"}
+              className={`source-option ${source === "local" ? "active" : ""}`}
+              onClick={() => setSource("local")}
+            >
+              <Folder size={18} />
+              {t.sourceTypeLocal}
+            </button>
+          </div>
+          {source === "github" ? (
+            <>
+              <label>
+                {t.sourceTypeGithub}
+                <input name="url" placeholder={t.githubUrlPlaceholder} required />
+              </label>
+              {appSettings.data?.github_token_configured && (
+                <div className="field-success">✓ {t.privateRepoTokenNotice}</div>
+              )}
+            </>
+          ) : (
             <label>
-              {t.branchOrCommitOptional}
-              <input name="ref" />
+              {t.localPathLabel}
+              <input name="local_path" placeholder={t.localPathPlaceholder} required />
             </label>
           )}
-        </div>
-        <label>
-          {t.customExcludesLabel}
-          <input name="excludes" placeholder={t.customExcludesPlaceholder} />
-        </label>
-        <label>
-          {t.yourContribution}
-          <textarea name="contribution" rows={2} />
-        </label>
-        <button className="primary" disabled={busy}>
-          {source === "local" ? t.importLocalDir : t.importRepository} <Plus size={17} />
-        </button>
-      </form>
+          <div className="two">
+            <label>
+              {t.projectNameOptional}
+              <input name="name" />
+            </label>
+            {source === "github" && (
+              <label>
+                {t.branchOrCommitOptional}
+                <input name="ref" />
+              </label>
+            )}
+          </div>
+          <label>
+            {t.customExcludesLabel}
+            <input name="excludes" placeholder={t.customExcludesPlaceholder} />
+          </label>
+          <label>
+            {t.yourContribution}
+            <textarea name="contribution" rows={2} />
+          </label>
+          <button className="primary" disabled={busy}>
+            {source === "local" ? t.importLocalDir : t.importRepository} <Plus size={17} />
+          </button>
+        </form>
+      )}
       {projects.isLoading && <Skeleton label={t.loadingLabel} />}
-      {projects.data?.length === 0 && (
-        <EmptyState
-          icon={<FolderGit2 />}
-          title={t.emptyProjectsTitle}
-          description={t.emptyProjectsDesc}
-        />
+      {projects.data?.length === 0 && !hosted && (
+        <EmptyState icon={<FolderGit2 />} title={t.emptyProjectsTitle} description={t.emptyProjectsDesc} />
       )}
       {projects.data?.map((p) => (
         <section className="card project" key={p.id}>
@@ -150,7 +150,7 @@ export function ProjectsPage() {
                 <SnapshotFiles id={s.id} />
               </details>
             ))}
-          {!p.demo && (
+          {!p.demo && !hosted && (
             <button
               disabled={busy}
               onClick={() =>

@@ -2544,3 +2544,20 @@ textarea:focus-visible {
     transform: none;
   }
 }
+
+.hosted-notice {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.hosted-notice > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--color-primary);
+}
+
+.hosted-notice p {
+  margin: 4px 0 0;
+}
