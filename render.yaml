@@ -9,13 +9,11 @@ services:
     envVars:
       - key: PORT
         value: 8000
+      # Public deployments must run in hosted mode: no imports, no settings, no real AI.
+      - key: HOSTED_MODE
+        value: "true"
+      - key: DATABASE_URL
+        value: sqlite:////tmp/jobproof-hosted.db
+      # Set to your frontend origin, e.g. https://jobproof-web.vercel.app (not "*").
       - key: ALLOWED_ORIGINS
-        value: "*"
-      - key: GEMINI_API_KEY
         sync: false
-      - key: ANTHROPIC_API_KEY
-        sync: false
-      - key: LLM_PROVIDER
-        value: "gemini"
-      - key: LLM_MODEL
-        value: "gemini-3.8-flash"

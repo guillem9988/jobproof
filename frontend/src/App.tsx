@@ -66,6 +66,7 @@ export function App() {
   const projects = useProjects();
   const history = useHistory();
   const task = useTask(taskId);
+  const hosted = !!health.data?.hosted;
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -184,7 +185,10 @@ export function App() {
         const saved = await one<Job>(
           "/job-postings/" + loaded.id + "/requirements",
           {
-            requirements: loaded.requirements.map((r) => ({ ...r, reviewed: true })),
+            requirements: loaded.requirements.map((r) => ({
+              ...r,
+              reviewed: true,
+            })),
             version: loaded.requirements_version,
           },
           "PUT",
@@ -206,6 +210,7 @@ export function App() {
     t,
     lang,
     busy,
+    hosted,
     setError,
     act,
     go,
@@ -221,17 +226,26 @@ export function App() {
     setupAndRun,
   };
 
-  const nav: [Exclude<Page, "report" | "progress" | "job">, string, typeof FileText, number?][] = [
+  type NavItem = [Exclude<Page, "report" | "progress" | "job">, string, typeof FileText, number?];
+  const navAll: NavItem[] = [
     ["home", t.brand, FileText],
     ["projects", t.navProjects, FolderGit2, projects.data?.length],
     ["history", t.navHistory, History, history.data?.length],
     ["settings", t.navSettings, Settings],
   ];
+  const nav = navAll.filter(([id]) => !(hosted && id === "settings"));
   const provider = health.data?.active_provider;
 
   return (
     <AppContext.Provider value={ctx}>
-      <a className="skip-link" href="#main" onClick={(e) => { e.preventDefault(); mainRef.current?.focus(); }}>
+      <a
+        className="skip-link"
+        href="#main"
+        onClick={(e) => {
+          e.preventDefault();
+          mainRef.current?.focus();
+        }}
+      >
         {t.skipToContent}
       </a>
       <div className="app">
@@ -275,7 +289,7 @@ export function App() {
             <p>{t.sidebarNote}</p>
             <span className="local">
               <span className="pulse-dot" />
-              {t.sidebarLocal}
+              {hosted ? t.sidebarHosted : t.sidebarLocal}
             </span>
           </div>
         </aside>
@@ -307,12 +321,20 @@ export function App() {
               {health.data?.real_provider_configured ? (
                 <span className="pill supported provider-pill" title={health.data.model}>
                   <span className="pulse-dot" />
-                  <span>{provider ? (provider === "gemini" ? "Gemini" : provider === "openai" ? "OpenAI" : "Claude") : "IA"}</span>
+                  <span>
+                    {provider
+                      ? provider === "gemini"
+                        ? "Gemini"
+                        : provider === "openai"
+                          ? "OpenAI"
+                          : "Claude"
+                      : "IA"}
+                  </span>
                   <span className="dim">·</span>
                   <span className="mono">{health.data.model}</span>
                 </span>
               ) : (
-                <span className="pill">{t.badgePrivateLocal}</span>
+                <span className="pill">{hosted ? t.hostedBadge : t.badgePrivateLocal}</span>
               )}
             </div>
           </header>

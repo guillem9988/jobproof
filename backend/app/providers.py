@@ -641,7 +641,7 @@ class OpenAIProvider(BaseLLMProvider):
 
 
 def provider(mode):
-    if mode == "demo":
+    if mode == "demo" or settings.hosted_mode:
         return DemoProvider()
     eff_anthropic = get_effective_anthropic_key()
     eff_gemini = get_effective_gemini_key()
