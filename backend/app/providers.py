@@ -25,11 +25,8 @@ class Provider(Protocol):
     def extract_requirements(self, text): ...
     def assess_requirements(self, requirement, chunks): ...
     def generate_preparation_material(self, assessments): ...
-    def generate_cover_letter(
-        self, job_title, job_text, assessments, language="en", tone="balanced"
-    ): ...
+    def generate_cover_letter(self, job_title, job_text, assessments, language="en", tone="balanced"): ...
     def chat_interview(self, job_title, assessments, messages, language="en"): ...
-
 
 
 class BaseLLMProvider:
@@ -64,12 +61,14 @@ class BaseLLMProvider:
                 f"{e['path']} (L{e.get('start', '?')}-L{e.get('end', '?')}): {e.get('relation', '')}"
                 for e in a.get("evidence", [])
             ]
-            evidence_summary.append({
-                "requirement": req_text,
-                "status": status,
-                "evidence": ev_list[:2],
-                "limitations": a.get("limitations", [])[:1],
-            })
+            evidence_summary.append(
+                {
+                    "requirement": req_text,
+                    "status": status,
+                    "evidence": ev_list[:2],
+                    "limitations": a.get("limitations", [])[:1],
+                }
+            )
         data = {
             "job_title": job_title,
             "tone": tone,
@@ -96,12 +95,14 @@ class BaseLLMProvider:
                 f"{e['path']} (L{e.get('start', '?')}-L{e.get('end', '?')}): {e.get('relation', '')}"
                 for e in a.get("evidence", [])
             ]
-            evidence_summary.append({
-                "requirement": req_text,
-                "status": status,
-                "evidence": ev_list[:2],
-                "limitations": a.get("limitations", [])[:1],
-            })
+            evidence_summary.append(
+                {
+                    "requirement": req_text,
+                    "status": status,
+                    "evidence": ev_list[:2],
+                    "limitations": a.get("limitations", [])[:1],
+                }
+            )
         data = {
             "job_title": job_title,
             "language": lang_name,
@@ -126,7 +127,8 @@ class RealProvider(BaseLLMProvider):
             if settings.llm_model and "claude" in settings.llm_model
             else (
                 settings.llm_model
-                if settings.llm_model and not any(p in settings.llm_model for p in ("gemini", "gpt", "o1", "o3", "o4"))
+                if settings.llm_model
+                and not any(p in settings.llm_model for p in ("gemini", "gpt", "o1", "o3", "o4"))
                 else "claude-sonnet-5-5"
             )
         )
@@ -352,7 +354,9 @@ class DemoProvider:
                     "He estat examinant el teu codi a SignalBoard i he vist la comprovació d'autoria a `app/api.py`. "
                     "Podries explicar com funciona aquest control d'autorització i per què vas decidir implementar-lo directament a la capa de l'endpoint?"
                 )
-                feedback = "Pregunta inicial per avaluar el disseny d'arquitectura i autorització a la teva API."
+                feedback = (
+                    "Pregunta inicial per avaluar el disseny d'arquitectura i autorització a la teva API."
+                )
             elif language == "es":
                 reply = (
                     f"¡Hola! Gracias por tu tiempo para esta entrevista técnica para el puesto de {job_title}. "
@@ -433,7 +437,6 @@ class DemoProvider:
         return InterviewChatReply(evaluation_feedback=feedback, interviewer_reply=reply, is_wrap_up=True)
 
 
-
 def to_gemini_schema(schema: dict) -> dict:
     defs = schema.get("$defs", {})
 
@@ -463,7 +466,8 @@ class GeminiProvider(BaseLLMProvider):
             if settings.llm_model and "gemini" in settings.llm_model
             else (
                 settings.llm_model
-                if settings.llm_model and not any(p in settings.llm_model for p in ("claude", "gpt", "o1", "o3", "o4"))
+                if settings.llm_model
+                and not any(p in settings.llm_model for p in ("claude", "gpt", "o1", "o3", "o4"))
                 else "gemini-3.8-flash"
             )
         )
@@ -546,8 +550,7 @@ class OpenAIProvider(BaseLLMProvider):
     def __init__(self):
         self.model = (
             settings.llm_model
-            if settings.llm_model
-            and any(k in settings.llm_model for k in ("gpt", "o1", "o3", "o4"))
+            if settings.llm_model and any(k in settings.llm_model for k in ("gpt", "o1", "o3", "o4"))
             else (
                 settings.llm_model
                 if settings.llm_model and not any(p in settings.llm_model for p in ("claude", "gemini"))
@@ -644,17 +647,9 @@ def provider(mode):
     eff_gemini = get_effective_gemini_key()
     eff_openai = get_effective_openai_key()
 
-    if settings.llm_provider == "gemini" or (
-        not eff_anthropic
-        and not eff_openai
-        and eff_gemini
-    ):
+    if settings.llm_provider == "gemini" or (not eff_anthropic and not eff_openai and eff_gemini):
         return GeminiProvider()
-    if settings.llm_provider == "openai" or (
-        not eff_anthropic
-        and not eff_gemini
-        and eff_openai
-    ):
+    if settings.llm_provider == "openai" or (not eff_anthropic and not eff_gemini and eff_openai):
         return OpenAIProvider()
     if not eff_anthropic and not eff_gemini and not eff_openai:
         raise ValueError(

@@ -11,6 +11,7 @@ test("demo: requirements → analysis → evidence → review → export", async
   await expect(
     page.getByRole("heading", { name: "Requirements & evidence" }),
   ).toBeVisible({ timeout: 20000 });
+  await page.getByRole("button", { name: "Expand all" }).click();
   await page
     .getByRole("button", { name: /app\/api.py/ })
     .first()
@@ -156,3 +157,44 @@ test("job posting file upload and projects custom excludes", async ({ page }) =>
 });
 
 
+
+test("report tab lives in the URL and survives a reload", async ({ page }) => {
+  await page.goto("/");
+  await page.locator('[data-testid="test-load-demo"]').click({ force: true });
+  await page.getByRole("button", { name: "Analyze evidence" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Requirements & evidence" }),
+  ).toBeVisible({ timeout: 20000 });
+
+  // cards start collapsed; details open on demand
+  const card = page.locator(".assessment").first();
+  await expect(card.getByRole("button", { name: /app\/api.py/ })).toBeHidden();
+  await card.getByRole("button", { name: "Show details" }).click();
+  await expect(card.getByRole("button", { name: "Hide details" })).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+
+  // arrow keys move between tabs and update the URL
+  await page.getByRole("tab", { name: "Resume Bullets" }).focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("tab", { name: "Next steps" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(page).toHaveURL(/#\/report\/[^/]+\/next_steps$/);
+  await expect(page.getByRole("heading", { name: "Next steps" })).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByRole("tab", { name: "Next steps" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+});
+
+test("language switch updates the document language", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("Language selector").selectOption("ca");
+  await expect(page.locator("html")).toHaveAttribute("lang", "ca");
+  await expect(page.getByLabel("Selector d'idioma")).toBeVisible();
+});
