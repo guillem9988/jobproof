@@ -114,8 +114,24 @@ Access the single-container app at `http://localhost:8000`.
 | `DATABASE_URL` | SQLite database URI | `sqlite:///./jobproof.db` |
 | `STATIC_DIR` | Path to production built frontend assets | `""` |
 | `ALLOWED_ORIGINS` | Comma-separated CORS origins | Localhost defaults |
+| `HOSTED_MODE` | `true` runs a locked-down public demo (see below) | `false` |
+| `HOSTED_WRITE_LIMIT_PER_MIN` | Write requests allowed per client per minute in hosted mode | `60` |
 
 *Note: All API keys and settings can be conveniently managed directly from the in-app **Settings** screen.*
+
+---
+
+## Public Deployment (Hosted Mode)
+
+JobProof is a single-user tool: it has no accounts, so a normal deployment must never be exposed to the internet. To publish a **public demo**, set `HOSTED_MODE=true` on the backend. In that mode:
+
+- Only the fictional fixture posting and sample projects are available. Importing GitHub repositories or local folders, adding job postings, fetching URLs, editing requirements, reviewing conclusions and the Settings screen are disabled (HTTP 403).
+- The real AI providers are never used, whatever keys the server holds; answers come from the deterministic demo provider.
+- Visitors cannot modify shared data: the demo analysis is shared, cover letters and interview chats are not saved, and records that are not fixtures are hidden.
+- Write requests are rate limited per client (`HOSTED_WRITE_LIMIT_PER_MIN`).
+- Set `ALLOWED_ORIGINS` to your frontend's origin (not `*`) and use a fresh database.
+
+To use JobProof with your own repositories, job postings and API keys, run it locally. See [`docs/security.md`](docs/security.md).
 
 ---
 
@@ -124,13 +140,13 @@ Access the single-container app at `http://localhost:8000`.
 JobProof is continuously tested with high-coverage unit, contract, and browser test suites:
 
 ```bash
-# 1. Backend tests & linters (67 tests)
+# 1. Backend tests & linters (111 tests)
 .venv/bin/pytest backend/tests
 .venv/bin/ruff check backend
 .venv/bin/ruff format --check backend
 
 # 2. Frontend typecheck & i18n unit tests
-pnpm --dir frontend test --run
+pnpm --dir frontend test
 pnpm --dir frontend build
 
 # 3. Playwright browser end-to-end tests (5 tests)

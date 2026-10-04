@@ -27,7 +27,7 @@ export function AssessmentCard({
   open: boolean;
   onToggle: () => void;
 }) {
-  const { t, busy } = useApp();
+  const { t, busy, hosted } = useApp();
   const bodyId = useId();
   const [editing, setEditing] = useState(false);
   const statusLabels = getStatusLabels(t);
@@ -43,9 +43,7 @@ export function AssessmentCard({
       (
         await Promise.all(
           snapshotIds.map((id) =>
-            many<{ id: string; path: string; start: number; end: number }>(
-              `/snapshots/${id}/chunks`,
-            ),
+            many<{ id: string; path: string; start: number; end: number }>(`/snapshots/${id}/chunks`),
           ),
         )
       ).flat(),
@@ -57,8 +55,7 @@ export function AssessmentCard({
           {STATUS_ICON[a.status] ?? "◇"} {statusLabels[a.status] || a.status}
         </span>
         <span className="muted">
-          {priorityLabels[a.requirement.priority] || a.requirement.priority} ·{" "}
-          {a.requirement.category}
+          {priorityLabels[a.requirement.priority] || a.requirement.priority} · {a.requirement.category}
         </span>
       </div>
       <h3>{a.requirement.text}</h3>
@@ -78,16 +75,14 @@ export function AssessmentCard({
               {a.evidence.length} {t.sourcesCount}
             </span>
           )}
-          {a.reviews.length > 0 && <span className="pill reviewed-pill">{t.humanReviewed.split("·")[0].trim()}</span>}
+          {a.reviews.length > 0 && (
+            <span className="pill reviewed-pill">{t.humanReviewed.split("·")[0].trim()}</span>
+          )}
         </span>
       </button>
       <div id={bodyId} hidden={!open}>
         {a.evidence.map((e) => (
-          <button
-            className="evidence-link"
-            key={e.chunk_id + e.quote}
-            onClick={() => evidence(e)}
-          >
+          <button className="evidence-link" key={e.chunk_id + e.quote} onClick={() => evidence(e)}>
             <FileText size={16} />
             <span>
               {e.path}
@@ -113,66 +108,62 @@ export function AssessmentCard({
             {t.humanReviewed} {statusLabels[a.original.status] || a.original.status}
           </p>
         )}
-        <details onToggle={(e) => setEditing(e.currentTarget.open)}>
-          <summary>{t.reviewConclusion}</summary>
-          <form
-            className="form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const f = new FormData(e.currentTarget);
-              review(
-                f.get("status") as Status,
-                String(f.get("reason")),
-                f.getAll("remove").map(String),
-                f.get("add") ? [String(f.get("add"))] : [],
-              );
-            }}
-          >
-            <label>
-              {t.effectiveConclusion}
-              <select name="status" defaultValue={a.status}>
-                {Object.entries(statusLabels).map(([k, v]) => (
-                  <option key={k} value={k}>
-                    {v}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              {t.reasonLabel}
-              <textarea
-                name="reason"
-                placeholder={t.reasonPlaceholder}
-                required
-                minLength={3}
-                rows={2}
-              />
-            </label>
-            {a.evidence.map((e) => (
-              <label key={e.chunk_id} className="check">
-                <input type="checkbox" name="remove" value={e.chunk_id} />
-                {t.removeEvidence} {e.path}
+        {!hosted && (
+          <details onToggle={(e) => setEditing(e.currentTarget.open)}>
+            <summary>{t.reviewConclusion}</summary>
+            <form
+              className="form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const f = new FormData(e.currentTarget);
+                review(
+                  f.get("status") as Status,
+                  String(f.get("reason")),
+                  f.getAll("remove").map(String),
+                  f.get("add") ? [String(f.get("add"))] : [],
+                );
+              }}
+            >
+              <label>
+                {t.effectiveConclusion}
+                <select name="status" defaultValue={a.status}>
+                  {Object.entries(statusLabels).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
               </label>
+              <label>
+                {t.reasonLabel}
+                <textarea name="reason" placeholder={t.reasonPlaceholder} required minLength={3} rows={2} />
+              </label>
+              {a.evidence.map((e) => (
+                <label key={e.chunk_id} className="check">
+                  <input type="checkbox" name="remove" value={e.chunk_id} />
+                  {t.removeEvidence} {e.path}
+                </label>
+              ))}
+              <label>
+                {t.addEvidenceFromSnapshot}
+                <select name="add">
+                  <option value="">{t.noAdditionalEvidence}</option>
+                  {sources.data?.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.path} · {t.lines} {c.start}–{c.end}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button disabled={busy}>{t.saveReview}</button>
+            </form>
+            {a.reviews.map((r, i) => (
+              <p key={i}>
+                {r.created_at}: {r.reason}
+              </p>
             ))}
-            <label>
-              {t.addEvidenceFromSnapshot}
-              <select name="add">
-                <option value="">{t.noAdditionalEvidence}</option>
-                {sources.data?.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.path} · {t.lines} {c.start}–{c.end}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button disabled={busy}>{t.saveReview}</button>
-          </form>
-          {a.reviews.map((r, i) => (
-            <p key={i}>
-              {r.created_at}: {r.reason}
-            </p>
-          ))}
-        </details>
+          </details>
+        )}
       </div>
     </section>
   );

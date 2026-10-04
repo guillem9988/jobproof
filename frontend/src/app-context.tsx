@@ -25,6 +25,8 @@ export interface AppContextValue {
   t: Translations;
   lang: Lang;
   busy: boolean;
+  /** Public demo deployment: imports, settings and edits are unavailable. */
+  hosted: boolean;
   setError: (message: string) => void;
   /** Runs an async action with the shared busy/error handling and refreshes list queries afterwards. */
   act: (fn: () => Promise<void>) => Promise<void>;

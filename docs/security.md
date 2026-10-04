@@ -1,6 +1,6 @@
 # Security and data handling
 
-This is a single-user local app, bound to 127.0.0.1. It is not a secure public multi-user deployment. Public hosting would need authentication, authorization on every resource, tenant isolation, per-user rate/cost limits, CSRF/session design, audit controls and operational monitoring.
+This is a single-user local app, bound to 127.0.0.1. It is not a secure public multi-user deployment. Public hosting would need authentication, authorization on every resource, tenant isolation, per-user rate/cost limits, CSRF/session design, audit controls and operational monitoring. The only supported way to publish it is the read-mostly **hosted mode** described below.
 
 Keys are server environment variables loaded from `jobproof/.env`; that file is ignored. The browser receives only a configured/not-configured flag and model identifier. SQLite and exports can contain private user-entered job or review text: store them as personal documents. Exports include cited snippets, not full source files or provider keys. Do not put credentials in free-text fields.
 
@@ -17,3 +17,17 @@ React renders strings as text and never uses arbitrary README HTML or `dangerous
 Tests cover hostile URLs, sensitive exclusions, unknown redirects, injection fixtures, malicious job HTML, changed quotes, foreign snapshot evidence and redaction. They are not a penetration test or an audit.
 
 Outbound payloads are sanitized as structured string values before JSON escaping. This handles multiline secret blocks without corrupting JSON and preserves character positions needed by posting citations. The original posting remains local; redaction is still pattern-based and not a guarantee that all sensitive information has been detected. Regression tests inspect the actual official SDK request using an in-memory transport.
+
+## Hosted mode (public demo)
+
+`HOSTED_MODE=true` exists because the default mode trusts its user: anyone who can reach the API could read the server's filesystem (`local_path` imports), make the server request arbitrary URLs, spend the server's AI quota, and overwrite the keys stored for everyone. Hosted mode removes those capabilities instead of adding accounts:
+
+- **Blocked at the API (403, `hosted_mode`)**: project creation and imports, job posting creation, URL fetching, requirement extraction, human reviews, task cancellation, and settings read-write/test. The check is in middleware, so it applies whatever the frontend does.
+- **No real providers**: `provider()` always returns the demo provider and real-mode analyses are rejected. Keys in the environment or database are ignored, `GET /settings` reports nothing configured, and `/health` reports `model: demo`.
+- **Fixture data only**: lists and lookups hide records that are not fixtures, so data created before hosted mode was enabled is not exposed. Use a fresh database anyway.
+- **No shared-state mutation**: `PUT /requirements` is a no-op, the demo analysis is deduplicated per fixture input, and cover letters and interview chats are returned but not saved.
+- **Rate limiting**: write requests are limited per client address (the last `X-Forwarded-For` hop, which our own proxy added; earlier hops can be spoofed). The limiter is in memory, so it assumes one instance.
+- **URL fetching guard**: independently of the mode, `/job-postings/fetch-url` now rejects non-public hosts (loopback, private, link-local, metadata addresses), re-checks every redirect hop, and caps the response at 2 MB. It resolves the host before connecting, so a DNS-rebinding race is still theoretically possible; the endpoint is disabled entirely in hosted mode.
+- **CORS**: set `ALLOWED_ORIGINS` to the frontend origin. With `*` the app logs a warning at startup, because the Origin check on writes is then disabled.
+
+Hosted mode is a demo hardening, not multi-user support. It has not been penetration tested.

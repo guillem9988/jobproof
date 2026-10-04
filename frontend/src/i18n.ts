@@ -1,6 +1,11 @@
 export type Lang = "ca" | "en" | "es";
 
 export interface Translations {
+  sidebarHosted: string;
+  hostedBadge: string;
+  hostedNoticeTitle: string;
+  hostedNoticeBody: string;
+  hostedReadOnlyRequirements: string;
   workspaceLabel: string;
   breadcrumbWorkspace: string;
   sidebarTitle: string;
@@ -308,6 +313,11 @@ export interface Translations {
 
 export const translations: Record<Lang, Translations> = {
   ca: {
+    sidebarHosted: "Demo pública · Dades d'exemple",
+    hostedBadge: "Demo pública",
+    hostedNoticeTitle: "Estàs fent servir la demo pública",
+    hostedNoticeBody: "Funciona amb una oferta fictícia i projectes d'exemple, amb respostes d'IA simulades. Importar els teus repositoris, afegir les teves ofertes i connectar claus d'IA només és possible si executes JobProof tu mateix, així les teves dades i claus no surten de la teva màquina.",
+    hostedReadOnlyRequirements: "Els requisits de la demo són de només lectura.",
     workspaceLabel: "ESPAI PERSONAL",
     breadcrumbWorkspace: "Espai de treball",
     sidebarTitle: "Evidència, amb context.",
@@ -613,6 +623,11 @@ export const translations: Record<Lang, Translations> = {
     fileLoadedSuccess: "Fitxer d'oferta carregat correctament!",
   },
   en: {
+    sidebarHosted: "Public demo · Sample data",
+    hostedBadge: "Public demo",
+    hostedNoticeTitle: "You're using the public demo",
+    hostedNoticeBody: "It runs on a fictional job posting and sample projects, with simulated AI answers. Importing your own repositories, adding your own job postings and connecting AI keys are only available when you run JobProof yourself, so your data and keys never leave your machine.",
+    hostedReadOnlyRequirements: "The demo requirements are read-only.",
     workspaceLabel: "PERSONAL WORKSPACE",
     breadcrumbWorkspace: "Workspace",
     sidebarTitle: "Evidence, with context.",
@@ -918,6 +933,11 @@ export const translations: Record<Lang, Translations> = {
     fileLoadedSuccess: "Job posting file loaded successfully!",
   },
   es: {
+    sidebarHosted: "Demo pública · Datos de ejemplo",
+    hostedBadge: "Demo pública",
+    hostedNoticeTitle: "Estás usando la demo pública",
+    hostedNoticeBody: "Funciona con una oferta ficticia y proyectos de ejemplo, con respuestas de IA simuladas. Importar tus repositorios, añadir tus ofertas y conectar claves de IA solo es posible si ejecutas JobProof tú mismo, así tus datos y claves no salen de tu máquina.",
+    hostedReadOnlyRequirements: "Los requisitos de la demo son de solo lectura.",
     workspaceLabel: "ESPACIO PERSONAL",
     breadcrumbWorkspace: "Espacio de trabajo",
     sidebarTitle: "Evidencia, con contexto.",

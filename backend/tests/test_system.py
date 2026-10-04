@@ -616,10 +616,10 @@ def test_job_posting_fetch_url(monkeypatch):
         </html>
         """
 
-    def fake_get(url, **kwargs):
-        return FakeResponse()
+    def fake_safe_get(url, **kwargs):
+        return FakeResponse.status_code, FakeResponse.text
 
-    monkeypatch.setattr(httpx, "get", fake_get)
+    monkeypatch.setattr("app.main.safe_get", fake_safe_get)
     with TestClient(app) as c:
         res = c.post("/api/v1/job-postings/fetch-url", json={"url": "https://example.com/jobs/senior-dev"})
         assert res.status_code == 200

@@ -6,7 +6,12 @@ export const useHealth = () =>
   useQuery({
     queryKey: ["health"],
     queryFn: () =>
-      request<{ real_provider_configured: boolean; model: string; active_provider?: string }>(
+      request<{
+        real_provider_configured: boolean;
+        model: string;
+        active_provider?: string;
+        hosted?: boolean;
+      }>(
         "/health",
       ),
   });
