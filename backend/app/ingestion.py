@@ -163,7 +163,9 @@ class GitHub:
     def import_repo(self, project, ref, checkpoint=lambda stage: None):
         base = f"/repos/{project['owner']}/{project['repository']}"
         meta = self.request(base)
-        if not get_effective_github_token() and (meta.get("private") or meta.get("visibility", "public") != "public"):
+        if not get_effective_github_token() and (
+            meta.get("private") or meta.get("visibility", "public") != "public"
+        ):
             raise ValueError(
                 "Private repositories require a configured GitHub Personal Access Token in Settings."
             )
@@ -189,9 +191,7 @@ class GitHub:
                 "demo": False,
             },
         )
-        custom_excludes = [
-            x.strip() for x in project.get("excludes", "").split(",") if x.strip()
-        ]
+        custom_excludes = [x.strip() for x in project.get("excludes", "").split(",") if x.strip()]
         try:
             entries = sorted(
                 tree["tree"],
@@ -296,11 +296,7 @@ def import_local_dir(project, directory_path, checkpoint=lambda stage: None):
         entries = []
         for root, dirs, files in os.walk(abs_dir):
             rel_root = os.path.relpath(root, abs_dir).replace("\\", "/")
-            dirs[:] = [
-                d
-                for d in dirs
-                if not is_excluded_dir(d if rel_root == "." else f"{rel_root}/{d}")
-            ]
+            dirs[:] = [d for d in dirs if not is_excluded_dir(d if rel_root == "." else f"{rel_root}/{d}")]
             if rel_root != "." and is_excluded_dir(rel_root):
                 continue
             for f in files:
@@ -314,9 +310,7 @@ def import_local_dir(project, directory_path, checkpoint=lambda stage: None):
             )
         )
 
-        custom_excludes = [
-            x.strip() for x in project.get("excludes", "").split(",") if x.strip()
-        ]
+        custom_excludes = [x.strip() for x in project.get("excludes", "").split(",") if x.strip()]
 
         for rel_path, full_path in entries:
             checkpoint("Importing files")
@@ -326,8 +320,7 @@ def import_local_dir(project, directory_path, checkpoint=lambda stage: None):
                 continue
             reason = exclusion(rel_path, size, "100644", custom_excludes)
             if not reason and (
-                snap["file_count"] >= settings.max_files
-                or snap["bytes"] + size > settings.max_project_bytes
+                snap["file_count"] >= settings.max_files or snap["bytes"] + size > settings.max_project_bytes
             ):
                 reason = "project import limit"
             if reason:
@@ -375,4 +368,3 @@ def stable_url(chunk, start, end):
         return None
     project = get(snap["project_id"], "project")
     return f"{project['url']}/blob/{snap['sha']}/{quote(chunk['path'], safe='/')}#L{start}-L{end}"
-

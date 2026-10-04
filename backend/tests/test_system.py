@@ -416,7 +416,9 @@ def test_local_dir_ingestion(tmp_path):
     # Create a dummy project structure
     project_dir = tmp_path / "sample_local_project"
     project_dir.mkdir()
-    (project_dir / "README.md").write_text("# Sample Project\nA local repository for testing.", encoding="utf-8")
+    (project_dir / "README.md").write_text(
+        "# Sample Project\nA local repository for testing.", encoding="utf-8"
+    )
     src_dir = project_dir / "src"
     src_dir.mkdir()
     (src_dir / "main.py").write_text("def hello():\n    return 'world'\n", encoding="utf-8")
@@ -483,7 +485,10 @@ def test_settings_endpoints():
         )
         assert test_fail.status_code == 200
         assert test_fail.json()["success"] is False
-        assert "missing" in test_fail.json()["message"].lower() or "no anthropic" in test_fail.json()["message"].lower()
+        assert (
+            "missing" in test_fail.json()["message"].lower()
+            or "no anthropic" in test_fail.json()["message"].lower()
+        )
 
         # POST settings update with OpenAI
         update_openai = c.post(
@@ -627,6 +632,3 @@ def test_job_posting_fetch_url(monkeypatch):
         # Test invalid protocol
         invalid_res = c.post("/api/v1/job-postings/fetch-url", json={"url": "ftp://example.com/job"})
         assert invalid_res.status_code == 422 or invalid_res.status_code == 400
-
-
-
