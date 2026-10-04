@@ -2,6 +2,7 @@ import { ArrowRight, Globe, Play, Plus, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { one, request } from "../api";
 import { useApp } from "../app-context";
+import { HostedNotice } from "../components/HostedNotice";
 import { useJobs, useSnapshots, useProjects } from "../hooks/queries";
 import type { Job, JobUrlFetchResponse, Requirement, Task } from "../types";
 
@@ -9,6 +10,7 @@ export function JobPage() {
   const {
     t,
     busy,
+    hosted,
     act,
     go,
     setError,
@@ -86,9 +88,7 @@ export function JobPage() {
     if (job)
       setJob({
         ...job,
-        requirements: job.requirements.map((r) =>
-          r.id === id ? { ...r, ...change, reviewed: true } : r,
-        ),
+        requirements: job.requirements.map((r) => (r.id === id ? { ...r, ...change, reviewed: true } : r)),
       });
   }
 
@@ -111,7 +111,15 @@ export function JobPage() {
       <div className="eyebrow">{t.applicationWorkspace}</div>
       <h1>{job ? t.jobReviewTitle : t.jobStartTitle}</h1>
       <p className="intro">{job ? t.jobReviewIntro : t.jobStartIntro}</p>
-      {!job ? (
+      {hosted && <HostedNotice />}
+      {!job && hosted ? (
+        <div className="quick-start">
+          <span>{t.homeCardSetupRunDesc}</span>
+          <button type="button" className="primary button-sm" onClick={setupAndRun} disabled={busy}>
+            <Play size={14} fill="currentColor" /> {t.buttonSetupAndRun}
+          </button>
+        </div>
+      ) : !job ? (
         <>
           <div className="quick-start">
             <span>{t.homeCardSetupRunDesc}</span>
@@ -133,11 +141,7 @@ export function JobPage() {
                 onChange={(e) => patch({ fetchUrl: e.target.value })}
                 className="grow"
               />
-              <button
-                type="button"
-                disabled={fetching || !draft.fetchUrl.trim()}
-                onClick={fetchFromUrl}
-              >
+              <button type="button" disabled={fetching || !draft.fetchUrl.trim()} onClick={fetchFromUrl}>
                 {fetching ? t.fetchingJobUrl : t.fetchJobButton}
               </button>
             </div>
@@ -245,22 +249,25 @@ export function JobPage() {
             </summary>
             <pre className="posting">{job.canonical_text}</pre>
           </details>
-          <button
-            disabled={busy}
-            onClick={() =>
-              act(async () =>
-                track(
-                  await one<Task>(`/job-postings/${job.id}/extract-requirements`, {
-                    mode: job.demo ? "demo" : "real",
-                    request_id: crypto.randomUUID(),
-                  }),
-                ),
-              )
-            }
-          >
-            {t.extractRequirements}
-            {job.requirements.length ? ` (${t.extractAgain})` : ""}
-          </button>
+          {!hosted && (
+            <button
+              disabled={busy}
+              onClick={() =>
+                act(async () =>
+                  track(
+                    await one<Task>(`/job-postings/${job.id}/extract-requirements`, {
+                      mode: job.demo ? "demo" : "real",
+                      request_id: crypto.randomUUID(),
+                    }),
+                  ),
+                )
+              }
+            >
+              {t.extractRequirements}
+              {job.requirements.length ? ` (${t.extractAgain})` : ""}
+            </button>
+          )}
+          {hosted && <p className="quiet">{t.hostedReadOnlyRequirements}</p>}
           <div className="requirements">
             {job.requirements.map((r, i) => (
               <section className="card requirement-edit" key={r.id}>
@@ -270,19 +277,25 @@ export function JobPage() {
                     <input
                       type="checkbox"
                       checked={r.selected ?? true}
+                      disabled={hosted}
                       onChange={(e) => changeReq(r.id, { selected: e.target.checked })}
                     />
                     {t.includeInAnalysis}
                   </label>
                   <label>
                     {t.requirementLabel}
-                    <input value={r.text} onChange={(e) => changeReq(r.id, { text: e.target.value })} />
+                    <input
+                      value={r.text}
+                      readOnly={hosted}
+                      onChange={(e) => changeReq(r.id, { text: e.target.value })}
+                    />
                   </label>
                   <div className="two">
                     <label>
                       {t.priorityLabel}
                       <select
                         value={r.priority}
+                        disabled={hosted}
                         onChange={(e) =>
                           changeReq(r.id, { priority: e.target.value as Requirement["priority"] })
                         }
@@ -296,6 +309,7 @@ export function JobPage() {
                       {t.verifiableFromCode}
                       <select
                         value={r.verifiability}
+                        disabled={hosted}
                         onChange={(e) =>
                           changeReq(r.id, {
                             verifiability: e.target.value as Requirement["verifiability"],
@@ -314,43 +328,47 @@ export function JobPage() {
                       : `${t.postingExcerptPrefix} “${r.quote}” · ${t.characterPrefix} ${r.offset}`}
                   </small>
                 </div>
-                <button
-                  className="icon-button"
-                  aria-label={`Remove ${r.text}`}
-                  onClick={() =>
-                    setJob({ ...job, requirements: job.requirements.filter((x) => x.id !== r.id) })
-                  }
-                >
-                  <X size={17} />
-                </button>
+                {!hosted && (
+                  <button
+                    className="icon-button"
+                    aria-label={`Remove ${r.text}`}
+                    onClick={() =>
+                      setJob({ ...job, requirements: job.requirements.filter((x) => x.id !== r.id) })
+                    }
+                  >
+                    <X size={17} />
+                  </button>
+                )}
               </section>
             ))}
           </div>
-          <button
-            onClick={() =>
-              setJob({
-                ...job,
-                requirements: [
-                  ...job.requirements,
-                  {
-                    id: crypto.randomUUID(),
-                    text: "New requirement",
-                    quote: "",
-                    offset: null,
-                    category: "technology",
-                    priority: "unspecified",
-                    verifiability: "code",
-                    reviewed: true,
-                    provenance: "manual",
-                    selected: true,
-                  },
-                ],
-              })
-            }
-          >
-            <Plus size={16} />
-            {t.addManualRequirement}
-          </button>
+          {!hosted && (
+            <button
+              onClick={() =>
+                setJob({
+                  ...job,
+                  requirements: [
+                    ...job.requirements,
+                    {
+                      id: crypto.randomUUID(),
+                      text: "New requirement",
+                      quote: "",
+                      offset: null,
+                      category: "technology",
+                      priority: "unspecified",
+                      verifiability: "code",
+                      reviewed: true,
+                      provenance: "manual",
+                      selected: true,
+                    },
+                  ],
+                })
+              }
+            >
+              <Plus size={16} />
+              {t.addManualRequirement}
+            </button>
+          )}
           <section className="card project-picker">
             <h2>{t.selectProjectSnapshots}</h2>
             <p>{t.selectProjectDesc}</p>
@@ -362,9 +380,7 @@ export function JobPage() {
                     type="checkbox"
                     checked={selected.includes(s.id)}
                     onChange={(e) =>
-                      setSelected(
-                        e.target.checked ? [...selected, s.id] : selected.filter((x) => x !== s.id),
-                      )
+                      setSelected(e.target.checked ? [...selected, s.id] : selected.filter((x) => x !== s.id))
                     }
                   />
                   <span>
@@ -378,16 +394,18 @@ export function JobPage() {
               ))}
             {!snapshots.data?.length && <button onClick={() => go("projects")}>{t.yourProjects}</button>}
           </section>
-          <button
-            disabled={busy}
-            onClick={() =>
-              act(async () => {
-                setJob(await saveRequirements(job));
-              })
-            }
-          >
-            {t.saveReviewedRequirements}
-          </button>
+          {!hosted && (
+            <button
+              disabled={busy}
+              onClick={() =>
+                act(async () => {
+                  setJob(await saveRequirements(job));
+                })
+              }
+            >
+              {t.saveReviewedRequirements}
+            </button>
+          )}
           <div className="action-bar">
             <span>
               {job.requirements.filter((r) => r.selected ?? true).length} / {job.requirements.length}{" "}
