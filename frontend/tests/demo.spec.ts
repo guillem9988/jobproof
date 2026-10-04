@@ -198,3 +198,19 @@ test("language switch updates the document language", async ({ page }) => {
   await expect(page.locator("html")).toHaveAttribute("lang", "ca");
   await expect(page.getByLabel("Selector d'idioma")).toBeVisible();
 });
+
+test("a sleeping server shows a waking-up message instead of an error", async ({ page }) => {
+  let calls = 0;
+  await page.route("**/api/v1/health", (route) => {
+    calls += 1;
+    if (calls <= 2) return route.fulfill({ status: 502, contentType: "text/html", body: "<html>Bad Gateway</html>" });
+    return route.continue();
+  });
+  await page.goto("/");
+  const waking = page.getByText("Waking up the server…");
+  await expect(waking).toBeVisible();
+  await expect(page.getByText("Cannot reach the backend", { exact: false })).toHaveCount(0);
+  // once the server answers, the message goes away and the app is usable
+  await expect(waking).toBeHidden({ timeout: 15000 });
+  await expect(page.getByRole("button", { name: "New analysis", exact: true })).toBeVisible();
+});

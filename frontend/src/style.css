@@ -2561,3 +2561,27 @@ textarea:focus-visible {
 .hosted-notice p {
   margin: 4px 0 0;
 }
+
+.waking-notice {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.waking-notice p {
+  margin: 4px 0 0;
+}
+
+.spin {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--color-primary);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

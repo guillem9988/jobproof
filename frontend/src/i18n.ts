@@ -1,6 +1,8 @@
 export type Lang = "ca" | "en" | "es";
 
 export interface Translations {
+  serverWakingTitle: string;
+  serverWakingDesc: string;
   sidebarHosted: string;
   hostedBadge: string;
   hostedNoticeTitle: string;
@@ -313,6 +315,8 @@ export interface Translations {
 
 export const translations: Record<Lang, Translations> = {
   ca: {
+    serverWakingTitle: "El servidor s'està despertant…",
+    serverWakingDesc: "El servidor gratuït s'adorm quan no s'usa, així que la primera visita pot trigar fins a un minut. Aquesta pàgina es carregarà sola.",
     sidebarHosted: "Demo pública · Dades d'exemple",
     hostedBadge: "Demo pública",
     hostedNoticeTitle: "Estàs fent servir la demo pública",
@@ -623,6 +627,8 @@ export const translations: Record<Lang, Translations> = {
     fileLoadedSuccess: "Fitxer d'oferta carregat correctament!",
   },
   en: {
+    serverWakingTitle: "Waking up the server…",
+    serverWakingDesc: "The free server sleeps when idle, so the first visit can take up to a minute. This page will load by itself.",
     sidebarHosted: "Public demo · Sample data",
     hostedBadge: "Public demo",
     hostedNoticeTitle: "You're using the public demo",
@@ -933,6 +939,8 @@ export const translations: Record<Lang, Translations> = {
     fileLoadedSuccess: "Job posting file loaded successfully!",
   },
   es: {
+    serverWakingTitle: "El servidor se está despertando…",
+    serverWakingDesc: "El servidor gratuito se duerme cuando no se usa, así que la primera visita puede tardar hasta un minuto. Esta página se cargará sola.",
     sidebarHosted: "Demo pública · Datos de ejemplo",
     hostedBadge: "Demo pública",
     hostedNoticeTitle: "Estás usando la demo pública",
