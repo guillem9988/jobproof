@@ -59,7 +59,7 @@ jobs:
       - name: Run Vitest Unit Tests
         run: |
           cd frontend
-          pnpm test --run
+          pnpm test
 
       - name: Build Frontend
         run: |

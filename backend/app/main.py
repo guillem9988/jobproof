@@ -15,10 +15,13 @@ from pydantic import Field
 
 from . import tasks
 from .core import (
+    SERVER_DEFAULT_ANTHROPIC_KEY,
+    SERVER_DEFAULT_GEMINI_KEY,
+    SERVER_DEFAULT_GITHUB_TOKEN,
+    SERVER_DEFAULT_OPENAI_KEY,
     Base,
     ChatMessage,
     CoverLetterRequest,
-    engine,
     GeneratedCoverLetter,
     InterviewChatReply,
     InterviewChatRequest,
@@ -27,16 +30,13 @@ from .core import (
     Schema,
     Status,
     all_records,
+    engine,
     get,
     get_allowed_origins,
     get_effective_anthropic_key,
     get_effective_gemini_key,
     get_effective_github_token,
     get_effective_openai_key,
-    SERVER_DEFAULT_ANTHROPIC_KEY,
-    SERVER_DEFAULT_GEMINI_KEY,
-    SERVER_DEFAULT_GITHUB_TOKEN,
-    SERVER_DEFAULT_OPENAI_KEY,
     normalize,
     now,
     save,
@@ -54,7 +54,7 @@ PIPELINE = "1.1"
 def init_settings():
     try:
         cfg = get("config", kind="settings")
-    except Exception:
+    except Exception:  # noqa: BLE001 - settings table may not exist yet on first boot
         return
     if cfg.get("anthropic_api_key") and not settings.anthropic_api_key:
         settings.anthropic_api_key = cfg["anthropic_api_key"]
@@ -64,7 +64,9 @@ def init_settings():
         settings.openai_api_key = cfg["openai_api_key"]
     if cfg.get("llm_provider") and not settings.llm_provider:
         settings.llm_provider = cfg["llm_provider"]
-    if cfg.get("llm_model") and (not settings.llm_model or settings.llm_model in ("claude-sonnet-4-6", "gpt-4o")):
+    if cfg.get("llm_model") and (
+        not settings.llm_model or settings.llm_model in ("claude-sonnet-4-6", "gpt-4o")
+    ):
         settings.llm_model = cfg["llm_model"]
     if cfg.get("github_token") and not settings.github_token:
         settings.github_token = cfg["github_token"]
@@ -74,7 +76,7 @@ def init_settings():
 async def lifespan(app):
     try:
         Base.metadata.create_all(engine)
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 - tables may already exist or the DB may be read-only
         pass
     init_settings()
     tasks.recover()
@@ -483,9 +485,7 @@ def test_settings(payload: SettingsTestRequest):
         )
         start_t = time.perf_counter()
         try:
-            with httpx.Client(
-                timeout=10, headers={"Authorization": f"Bearer {key}"}
-            ) as client:
+            with httpx.Client(timeout=10, headers={"Authorization": f"Bearer {key}"}) as client:
                 resp = client.post(
                     "https://api.openai.com/v1/chat/completions",
                     json={
@@ -555,7 +555,6 @@ class ProjectInput(Schema):
     description: str = Field(default="", max_length=2000)
     contribution: str = Field(default="", max_length=4000)
     excludes: str = Field(default="", max_length=500)
-
 
 
 @app.post("/api/v1/projects", response_model=Document)
@@ -752,16 +751,13 @@ def fetch_job_url(body: JobUrlFetchRequest):
     clean_text = "\n".join(line for line in lines if line)
 
     if len(clean_text) < 30:
-        raise HTTPException(
-            status_code=400, detail="Could not extract readable text from the provided URL."
-        )
+        raise HTTPException(status_code=400, detail="Could not extract readable text from the provided URL.")
 
     return JobUrlFetchResponse(
         title=title[:200],
         company="",
         text=clean_text[:40000],
     )
-
 
 
 class ExtractInput(Schema):
@@ -1175,13 +1171,15 @@ def interview_chat_endpoint(id: str, body: InterviewChatRequest):
         language=body.language,
     )
     chat_history = [m.model_dump() for m in body.messages]
-    chat_history.append({
-        "id": uid(),
-        "role": "interviewer",
-        "content": reply.interviewer_reply,
-        "feedback": reply.evaluation_feedback,
-        "created_at": now(),
-    })
+    chat_history.append(
+        {
+            "id": uid(),
+            "role": "interviewer",
+            "content": reply.interviewer_reply,
+            "feedback": reply.evaluation_feedback,
+            "created_at": now(),
+        }
+    )
     save("analysis", {**a, "interview_chat": chat_history}, id)
     return reply
 
