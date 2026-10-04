@@ -27,6 +27,14 @@ from .core import (
     all_records,
     get,
     get_allowed_origins,
+    get_effective_anthropic_key,
+    get_effective_gemini_key,
+    get_effective_github_token,
+    get_effective_openai_key,
+    SERVER_DEFAULT_ANTHROPIC_KEY,
+    SERVER_DEFAULT_GEMINI_KEY,
+    SERVER_DEFAULT_GITHUB_TOKEN,
+    SERVER_DEFAULT_OPENAI_KEY,
     normalize,
     now,
     save,
@@ -116,23 +124,27 @@ class Health(Schema):
 @app.get("/health", response_model=Health)
 @app.get("/api/v1/health", response_model=Health)
 def health():
+    eff_gemini = get_effective_gemini_key()
+    eff_openai = get_effective_openai_key()
+    eff_anthropic = get_effective_anthropic_key()
+
     pref = settings.llm_provider
     if not pref:
-        if settings.gemini_api_key:
+        if eff_gemini:
             pref = "gemini"
-        elif settings.openai_api_key:
+        elif eff_openai:
             pref = "openai"
-        elif settings.anthropic_api_key:
+        elif eff_anthropic:
             pref = "anthropic"
         else:
             pref = "gemini"
 
     active = ""
-    if pref == "gemini" and settings.gemini_api_key:
+    if pref == "gemini" and eff_gemini:
         active = "gemini"
-    elif pref == "openai" and settings.openai_api_key:
+    elif pref == "openai" and eff_openai:
         active = "openai"
-    elif pref == "anthropic" and settings.anthropic_api_key:
+    elif pref == "anthropic" and eff_anthropic:
         active = "anthropic"
 
     configured = bool(active)
@@ -206,12 +218,16 @@ class SettingsView(Schema):
     llm_model: str
     gemini_api_key_configured: bool
     gemini_api_key_preview: str
+    gemini_is_server_default: bool = False
     anthropic_api_key_configured: bool
     anthropic_api_key_preview: str
+    anthropic_is_server_default: bool = False
     openai_api_key_configured: bool
     openai_api_key_preview: str
+    openai_is_server_default: bool = False
     github_token_configured: bool
     github_token_preview: str
+    github_is_server_default: bool = False
     real_provider_configured: bool
     active_provider: str
 
@@ -239,23 +255,28 @@ class SettingsTestResponse(Schema):
 
 @app.get("/api/v1/settings", response_model=SettingsView)
 def get_settings():
+    eff_gemini = get_effective_gemini_key()
+    eff_openai = get_effective_openai_key()
+    eff_anthropic = get_effective_anthropic_key()
+    eff_github = get_effective_github_token()
+
     provider_pref = settings.llm_provider
     if not provider_pref:
-        if settings.gemini_api_key:
+        if eff_gemini:
             provider_pref = "gemini"
-        elif settings.openai_api_key:
+        elif eff_openai:
             provider_pref = "openai"
-        elif settings.anthropic_api_key:
+        elif eff_anthropic:
             provider_pref = "anthropic"
         else:
             provider_pref = "gemini"
 
     active = ""
-    if provider_pref == "gemini" and settings.gemini_api_key:
+    if provider_pref == "gemini" and eff_gemini:
         active = "gemini"
-    elif provider_pref == "openai" and settings.openai_api_key:
+    elif provider_pref == "openai" and eff_openai:
         active = "openai"
-    elif provider_pref == "anthropic" and settings.anthropic_api_key:
+    elif provider_pref == "anthropic" and eff_anthropic:
         active = "anthropic"
 
     configured = bool(active)
@@ -269,17 +290,41 @@ def get_settings():
 
     current_model = settings.llm_model if settings.llm_model else default_model
 
+    gemini_is_server = bool(not settings.gemini_api_key and SERVER_DEFAULT_GEMINI_KEY)
+    gemini_preview = mask_secret(eff_gemini)
+    if eff_gemini and gemini_is_server:
+        gemini_preview = f"{gemini_preview} (Default)"
+
+    anthropic_is_server = bool(not settings.anthropic_api_key and SERVER_DEFAULT_ANTHROPIC_KEY)
+    anthropic_preview = mask_secret(eff_anthropic)
+    if eff_anthropic and anthropic_is_server:
+        anthropic_preview = f"{anthropic_preview} (Default)"
+
+    openai_is_server = bool(not settings.openai_api_key and SERVER_DEFAULT_OPENAI_KEY)
+    openai_preview = mask_secret(eff_openai)
+    if eff_openai and openai_is_server:
+        openai_preview = f"{openai_preview} (Default)"
+
+    github_is_server = bool(not settings.github_token and SERVER_DEFAULT_GITHUB_TOKEN)
+    github_preview = mask_secret(eff_github)
+    if eff_github and github_is_server:
+        github_preview = f"{github_preview} (Default)"
+
     return SettingsView(
         llm_provider=provider_pref,
         llm_model=current_model,
-        gemini_api_key_configured=bool(settings.gemini_api_key),
-        gemini_api_key_preview=mask_secret(settings.gemini_api_key),
-        anthropic_api_key_configured=bool(settings.anthropic_api_key),
-        anthropic_api_key_preview=mask_secret(settings.anthropic_api_key),
-        openai_api_key_configured=bool(settings.openai_api_key),
-        openai_api_key_preview=mask_secret(settings.openai_api_key),
-        github_token_configured=bool(settings.github_token),
-        github_token_preview=mask_secret(settings.github_token),
+        gemini_api_key_configured=bool(eff_gemini),
+        gemini_api_key_preview=gemini_preview,
+        gemini_is_server_default=gemini_is_server,
+        anthropic_api_key_configured=bool(eff_anthropic),
+        anthropic_api_key_preview=anthropic_preview,
+        anthropic_is_server_default=anthropic_is_server,
+        openai_api_key_configured=bool(eff_openai),
+        openai_api_key_preview=openai_preview,
+        openai_is_server_default=openai_is_server,
+        github_token_configured=bool(eff_github),
+        github_token_preview=github_preview,
+        github_is_server_default=github_is_server,
         real_provider_configured=configured,
         active_provider=active,
     )
@@ -330,7 +375,7 @@ def update_settings(payload: SettingsUpdate):
 @app.post("/api/v1/settings/test", response_model=SettingsTestResponse)
 def test_settings(payload: SettingsTestRequest):
     if payload.provider == "gemini":
-        key = payload.api_key.strip() if payload.api_key else settings.gemini_api_key
+        key = payload.api_key.strip() if payload.api_key else get_effective_gemini_key()
         if not key:
             return SettingsTestResponse(success=False, message="No Gemini API key provided or configured.")
         model = (
@@ -371,7 +416,7 @@ def test_settings(payload: SettingsTestRequest):
             return SettingsTestResponse(success=False, message=f"Connection error: {e!s}")
 
     elif payload.provider == "anthropic":
-        key = payload.api_key.strip() if payload.api_key else settings.anthropic_api_key
+        key = payload.api_key.strip() if payload.api_key else get_effective_anthropic_key()
         if not key:
             return SettingsTestResponse(success=False, message="No Anthropic API key provided or configured.")
         model = (
@@ -418,7 +463,7 @@ def test_settings(payload: SettingsTestRequest):
             return SettingsTestResponse(success=False, message=f"Connection error: {e!s}")
 
     elif payload.provider == "openai":
-        key = payload.api_key.strip() if payload.api_key else settings.openai_api_key
+        key = payload.api_key.strip() if payload.api_key else get_effective_openai_key()
         if not key:
             return SettingsTestResponse(success=False, message="No OpenAI API key provided or configured.")
         model = (
@@ -465,7 +510,7 @@ def test_settings(payload: SettingsTestRequest):
             return SettingsTestResponse(success=False, message=f"Connection error: {e!s}")
 
     elif payload.provider == "github":
-        token = payload.api_key.strip() if payload.api_key else settings.github_token
+        token = payload.api_key.strip() if payload.api_key else get_effective_github_token()
         if not token:
             return SettingsTestResponse(success=False, message="No GitHub token provided or configured.")
         start_t = time.perf_counter()

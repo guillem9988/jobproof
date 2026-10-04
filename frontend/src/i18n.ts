@@ -224,6 +224,9 @@ export interface Translations {
   githubTokenDesc: string;
   keyConfiguredBadge: string;
   keyNotConfiguredBadge: string;
+  keyServerDefaultBadge: string;
+  keyCustomBadge: string;
+  serverDefaultHelper: string;
   saveSettings: string;
   settingsSaved: string;
   testConnection: string;
@@ -504,6 +507,9 @@ export const translations: Record<Lang, Translations> = {
     githubTokenDesc: "Permet importar i analitzar repositoris privats de GitHub.",
     keyConfiguredBadge: "Configurada",
     keyNotConfiguredBadge: "Sense configurar",
+    keyServerDefaultBadge: "Servidor",
+    keyCustomBadge: "Personalitzada",
+    serverDefaultHelper: "El servidor té una clau per defecte activa. Deixa-ho en blanc per usar-la o posa la teva per sobreescriure-la.",
     saveSettings: "Desar configuració",
     settingsSaved: "Configuració desada correctament!",
     testConnection: "Provar connexió",
@@ -780,6 +786,9 @@ export const translations: Record<Lang, Translations> = {
     githubTokenDesc: "Allows importing and analyzing private GitHub repositories.",
     keyConfiguredBadge: "Configured",
     keyNotConfiguredBadge: "Not configured",
+    keyServerDefaultBadge: "Server default",
+    keyCustomBadge: "Custom",
+    serverDefaultHelper: "The server has an active default key. Leave blank to use it or enter your own to override.",
     saveSettings: "Save settings",
     settingsSaved: "Settings saved successfully!",
     testConnection: "Test connection",
@@ -1056,6 +1065,9 @@ export const translations: Record<Lang, Translations> = {
     githubTokenDesc: "Permite importar y analizar repositorios privados de GitHub.",
     keyConfiguredBadge: "Configurada",
     keyNotConfiguredBadge: "Sin configurar",
+    keyServerDefaultBadge: "Servidor",
+    keyCustomBadge: "Personalizada",
+    serverDefaultHelper: "El servidor tiene una clave por defecto activa. Déjalo en blanco para usarla o pon la tuya para sobrescribirla.",
     saveSettings: "Guardar configuración",
     settingsSaved: "¡Configuración guardada correctamente!",
     testConnection: "Probar conexión",

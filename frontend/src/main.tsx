@@ -1816,7 +1816,7 @@ function App() {
                     </label>
                     {appSettings.data?.gemini_api_key_configured ? (
                       <span className="pill supported" style={{ fontSize: "0.8rem" }}>
-                        ✓ {t.keyConfiguredBadge}: {appSettings.data.gemini_api_key_preview}
+                        ✓ {t.keyConfiguredBadge} {appSettings.data.gemini_is_server_default ? `(${t.keyServerDefaultBadge})` : `(${t.keyCustomBadge})`}: {appSettings.data.gemini_api_key_preview}
                       </span>
                     ) : (
                       <span className="pill not_evidenced" style={{ fontSize: "0.8rem" }}>
@@ -1852,6 +1852,11 @@ function App() {
                       {showGeminiKey ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
+                  {appSettings.data?.gemini_is_server_default && !geminiKeyInput && (
+                    <div style={{ margin: "4px 0 0", fontSize: "0.8rem", color: "var(--color-muted, #64748b)" }}>
+                      ℹ️ {t.serverDefaultHelper}
+                    </div>
+                  )}
                   <div
                     style={{
                       display: "flex",

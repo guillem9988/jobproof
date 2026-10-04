@@ -6,7 +6,7 @@ from urllib.parse import quote
 
 import httpx
 
-from .core import digest, get, normalize, now, redact, save, settings
+from .core import digest, get, get_effective_github_token, normalize, now, redact, save, settings
 
 URL = re.compile(r"https://github\.com/([A-Za-z0-9][A-Za-z0-9-]{0,38})/([A-Za-z0-9_.-]{1,100})/?$")
 SHORT_REPO = re.compile(r"^([A-Za-z0-9][A-Za-z0-9-]{0,38})/([A-Za-z0-9_.-]{1,100})$")
@@ -135,8 +135,9 @@ def index_file(snapshot_id, path, content):
 class GitHub:
     def __init__(self, client=None):
         headers = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}
-        if settings.github_token:
-            headers["Authorization"] = f"Bearer {settings.github_token}"
+        token = get_effective_github_token()
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
         self.client = client or httpx.Client(
             base_url="https://api.github.com",
             headers=headers,
@@ -162,7 +163,7 @@ class GitHub:
     def import_repo(self, project, ref, checkpoint=lambda stage: None):
         base = f"/repos/{project['owner']}/{project['repository']}"
         meta = self.request(base)
-        if not settings.github_token and (meta.get("private") or meta.get("visibility", "public") != "public"):
+        if not get_effective_github_token() and (meta.get("private") or meta.get("visibility", "public") != "public"):
             raise ValueError(
                 "Private repositories require a configured GitHub Personal Access Token in Settings."
             )

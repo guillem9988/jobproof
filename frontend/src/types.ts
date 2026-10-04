@@ -115,12 +115,16 @@ export type AppSettings = {
   llm_model: string;
   gemini_api_key_configured: boolean;
   gemini_api_key_preview: string;
+  gemini_is_server_default?: boolean;
   anthropic_api_key_configured: boolean;
   anthropic_api_key_preview: string;
+  anthropic_is_server_default?: boolean;
   openai_api_key_configured: boolean;
   openai_api_key_preview: string;
+  openai_is_server_default?: boolean;
   github_token_configured: boolean;
   github_token_preview: string;
+  github_is_server_default?: boolean;
   real_provider_configured: boolean;
   active_provider: string;
 };

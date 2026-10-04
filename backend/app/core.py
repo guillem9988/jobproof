@@ -4,6 +4,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Literal
 
+import os
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import JSON, String, create_engine
@@ -34,6 +35,27 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+SERVER_DEFAULT_GEMINI_KEY: str = (os.environ.get("GEMINI_API_KEY", "") or settings.gemini_api_key).strip()
+SERVER_DEFAULT_ANTHROPIC_KEY: str = (os.environ.get("ANTHROPIC_API_KEY", "") or settings.anthropic_api_key).strip()
+SERVER_DEFAULT_OPENAI_KEY: str = (os.environ.get("OPENAI_API_KEY", "") or settings.openai_api_key).strip()
+SERVER_DEFAULT_GITHUB_TOKEN: str = (os.environ.get("GITHUB_TOKEN", "") or settings.github_token).strip()
+
+
+def get_effective_gemini_key() -> str:
+    return settings.gemini_api_key.strip() if settings.gemini_api_key else SERVER_DEFAULT_GEMINI_KEY
+
+
+def get_effective_anthropic_key() -> str:
+    return settings.anthropic_api_key.strip() if settings.anthropic_api_key else SERVER_DEFAULT_ANTHROPIC_KEY
+
+
+def get_effective_openai_key() -> str:
+    return settings.openai_api_key.strip() if settings.openai_api_key else SERVER_DEFAULT_OPENAI_KEY
+
+
+def get_effective_github_token() -> str:
+    return settings.github_token.strip() if settings.github_token else SERVER_DEFAULT_GITHUB_TOKEN
 
 
 def get_allowed_origins() -> list[str]:

@@ -10,6 +10,9 @@ from .core import (
     InterviewChatReply,
     Preparation,
     Requirements,
+    get_effective_anthropic_key,
+    get_effective_gemini_key,
+    get_effective_openai_key,
     redact_payload,
     settings,
 )
@@ -127,12 +130,13 @@ class RealProvider(BaseLLMProvider):
                 else "claude-sonnet-5-5"
             )
         )
-        if not settings.anthropic_api_key:
+        effective_key = get_effective_anthropic_key()
+        if not effective_key:
             raise ValueError(
                 "ANTHROPIC_API_KEY is missing. Configure the server or explicitly use the fixture demo."
             )
         self.client = Anthropic(
-            api_key=settings.anthropic_api_key,
+            api_key=effective_key,
             timeout=settings.external_timeout,
             max_retries=settings.max_retries,
         )
@@ -463,13 +467,14 @@ class GeminiProvider(BaseLLMProvider):
                 else "gemini-3.8-flash"
             )
         )
-        if not settings.gemini_api_key:
+        effective_key = get_effective_gemini_key()
+        if not effective_key:
             raise ValueError(
                 "GEMINI_API_KEY is missing. Configure the server or explicitly use the fixture demo."
             )
         self.client = httpx.Client(
             timeout=settings.external_timeout,
-            headers={"x-goog-api-key": settings.gemini_api_key},
+            headers={"x-goog-api-key": effective_key},
         )
         self.usage = {"calls": 0, "input_tokens": 0, "output_tokens": 0}
 
@@ -549,14 +554,15 @@ class OpenAIProvider(BaseLLMProvider):
                 else "gpt-6-sol"
             )
         )
-        if not settings.openai_api_key:
+        effective_key = get_effective_openai_key()
+        if not effective_key:
             raise ValueError(
                 "OPENAI_API_KEY is missing. Configure the server or explicitly use the fixture demo."
             )
         self.client = httpx.Client(
             timeout=settings.external_timeout,
             headers={
-                "Authorization": f"Bearer {settings.openai_api_key}",
+                "Authorization": f"Bearer {effective_key}",
                 "Content-Type": "application/json",
             },
         )
@@ -634,19 +640,23 @@ class OpenAIProvider(BaseLLMProvider):
 def provider(mode):
     if mode == "demo":
         return DemoProvider()
+    eff_anthropic = get_effective_anthropic_key()
+    eff_gemini = get_effective_gemini_key()
+    eff_openai = get_effective_openai_key()
+
     if settings.llm_provider == "gemini" or (
-        not settings.anthropic_api_key
-        and not settings.openai_api_key
-        and settings.gemini_api_key
+        not eff_anthropic
+        and not eff_openai
+        and eff_gemini
     ):
         return GeminiProvider()
     if settings.llm_provider == "openai" or (
-        not settings.anthropic_api_key
-        and not settings.gemini_api_key
-        and settings.openai_api_key
+        not eff_anthropic
+        and not eff_gemini
+        and eff_openai
     ):
         return OpenAIProvider()
-    if not settings.anthropic_api_key and not settings.gemini_api_key and not settings.openai_api_key:
+    if not eff_anthropic and not eff_gemini and not eff_openai:
         raise ValueError(
             "An API key (Gemini API, Anthropic, or OpenAI) is required. Configure it in Settings or use the fixture demo."
         )
