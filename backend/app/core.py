@@ -1,10 +1,10 @@
 import hashlib
+import os
 import re
 import uuid
 from datetime import UTC, datetime
 from typing import Literal
 
-import os
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import JSON, String, create_engine
@@ -30,14 +30,18 @@ class Settings(BaseSettings):
     external_timeout: int = 45
     max_retries: int = 1
     task_workers: int = 2
-    allowed_origins: str = "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:8000,http://localhost:8000"
+    allowed_origins: str = (
+        "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:8000,http://localhost:8000"
+    )
     static_dir: str = ""
 
 
 settings = Settings()
 
 SERVER_DEFAULT_GEMINI_KEY: str = (os.environ.get("GEMINI_API_KEY", "") or settings.gemini_api_key).strip()
-SERVER_DEFAULT_ANTHROPIC_KEY: str = (os.environ.get("ANTHROPIC_API_KEY", "") or settings.anthropic_api_key).strip()
+SERVER_DEFAULT_ANTHROPIC_KEY: str = (
+    os.environ.get("ANTHROPIC_API_KEY", "") or settings.anthropic_api_key
+).strip()
 SERVER_DEFAULT_OPENAI_KEY: str = (os.environ.get("OPENAI_API_KEY", "") or settings.openai_api_key).strip()
 SERVER_DEFAULT_GITHUB_TOKEN: str = (os.environ.get("GITHUB_TOKEN", "") or settings.github_token).strip()
 
@@ -61,6 +65,8 @@ def get_effective_github_token() -> str:
 def get_allowed_origins() -> list[str]:
     raw = settings.allowed_origins
     return [o.strip() for o in raw.split(",") if o.strip()]
+
+
 engine = create_engine(settings.database_url, connect_args={"check_same_thread": False})
 Session = sessionmaker(engine, expire_on_commit=False)
 
@@ -242,4 +248,3 @@ class InterviewChatReply(Schema):
 class InterviewChatRequest(Schema):
     messages: list[ChatMessage] = Field(default_factory=list, max_length=30)
     language: Literal["en", "ca", "es"] = "en"
-
