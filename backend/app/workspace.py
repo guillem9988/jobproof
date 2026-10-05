@@ -112,6 +112,15 @@ def check_quota(kind: str, limit: int, label: str) -> None:
         raise ValueError(f"Workspace limit reached: at most {limit} {label}. They are deleted automatically.")
 
 
+def check_capacity() -> None:
+    """A new workspace is refused while too many visitors already hold data, which bounds the database."""
+    if not settings.hosted_mode or not current_workspace.get():
+        return
+    holders = {r["_ws"] for kind in ("job", "project", "analysis") for r in all_records(kind) if r.get("_ws")}
+    if current_workspace.get() not in holders and len(holders) >= settings.workspace_max_active:
+        raise ValueError("The public site is busy right now. Try again in a while, or run JobProof yourself.")
+
+
 def check_active_tasks() -> None:
     active = [t for t in owned("task") if t.get("status") in {"queued", "running"}]
     if settings.hosted_mode and len(active) >= settings.workspace_max_active_tasks:

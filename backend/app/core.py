@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     workspace_max_jobs: int = 5
     workspace_max_analyses: int = 5
     workspace_max_active_tasks: int = 1
+    workspace_max_active: int = 200  # distinct visitor workspaces holding data at the same time
+    key_test_limit: int = 10  # key checks per client per 10 minutes
     # Optional limited trial on the server's own Gemini key (0 disables it).
     trial_daily_calls: int = 0
     trial_workspace_calls: int = 40
@@ -151,6 +153,10 @@ def purge_expired(max_age_seconds: float) -> int:
     cutoff = time.time() - max_age_seconds
     with Session.begin() as s:
         rows = [r for r in s.query(Record).all() if r.data.get("_ws") and r.data.get("_ts", 0) < cutoff]
+        week_ago = datetime.fromtimestamp(time.time() - 7 * 86400, UTC).date().isoformat()
+        rows += [
+            r for r in s.query(Record).filter_by(kind="trial_usage").all() if r.data.get("day", "") < week_ago
+        ]
         for r in rows:
             s.delete(r)
         return len(rows)

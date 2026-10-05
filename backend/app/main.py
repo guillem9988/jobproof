@@ -127,6 +127,8 @@ app.add_middleware(
 
 
 write_limiter = RateLimiter(settings.hosted_write_limit_per_min)
+# Checking a key is the one request an attacker could use to test stolen keys in bulk, so it gets its own tight limit.
+key_test_limiter = RateLimiter(settings.key_test_limit, window=600)
 if settings.hosted_mode and "*" in configured_origins:
     logging.getLogger("jobproof").warning(
         "HOSTED_MODE with ALLOWED_ORIGINS=* accepts writes from any website; set it to your frontend origin."
@@ -155,7 +157,9 @@ async def protect(request: Request, call_next):
         key = client_key(
             request.headers.get("x-forwarded-for"), request.client.host if request.client else None
         )
-        if not write_limiter.allow(key):
+        if not write_limiter.allow(key) or (
+            request.url.path == "/api/v1/settings/test" and not key_test_limiter.allow(key)
+        ):
             return JSONResponse(
                 {"error": {"code": "rate_limited", "message": "Too many requests. Try again in a minute."}},
                 429,
@@ -705,6 +709,7 @@ def project_create(body: ProjectInput):
     if settings.hosted_mode:
         if body.local_path:
             raise ValueError(HOSTED_MESSAGE)  # the server's filesystem is never importable
+        ws.check_capacity()
         ws.check_quota("project", settings.workspace_max_projects, "projects")
     if body.local_path:
         abs_path = os.path.abspath(body.local_path)
@@ -822,6 +827,7 @@ class JobInput(Schema):
 @app.post("/api/v1/job-postings", response_model=Document)
 def job_create(body: JobInput):
     if settings.hosted_mode:
+        ws.check_capacity()
         ws.check_quota("job", settings.workspace_max_jobs, "job postings")
     if body.url and not body.url.startswith("https://"):
         raise ValueError("Reference URL must use HTTPS. It is never fetched.")

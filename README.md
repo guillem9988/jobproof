@@ -147,7 +147,7 @@ To use JobProof with your own repositories, job postings and API keys, run it lo
 JobProof is continuously tested with high-coverage unit, contract, and browser test suites:
 
 ```bash
-# 1. Backend tests & linters (138 tests)
+# 1. Backend tests & linters (141 tests)
 .venv/bin/pytest backend/tests
 .venv/bin/ruff check backend
 .venv/bin/ruff format --check backend
