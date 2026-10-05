@@ -504,3 +504,43 @@ def test_old_trial_counters_are_purged(client):
     core.purge_expired(24 * 3600)
     ids = {r["id"] for r in all_records("trial_usage")}
     assert ids == {f"trial-usage-{today}"}
+
+
+def test_the_shared_demo_analysis_outlives_the_visitor_who_started_it(client):
+    d = client.post("/api/v1/demo", json={}, headers=h(TOKEN_A)).json()
+    body = {**d, "mode": "demo", "request_id": "first"}
+    task = client.post("/api/v1/analyses", json=body, headers=h(TOKEN_A)).json()
+    assert wait_task(client, task["id"], h(TOKEN_A))["status"] == "complete"
+    # nothing about the shared report belongs to A: no quota used, nothing removed with A's data
+    assert all(not r.get("_ws") for kind in ("analysis", "assessment", "task") for r in all_records(kind))
+    assert ws.owned("analysis") == []
+    client.post("/api/v1/workspace/delete", json={}, headers=h(TOKEN_A))
+    assert len(all_records("analysis")) == 1
+    aid = all_records("analysis")[0]["id"]
+    assert client.get(f"/api/v1/analyses/{aid}", headers=h(TOKEN_B)).status_code == 200
+    assert core.purge_expired(0) == 0  # not even an immediate sweep removes it
+
+
+def test_limits_apply_to_the_visitor_behind_a_shared_proxy_hop():
+    # Vercel -> Render: "visitor, vercel-egress"
+    assert hosted.client_keys("203.0.113.7, 76.76.21.9", "10.0.0.1") == ("76.76.21.9", "203.0.113.7")
+    assert hosted.client_keys("76.76.21.9", "10.0.0.1") == ("76.76.21.9", "76.76.21.9")
+    assert hosted.client_keys(None, "10.0.0.1") == ("10.0.0.1", "10.0.0.1")
+    assert hosted.client_keys(None, None) == ("unknown", "unknown")
+    # a spoofed leading hop only changes the visitor key; the direct hop is the one the platform added
+    assert hosted.client_keys("1.1.1.1, 2.2.2.2, 198.51.100.4", None) == ("198.51.100.4", "2.2.2.2")
+
+
+def test_one_noisy_visitor_does_not_block_the_others_behind_the_same_proxy(client, monkeypatch):
+    monkeypatch.setattr(main, "write_limiter", hosted.RateLimiter(2))
+    monkeypatch.setattr(main, "aggregate_limiter", hosted.RateLimiter(100))
+
+    def post(visitor):
+        return client.post(
+            "/api/v1/demo", json={}, headers={**h(TOKEN_A), "X-Forwarded-For": f"{visitor}, 76.76.21.9"}
+        ).status_code
+
+    assert [post("203.0.113.1") for _ in range(3)] == [200, 200, 429]
+    assert post("203.0.113.2") == 200  # a different visitor on the same Vercel hop is unaffected
+    monkeypatch.setattr(main, "aggregate_limiter", hosted.RateLimiter(2))
+    assert [post("203.0.113.3") for _ in range(3)][-1] == 429  # but the hop as a whole is still capped

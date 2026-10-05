@@ -139,6 +139,17 @@ def client_key(forwarded_for: str | None, peer: str | None) -> str:
     return peer or "unknown"
 
 
+def client_keys(forwarded_for: str | None, peer: str | None) -> tuple[str, str]:
+    """(direct, user): the address our own proxy saw, and the visitor behind it when a trusted proxy reported one.
+
+    Behind Vercel the last hop is Vercel's egress address, shared by every visitor, so rate limits are applied to
+    the hop before it (the visitor) and, more loosely, to the last hop (which a client cannot spoof)."""
+    hops = [h.strip() for h in (forwarded_for or "").split(",") if h.strip()]
+    direct = hops[-1] if hops else (peer or "unknown")
+    user = hops[-2] if len(hops) >= 2 else direct
+    return direct, user
+
+
 def is_demo_record(kind: str, row: dict) -> bool:
     if kind == "analysis":
         return row.get("mode") == "demo"

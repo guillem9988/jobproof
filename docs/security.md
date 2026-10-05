@@ -26,7 +26,7 @@ Outbound payloads are sanitized as structured string values before JSON escaping
 - **No real providers**: `provider()` always returns the demo provider and real-mode analyses are rejected. Keys in the environment or database are ignored, `GET /settings` reports nothing configured, and `/health` reports `model: demo`.
 - **Fixture data only**: lists and lookups hide records that are not fixtures, so data created before hosted mode was enabled is not exposed. Use a fresh database anyway.
 - **No shared-state mutation**: `PUT /requirements` is a no-op, the demo analysis is deduplicated per fixture input, and cover letters and interview chats are returned but not saved.
-- **Rate limiting**: write requests are limited per client address (the last `X-Forwarded-For` hop, which our own proxy added; earlier hops can be spoofed). The limiter is in memory, so it assumes one instance.
+- **Rate limiting**: write requests are limited per visitor (the `X-Forwarded-For` hop before the one our own platform added, so visitors behind Vercel are told apart) and, more loosely, per direct hop (the last one, which a client cannot spoof, so spoofing cannot get around the limit). The limiters are in memory, so they assume one instance.
 - **URL fetching guard**: independently of the mode, `/job-postings/fetch-url` now rejects non-public hosts (loopback, private, link-local, metadata addresses), re-checks every redirect hop, and caps the response at 2 MB. It resolves the host before connecting, so a DNS-rebinding race is still theoretically possible; the endpoint is disabled entirely in hosted mode.
 - **CORS**: set `ALLOWED_ORIGINS` to the frontend origin. With `*` the app logs a warning at startup, because the Origin check on writes is then disabled.
 
