@@ -140,7 +140,7 @@ To use JobProof with your own repositories, job postings and API keys, run it lo
 JobProof is continuously tested with high-coverage unit, contract, and browser test suites:
 
 ```bash
-# 1. Backend tests & linters (111 tests)
+# 1. Backend tests & linters (115 tests)
 .venv/bin/pytest backend/tests
 .venv/bin/ruff check backend
 .venv/bin/ruff format --check backend
@@ -178,3 +178,9 @@ Job Posting (URL / File / Text) → Structured Requirement Extraction → BM25 S
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## Security
+
+Report vulnerabilities privately (see [`SECURITY.md`](SECURITY.md)). What the project does and does not protect against, including hosted mode, is documented in [`docs/security.md`](docs/security.md).

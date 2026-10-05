@@ -31,3 +31,11 @@ Outbound payloads are sanitized as structured string values before JSON escaping
 - **CORS**: set `ALLOWED_ORIGINS` to the frontend origin. With `*` the app logs a warning at startup, because the Origin check on writes is then disabled.
 
 Hosted mode is a demo hardening, not multi-user support. It has not been penetration tested.
+
+## Browser hardening and dependencies
+
+- **Security headers** are sent by the API (including the static frontend it serves and every error or blocked response) and by Vercel (`frontend/vercel.json`; a test keeps the two lists identical): a Content-Security-Policy with `script-src 'self'` and no inline scripts, `frame-ancestors 'none'`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy` and HSTS. API responses are `Cache-Control: no-store`.
+- The build never inlines assets as `data:` URIs (`assetsInlineLimit: 0`), which is what lets the policy keep `font-src 'self'`. The full demo flow was exercised in a browser against the policy with zero violations.
+- In hosted mode the interactive API docs (`/docs`, `/redoc`, `/openapi.json`) are disabled.
+- Dependabot opens weekly update PRs, and CI audits production dependencies on every push and weekly (`pnpm audit --prod`, `pip-audit`).
+

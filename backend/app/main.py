@@ -48,6 +48,7 @@ from .core import (
 from .demo import load_demo
 from .hosted import (
     HOSTED_MESSAGE,
+    SECURITY_HEADERS,
     RateLimiter,
     client_key,
     is_blocked,
@@ -95,7 +96,9 @@ async def lifespan(app):
     yield
 
 
-app = FastAPI(title="JobProof local API", version=PIPELINE, lifespan=lifespan)
+# The interactive API docs load scripts from a CDN; a public deployment has no use for them.
+_docs = {"docs_url": None, "redoc_url": None, "openapi_url": None} if settings.hosted_mode else {}
+app = FastAPI(title="JobProof local API", version=PIPELINE, lifespan=lifespan, **_docs)
 configured_origins = get_allowed_origins()
 app.add_middleware(
     CORSMiddleware,
@@ -135,6 +138,17 @@ async def protect(request: Request, call_next):
         if len(body) > 300_000:
             return JSONResponse({"error": {"code": "size", "message": "Request exceeds 300 KB."}}, 413)
     return await call_next(request)
+
+
+# Registered after `protect` so it is the outermost layer and also covers the responses `protect` returns.
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    for name, value in SECURITY_HEADERS.items():
+        response.headers.setdefault(name, value)
+    if request.url.path.startswith("/api/"):
+        response.headers.setdefault("Cache-Control", "no-store")  # never cache report data or keys
+    return response
 
 
 @app.exception_handler(ValueError)

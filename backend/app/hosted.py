@@ -126,3 +126,29 @@ def is_demo_record(kind: str, row: dict) -> bool:
     if kind == "analysis":
         return row.get("mode") == "demo"
     return bool(row.get("demo"))
+
+
+# Served on every response. The app is a static SPA that only talks to its own origin, so the policy can be strict.
+CSP = (
+    "default-src 'self'; "
+    "script-src 'self'; "
+    "style-src 'self'; "
+    "style-src-attr 'unsafe-inline'; "  # React sets inline style attributes
+    "img-src 'self' data:; "
+    "font-src 'self'; "
+    "connect-src 'self'; "
+    "object-src 'none'; "
+    "base-uri 'self'; "
+    "form-action 'self'; "
+    "frame-ancestors 'none'"
+)
+
+SECURITY_HEADERS = {
+    "Content-Security-Policy": CSP,
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Strict-Transport-Security": "max-age=63072000; includeSubDomains",
+}
