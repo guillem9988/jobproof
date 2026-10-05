@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: "17 6 * * 1"  # weekly, so new advisories surface even without a push
   push:
