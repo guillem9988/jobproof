@@ -470,3 +470,37 @@ def test_trial_metering_happens_before_the_network_call(monkeypatch):
     finally:
         core.current_workspace.reset(reset)
     assert len(calls) <= 2  # the second call never reached the network (retries aside)
+
+
+def test_key_checks_have_their_own_tight_limit(client, monkeypatch):
+    monkeypatch.setattr(main, "key_test_limiter", hosted.RateLimiter(3, window=600))
+    codes = [
+        client.post(
+            "/api/v1/settings/test", json={"provider": "gemini", "api_key": ""}, headers=h(TOKEN_A)
+        ).status_code
+        for _ in range(5)
+    ]
+    assert codes[:3] == [200, 200, 200] and codes[3:] == [429, 429]
+    # ordinary writes are unaffected by the key-check limit
+    assert client.post("/api/v1/demo", json={}, headers=h(TOKEN_A)).status_code == 200
+
+
+def test_the_number_of_workspaces_holding_data_is_bounded(client, monkeypatch):
+    monkeypatch.setattr(core.settings, "workspace_max_active", 2)
+    body = {"title": "t", "text": "Required: something real."}
+    assert client.post("/api/v1/job-postings", json=body, headers=h(TOKEN_A)).status_code == 200
+    assert client.post("/api/v1/job-postings", json=body, headers=h("c" * 40)).status_code == 200
+    busy = client.post("/api/v1/job-postings", json=body, headers=h(TOKEN_B))
+    assert busy.status_code == 400 and "busy" in busy.json()["error"]["message"]
+    # visitors who already hold data are never locked out, and the fixture demo stays open to everyone
+    assert client.post("/api/v1/job-postings", json=body, headers=h(TOKEN_A)).status_code == 200
+    assert client.post("/api/v1/demo", json={}, headers=h(TOKEN_B)).status_code == 200
+
+
+def test_old_trial_counters_are_purged(client):
+    save("trial_usage", {"day": "2000-01-01", "total": 1, "by_workspace": {}}, "trial-usage-2000-01-01")
+    today = ws.datetime.now(ws.UTC).date().isoformat()
+    save("trial_usage", {"day": today, "total": 1, "by_workspace": {}}, f"trial-usage-{today}")
+    core.purge_expired(24 * 3600)
+    ids = {r["id"] for r in all_records("trial_usage")}
+    assert ids == {f"trial-usage-{today}"}
