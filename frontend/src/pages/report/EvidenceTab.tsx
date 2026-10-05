@@ -35,9 +35,7 @@ export function filterAssessments(rows: Assessment[], f: Filters): Assessment[] 
       (!q ||
         a.requirement.text.toLowerCase().includes(q) ||
         a.explanation.toLowerCase().includes(q) ||
-        a.evidence.some(
-          (e) => e.quote.toLowerCase().includes(q) || e.path.toLowerCase().includes(q),
-        )),
+        a.evidence.some((e) => e.quote.toLowerCase().includes(q) || e.path.toLowerCase().includes(q))),
   );
 }
 
@@ -54,7 +52,7 @@ export function EvidenceTab({
   setFilters: (f: Filters) => void;
   onEvidence: (e: Evidence) => void;
 }) {
-  const { t, act } = useApp();
+  const { t, act, hosted } = useApp();
   const projects = useProjects();
   const statusLabels = getStatusLabels(t);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -153,7 +151,11 @@ export function EvidenceTab({
         </h2>
         <div className="inline-row wrap">
           {filtered && (
-            <button type="button" className="text-button button-sm" onClick={() => setFilters(defaultFilters)}>
+            <button
+              type="button"
+              className="text-button button-sm"
+              onClick={() => setFilters(defaultFilters)}
+            >
               <X size={14} />
               {t.resetFilters}
             </button>
@@ -177,6 +179,7 @@ export function EvidenceTab({
           a={a}
           open={expanded.has(a.id)}
           onToggle={() => toggle(a.id)}
+          readOnly={hosted && report.mode === "demo"}
           evidence={onEvidence}
           review={(status, reason, remove, add) =>
             act(async () => {
@@ -199,8 +202,8 @@ export function EvidenceTab({
           {report.requirements_version}
         </p>
         <p>
-          {report.usage?.calls || 0} {t.logicalCalls} · {report.usage?.input_tokens || 0}{" "}
-          {t.inputTokens} · {report.usage?.output_tokens || 0} {t.outputTokens}
+          {report.usage?.calls || 0} {t.logicalCalls} · {report.usage?.input_tokens || 0} {t.inputTokens} ·{" "}
+          {report.usage?.output_tokens || 0} {t.outputTokens}
         </p>
         {report.snapshots.map((s) => (
           <p key={s.id}>

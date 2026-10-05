@@ -1,6 +1,8 @@
+import contextvars
 import hashlib
 import os
 import re
+import time
 import uuid
 from datetime import UTC, datetime
 from typing import Literal
@@ -32,6 +34,17 @@ class Settings(BaseSettings):
     task_workers: int = 2
     hosted_mode: bool = False
     hosted_write_limit_per_min: int = 60
+    # Hosted "bring your own key": each visitor gets a private, expiring workspace and supplies their own AI key.
+    hosted_byok: bool = False
+    workspace_ttl_hours: int = 24
+    workspace_max_projects: int = 3
+    workspace_max_jobs: int = 5
+    workspace_max_analyses: int = 5
+    workspace_max_active_tasks: int = 1
+    # Optional limited trial on the server's own Gemini key (0 disables it).
+    trial_daily_calls: int = 0
+    trial_workspace_calls: int = 40
+    trial_until: str = ""
     allowed_origins: str = (
         "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:8000,http://localhost:8000"
     )
@@ -49,18 +62,26 @@ SERVER_DEFAULT_GITHUB_TOKEN: str = (os.environ.get("GITHUB_TOKEN", "") or settin
 
 
 def get_effective_gemini_key() -> str:
+    if settings.hosted_mode:
+        return ""
     return settings.gemini_api_key.strip() if settings.gemini_api_key else SERVER_DEFAULT_GEMINI_KEY
 
 
 def get_effective_anthropic_key() -> str:
+    if settings.hosted_mode:
+        return ""
     return settings.anthropic_api_key.strip() if settings.anthropic_api_key else SERVER_DEFAULT_ANTHROPIC_KEY
 
 
 def get_effective_openai_key() -> str:
+    if settings.hosted_mode:
+        return ""
     return settings.openai_api_key.strip() if settings.openai_api_key else SERVER_DEFAULT_OPENAI_KEY
 
 
 def get_effective_github_token() -> str:
+    if settings.hosted_mode:
+        return ""
     return settings.github_token.strip() if settings.github_token else SERVER_DEFAULT_GITHUB_TOKEN
 
 
@@ -92,15 +113,47 @@ def now():
     return datetime.now(UTC).isoformat()
 
 
+# Workspace of the request being served (set by the API middleware, copied into worker threads).
+current_workspace: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "current_workspace", default=None
+)
+PROTECTED = ("_ws", "_ts")
+
+
 def save(kind, data, id=None):
+    data = dict(data)
     with Session.begin() as s:
         id = id or uid()
         row = s.get(Record, id)
         if row:
-            row.data = dict(data)
+            for key in PROTECTED:  # callers may rebuild a record without the bookkeeping fields
+                if key in row.data and key not in data:
+                    data[key] = row.data[key]
+            row.data = data
         else:
-            s.add(Record(id=id, kind=kind, data=dict(data)))
+            workspace = current_workspace.get()
+            if workspace and "_ws" not in data:
+                data["_ws"], data["_ts"] = workspace, time.time()
+            s.add(Record(id=id, kind=kind, data=data))
     return {"id": id, **data}
+
+
+def delete_workspace_records(workspace: str) -> int:
+    with Session.begin() as s:
+        rows = [r for r in s.query(Record).all() if r.data.get("_ws") == workspace]
+        for r in rows:
+            s.delete(r)
+        return len(rows)
+
+
+def purge_expired(max_age_seconds: float) -> int:
+    """Deletes records created inside a visitor workspace once they are older than the retention window."""
+    cutoff = time.time() - max_age_seconds
+    with Session.begin() as s:
+        rows = [r for r in s.query(Record).all() if r.data.get("_ws") and r.data.get("_ts", 0) < cutoff]
+        for r in rows:
+            s.delete(r)
+        return len(rows)
 
 
 def get(id, kind=None):

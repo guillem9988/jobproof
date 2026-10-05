@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import html as html_lib
 import json
@@ -16,6 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import Field
 
 from . import tasks
+from . import workspace as ws
 from .core import (
     SERVER_DEFAULT_ANTHROPIC_KEY,
     SERVER_DEFAULT_GEMINI_KEY,
@@ -32,6 +34,8 @@ from .core import (
     Schema,
     Status,
     all_records,
+    current_workspace,
+    delete_workspace_records,
     engine,
     get,
     get_allowed_origins,
@@ -41,6 +45,7 @@ from .core import (
     get_effective_openai_key,
     normalize,
     now,
+    purge_expired,
     save,
     settings,
     uid,
@@ -52,7 +57,7 @@ from .hosted import (
     RateLimiter,
     client_key,
     is_blocked,
-    is_demo_record,
+    needs_workspace,
     safe_get,
 )
 from .ingestion import FORBIDDEN_PREFIXES, GitHub, import_local_dir, parse_url
@@ -85,6 +90,16 @@ def init_settings():
         settings.github_token = cfg["github_token"]
 
 
+async def purge_loop():
+    """Deletes visitor workspaces once they are older than the retention window."""
+    while True:
+        try:
+            await asyncio.to_thread(purge_expired, settings.workspace_ttl_hours * 3600)
+        except Exception:
+            logging.getLogger("jobproof").exception("workspace purge failed")
+        await asyncio.sleep(600)
+
+
 @asynccontextmanager
 async def lifespan(app):
     try:
@@ -93,7 +108,10 @@ async def lifespan(app):
         pass
     init_settings()
     tasks.recover()
+    purger = asyncio.create_task(purge_loop()) if ws.enabled() else None
     yield
+    if purger:
+        purger.cancel()
 
 
 # The interactive API docs load scripts from a CDN; a public deployment has no use for them.
@@ -104,7 +122,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"] if "*" in configured_origins else configured_origins,
     allow_methods=["GET", "POST", "PUT"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "X-Workspace", "X-AI-Provider", "X-AI-Key", "X-AI-Model"],
 )
 
 
@@ -117,9 +135,23 @@ if settings.hosted_mode and "*" in configured_origins:
 
 @app.middleware("http")
 async def protect(request: Request, call_next):
+    if settings.hosted_mode:
+        # Who is asking: a random per-browser token (hashed) and, optionally, the visitor's own AI key.
+        current_workspace.set(ws.workspace_from_token(request.headers.get("x-workspace")))
+        ws.current_ai.set(
+            ws.credentials_from_headers(
+                request.headers.get("x-ai-provider"),
+                request.headers.get("x-ai-key"),
+                request.headers.get("x-ai-model"),
+            )
+        )
     if settings.hosted_mode and request.method in {"POST", "PUT", "DELETE"}:
-        if is_blocked(request.method, request.url.path):
+        if is_blocked(request.method, request.url.path, ws.enabled()):
             return JSONResponse({"error": {"code": "hosted_mode", "message": HOSTED_MESSAGE}}, 403)
+        if needs_workspace(request.method, request.url.path) and not current_workspace.get():
+            return JSONResponse(
+                {"error": {"code": "workspace_required", "message": "Missing or invalid workspace."}}, 403
+            )
         key = client_key(
             request.headers.get("x-forwarded-for"), request.client.host if request.client else None
         )
@@ -161,21 +193,37 @@ class Document(Schema):
     data: dict[str, Any]
 
 
+def strip_internal(value):
+    """Removes the workspace bookkeeping fields, however deeply a record embeds other records."""
+    if isinstance(value, dict):
+        return {k: strip_internal(v) for k, v in value.items() if k not in {"_ws", "_ts"}}
+    if isinstance(value, list):
+        return [strip_internal(v) for v in value]
+    return value
+
+
 def doc(row):
-    return Document(id=row["id"], data={k: v for k, v in row.items() if k != "id"})
+    return Document(id=row["id"], data=strip_internal({k: v for k, v in row.items() if k != "id"}))
 
 
 def get_visible(id, kind):
-    """`get`, but hosted mode only exposes fixture data."""
+    """`get`, but hosted mode only exposes fixtures and the visitor's own workspace."""
     row = get(id, kind)
-    if settings.hosted_mode and not is_demo_record(kind, row):
+    if not ws.can_see(kind, row):
         raise ValueError("Record not found")
     return row
 
 
+def get_owned(id, kind):
+    """For changes: the record must be visible and belong to the caller, never a shared fixture."""
+    row = get_visible(id, kind)
+    if not ws.can_write(kind, row):
+        raise ValueError(HOSTED_MESSAGE)
+    return row
+
+
 def visible_records(kind):
-    rows = all_records(kind)
-    return [r for r in rows if is_demo_record(kind, r)] if settings.hosted_mode else rows
+    return [r for r in all_records(kind) if ws.can_see(kind, r)]
 
 
 class Health(Schema):
@@ -185,6 +233,8 @@ class Health(Schema):
     model: str
     demo_available: bool
     hosted: bool = False
+    byok: bool = False
+    trial: dict[str, Any] = Field(default_factory=dict)
     limits: dict[str, int]
 
 
@@ -198,6 +248,8 @@ def health():
             model="demo",
             demo_available=True,
             hosted=True,
+            byok=ws.enabled(),
+            trial=ws.trial_status() if ws.enabled() else {},
             limits={
                 "projects": 0,
                 "requirements": settings.max_requirements,
@@ -471,6 +523,8 @@ def update_settings(payload: SettingsUpdate):
 
 @app.post("/api/v1/settings/test", response_model=SettingsTestResponse)
 def test_settings(payload: SettingsTestRequest):
+    if settings.hosted_mode and payload.provider == "github":
+        raise ValueError(HOSTED_MESSAGE)  # no GitHub token is ever configured or used on a public server
     if payload.provider == "gemini":
         key = payload.api_key.strip() if payload.api_key else get_effective_gemini_key()
         if not key:
@@ -648,6 +702,10 @@ class ProjectInput(Schema):
 
 @app.post("/api/v1/projects", response_model=Document)
 def project_create(body: ProjectInput):
+    if settings.hosted_mode:
+        if body.local_path:
+            raise ValueError(HOSTED_MESSAGE)  # the server's filesystem is never importable
+        ws.check_quota("project", settings.workspace_max_projects, "projects")
     if body.local_path:
         abs_path = os.path.abspath(body.local_path)
         if not os.path.isdir(abs_path):
@@ -710,7 +768,9 @@ class ImportInput(Schema):
 
 @app.post("/api/v1/projects/{id}/imports", response_model=Document)
 def import_project(id: str, body: ImportInput):
-    p = get(id, "project")
+    p = get_owned(id, "project")
+    if settings.hosted_mode:
+        ws.check_active_tasks()
     if p.get("demo"):
         raise ValueError("Fixture projects cannot be fetched from GitHub.")
     if p.get("local"):
@@ -761,6 +821,8 @@ class JobInput(Schema):
 
 @app.post("/api/v1/job-postings", response_model=Document)
 def job_create(body: JobInput):
+    if settings.hosted_mode:
+        ws.check_quota("job", settings.workspace_max_jobs, "job postings")
     if body.url and not body.url.startswith("https://"):
         raise ValueError("Reference URL must use HTTPS. It is never fetched.")
     return doc(
@@ -873,7 +935,9 @@ def check_requirements(requirements, text):
 
 @app.post("/api/v1/job-postings/{id}/extract-requirements", response_model=Document)
 def extract(id: str, body: ExtractInput):
-    job = get(id, "job")
+    job = get_owned(id, "job")
+    if settings.hosted_mode:
+        ws.check_active_tasks()
     p = provider(body.mode)
 
     def work(check):
@@ -901,7 +965,7 @@ def extract(id: str, body: ExtractInput):
 
 @app.get("/api/v1/job-postings/{id}/requirements", response_model=Requirements)
 def requirements(id: str):
-    return Requirements(requirements=get(id, "job")["requirements"])
+    return Requirements(requirements=get_visible(id, "job")["requirements"])
 
 
 class RequirementsUpdate(Requirements):
@@ -912,7 +976,7 @@ class RequirementsUpdate(Requirements):
 def update_requirements(id: str, body: RequirementsUpdate):
     with tasks.lock:
         job = get_visible(id, "job")
-        if settings.hosted_mode:
+        if settings.hosted_mode and not ws.can_write("job", job):
             return doc(job)  # the fixture posting is shared and read-only
         if body.version != job["requirements_version"]:
             raise HTTPException(409, "Requirements changed; reload before saving.")
@@ -970,14 +1034,18 @@ def analyze(a, p, check):
 
 @app.post("/api/v1/analyses", response_model=Document)
 def analysis_create(body: AnalysisInput):
-    if settings.hosted_mode and body.mode != "demo":
+    hosted_demo = settings.hosted_mode and body.mode == "demo"
+    hosted_real = settings.hosted_mode and body.mode != "demo"
+    if hosted_real and not (ws.enabled() and current_workspace.get()):
         raise ValueError(HOSTED_MESSAGE)
     with tasks.lock:
         key = "analysis:" + body.request_id
-        if settings.hosted_mode:
+        if hosted_demo:
             # One shared analysis per fixture input instead of one per click.
             fingerprint = f"{body.job_id}:{','.join(sorted(set(body.snapshot_ids)))}:{PIPELINE}"
             key = "analysis:hosted:" + hashlib.sha256(fingerprint.encode()).hexdigest()
+        elif hosted_real:
+            key = f"analysis:{current_workspace.get()}:{body.request_id}"
         duplicate = next((t for t in all_records("task") if t["key"] == key), None)
         if duplicate:
             previous = get(duplicate["analysis_id"], "analysis")
@@ -993,13 +1061,19 @@ def analysis_create(body: AnalysisInput):
                     409, "Request ID already belongs to different inputs. Retry with a new request ID."
                 )
             return doc(duplicate)
-        job = get_visible(body.job_id, "job")
+        if hosted_real:
+            ws.check_quota("analysis", settings.workspace_max_analyses, "analyses")
+            ws.check_active_tasks()
+        job = get_owned(body.job_id, "job") if hosted_real else get_visible(body.job_id, "job")
         reqs = [r for r in job["requirements"] if r.get("selected", True)]
         if not 1 <= len(reqs) <= settings.max_requirements:
             raise ValueError(
                 f"Select 1–{settings.max_requirements} requirements; remaining requirements stay visible as excluded."
             )
-        snaps = [get(s, "snapshot") for s in set(body.snapshot_ids)]
+        snaps = [
+            get_owned(s, "snapshot") if hosted_real else get_visible(s, "snapshot")
+            for s in set(body.snapshot_ids)
+        ]
         if len({s["project_id"] for s in snaps}) != len(snaps):
             raise ValueError("Select one snapshot per project.")
         if any(s["status"] != "complete" for s in snaps):
@@ -1063,7 +1137,9 @@ def assessments(id: str):
 
 @app.get("/api/v1/assessments/{id}/evidence", response_model=list[dict[str, Any]])
 def evidence(id: str):
-    return get(id, "assessment")["evidence"]
+    row = get(id, "assessment")
+    get_visible(row["analysis_id"], "analysis")
+    return row["evidence"]
 
 
 class ReviewInput(Schema):
@@ -1077,7 +1153,7 @@ class ReviewInput(Schema):
 def review(id: str, body: ReviewInput):
     with tasks.lock:
         a = get(id, "assessment")
-        analysis = get(a["analysis_id"], "analysis")
+        analysis = get_owned(a["analysis_id"], "analysis")
         if analysis["status"] != "complete":
             raise ValueError("Review is available after analysis completes.")
         from .core import Assessment
@@ -1123,15 +1199,24 @@ def chunks(id: str):
     return [doc(c) for c in all_records("chunk") if c["snapshot_id"] == id]
 
 
+def _task_is_private(task):
+    """Tasks of the shared fixture analysis belong to everyone, so nobody may cancel them."""
+    if not task.get("analysis_id"):
+        return True
+    return get(task["analysis_id"], "analysis").get("mode") != "demo"
+
+
 @app.get("/api/v1/tasks/{id}", response_model=Document)
 def task_get(id: str):
-    return doc(get(id, "task"))
+    return doc(get_visible(id, "task"))
 
 
 @app.post("/api/v1/tasks/{id}/cancel", response_model=Document)
 def cancel_task(id: str):
     with tasks.lock:
-        t = get(id, "task")
+        t = get_visible(id, "task")
+        if settings.hosted_mode and not (ws.can_write("task", t) and _task_is_private(t)):
+            raise ValueError(HOSTED_MESSAGE)
         if t["status"] in {"queued", "running"}:
             t = save("task", {**t, "cancel_requested": True}, id)
         return doc(t)
@@ -1139,6 +1224,7 @@ def cancel_task(id: str):
 
 @app.post("/api/v1/analyses/{id}/cancel", response_model=Document)
 def cancel_analysis(id: str):
+    get_visible(id, "analysis")
     t = next((t for t in all_records("task") if t.get("analysis_id") == id), None)
     if not t:
         raise ValueError("Analysis task not found")
@@ -1148,7 +1234,21 @@ def cancel_analysis(id: str):
 @app.post("/api/v1/demo", response_model=dict[str, Any])
 def demo():
     with tasks.lock:
-        return load_demo()
+        reset = current_workspace.set(None)  # fixtures are shared, so they never belong to one visitor
+        try:
+            return load_demo()
+        finally:
+            current_workspace.reset(reset)
+
+
+@app.post("/api/v1/workspace/delete", response_model=dict[str, Any])
+def workspace_delete():
+    """Lets a visitor erase everything their workspace created right now instead of waiting for the retention window."""
+    workspace = current_workspace.get()
+    if not (ws.enabled() and workspace):
+        raise ValueError(HOSTED_MESSAGE)
+    with tasks.lock:
+        return {"deleted": delete_workspace_records(workspace)}
 
 
 def export_report(id):
@@ -1159,7 +1259,7 @@ def export_report(id):
     for row in rows:
         for e in row["evidence"]:
             e.pop("source_text", None)
-    return {**a, "assessments": rows}
+    return strip_internal({**a, "assessments": rows})
 
 
 def markdown(report):
@@ -1238,7 +1338,7 @@ def generate_cover_letter_endpoint(id: str, body: CoverLetterRequest):
         language=body.language,
         tone=body.tone,
     )
-    if not settings.hosted_mode:  # hosted reports are shared, so visitors don't write to them
+    if ws.can_write("analysis", a):  # the shared fixture report is never written by visitors
         save("analysis", {**a, "cover_letter": letter.model_dump()}, id)
     return letter
 
@@ -1276,7 +1376,7 @@ def interview_chat_endpoint(id: str, body: InterviewChatRequest):
             "created_at": now(),
         }
     )
-    if not settings.hosted_mode:
+    if ws.can_write("analysis", a):
         save("analysis", {**a, "interview_chat": chat_history}, id)
     return reply
 
@@ -1291,7 +1391,7 @@ def get_interview_chat_endpoint(id: str):
 @app.post("/api/v1/analyses/{id}/interview/reset", response_model=dict[str, bool])
 def reset_interview_chat_endpoint(id: str):
     a = get_visible(id, "analysis")
-    if not settings.hosted_mode:
+    if ws.can_write("analysis", a):
         save("analysis", {**a, "interview_chat": []}, id)
     return {"ok": True}
 

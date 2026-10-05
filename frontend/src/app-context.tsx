@@ -25,8 +25,15 @@ export interface AppContextValue {
   t: Translations;
   lang: Lang;
   busy: boolean;
-  /** Public demo deployment: imports, settings and edits are unavailable. */
+  /** Public deployment: some capabilities are removed. */
   hosted: boolean;
+  /** Public deployment where visitors get a private workspace and bring their own AI key. */
+  byok: boolean;
+  /** Public demo without workspaces: imports, settings and edits are unavailable. */
+  locked: boolean;
+  /** The visitor can run real AI (own key or free trial). */
+  canUseAi: boolean;
+  trialRemaining: number;
   setError: (message: string) => void;
   /** Runs an async action with the shared busy/error handling and refreshes list queries afterwards. */
   act: (fn: () => Promise<void>) => Promise<void>;

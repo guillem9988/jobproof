@@ -1,6 +1,31 @@
 export type Lang = "ca" | "en" | "es";
 
 export interface Translations {
+  realAnalysisNoticeHosted: string;
+  hostedByokTitle: string;
+  hostedByokBody: string;
+  yourAiKeyTitle: string;
+  yourAiKeyIntro: string;
+  keyPrivacyTitle: string;
+  keyPrivacy1: string;
+  keyPrivacy2: string;
+  keyPrivacy3: string;
+  getFreeGeminiKey: string;
+  useThisKey: string;
+  forgetKey: string;
+  keyActive: string;
+  keyMissing: string;
+  keySaved: string;
+  needKeyTitle: string;
+  needKeyDesc: string;
+  needKeyButton: string;
+  trialLeft: string;
+  trialBadge: string;
+  yourKeyBadge: string;
+  deleteWorkspaceTitle: string;
+  deleteWorkspaceDesc: string;
+  deleteWorkspaceButton: string;
+  deleteWorkspaceDone: string;
   serverWakingTitle: string;
   serverWakingDesc: string;
   sidebarHosted: string;
@@ -315,6 +340,31 @@ export interface Translations {
 
 export const translations: Record<Lang, Translations> = {
   ca: {
+    realAnalysisNoticeHosted: "L'anàlisi real envia l'oferta i fragments redactats dels repositoris seleccionats al proveïdor d'IA que has triat, amb la teva pròpia clau. El servidor no desa la clau.",
+    hostedByokTitle: "Demo pública amb la teva clau d'IA",
+    hostedByokBody: "Prova JobProof amb els teus repositoris i ofertes. Les teves dades queden en un espai privat lligat a aquest navegador i s'esborren al cap de 24 hores. Afegeix la teva clau d'IA per fer anàlisis reals; sense clau només tens la demo simulada.",
+    yourAiKeyTitle: "La teva clau d'IA",
+    yourAiKeyIntro: "Aquest web públic no posa la IA. Porta la teva pròpia clau d'un proveïdor que tingui nivell gratuït.",
+    keyPrivacyTitle: "Com es tracta la teva clau",
+    keyPrivacy1: "Es queda només en aquesta pestanya del navegador i desapareix quan la tanques.",
+    keyPrivacy2: "Viatja per HTTPS amb cada petició d'IA i només s'usa per a aquella petició; el servidor no la desa ni la registra.",
+    keyPrivacy3: "Fes servir una clau amb límit de despesa i esborra-la del proveïdor quan acabis.",
+    getFreeGeminiKey: "Aconsegueix una clau gratuïta de Gemini (sense targeta)",
+    useThisKey: "Usa aquesta clau en aquesta pestanya",
+    forgetKey: "Oblida la clau",
+    keyActive: "Fent servir la teva clau",
+    keyMissing: "Encara no hi ha clau",
+    keySaved: "Clau desada per a aquesta pestanya.",
+    needKeyTitle: "Afegeix la teva clau d'IA per fer una anàlisi real",
+    needKeyDesc: "Obre Configuració, enganxa una clau i torna. La demo amb dades d'exemple continua funcionant sense clau.",
+    needKeyButton: "Afegeix la meva clau",
+    trialLeft: "Prova gratuïta disponible: queden unes {n} crides d'IA avui. Afegeix la teva clau per usar-ho sense límit.",
+    trialBadge: "Prova gratuïta",
+    yourKeyBadge: "La teva clau",
+    deleteWorkspaceTitle: "Les teves dades",
+    deleteWorkspaceDesc: "Tot el que crees aquí és privat d'aquest navegador i s'esborra sol al cap de 24 hores. Pots esborrar-ho ara.",
+    deleteWorkspaceButton: "Esborra les meves dades ara",
+    deleteWorkspaceDone: "S'han esborrat les teves dades.",
     serverWakingTitle: "El servidor s'està despertant…",
     serverWakingDesc: "El servidor gratuït s'adorm quan no s'usa, així que la primera visita pot trigar fins a un minut. Aquesta pàgina es carregarà sola.",
     sidebarHosted: "Demo pública · Dades d'exemple",
@@ -627,6 +677,31 @@ export const translations: Record<Lang, Translations> = {
     fileLoadedSuccess: "Fitxer d'oferta carregat correctament!",
   },
   en: {
+    realAnalysisNoticeHosted: "Real analysis sends the posting and selected, redacted repository excerpts to the AI provider you chose, using your own key. The server does not store the key.",
+    hostedByokTitle: "Public demo with your own AI key",
+    hostedByokBody: "Try JobProof with your own repositories and job postings. Your data stays in a private workspace tied to this browser and is deleted after 24 hours. Add your own AI key to run real analyses; without one you only get the simulated demo.",
+    yourAiKeyTitle: "Your AI key",
+    yourAiKeyIntro: "This public site does not provide the AI. Bring your own key from a provider that has a free tier.",
+    keyPrivacyTitle: "How your key is handled",
+    keyPrivacy1: "It stays in this browser tab only and disappears when you close it.",
+    keyPrivacy2: "It travels over HTTPS with each AI request and is used only for that request; the server never stores or logs it.",
+    keyPrivacy3: "Use a key with a spend limit, and delete it from the provider when you finish.",
+    getFreeGeminiKey: "Get a free Gemini key (no card needed)",
+    useThisKey: "Use this key in this tab",
+    forgetKey: "Forget key",
+    keyActive: "Using your key",
+    keyMissing: "No key yet",
+    keySaved: "Key saved for this tab.",
+    needKeyTitle: "Add your AI key to run a real analysis",
+    needKeyDesc: "Open Settings, paste a key and come back. The fixture demo keeps working without one.",
+    needKeyButton: "Add my key",
+    trialLeft: "Free trial available: about {n} AI calls left today. Add your own key for unlimited use.",
+    trialBadge: "Free trial",
+    yourKeyBadge: "Your key",
+    deleteWorkspaceTitle: "Your data",
+    deleteWorkspaceDesc: "Everything you create here is private to this browser and deleted automatically after 24 hours. You can erase it now.",
+    deleteWorkspaceButton: "Delete my data now",
+    deleteWorkspaceDone: "Your data was deleted.",
     serverWakingTitle: "Waking up the server…",
     serverWakingDesc: "The free server sleeps when idle, so the first visit can take up to a minute. This page will load by itself.",
     sidebarHosted: "Public demo · Sample data",
@@ -939,6 +1014,31 @@ export const translations: Record<Lang, Translations> = {
     fileLoadedSuccess: "Job posting file loaded successfully!",
   },
   es: {
+    realAnalysisNoticeHosted: "El análisis real envía la oferta y fragmentos redactados de los repositorios seleccionados al proveedor de IA que elegiste, con tu propia clave. El servidor no guarda la clave.",
+    hostedByokTitle: "Demo pública con tu propia clave de IA",
+    hostedByokBody: "Prueba JobProof con tus repositorios y ofertas. Tus datos quedan en un espacio privado ligado a este navegador y se borran a las 24 horas. Añade tu clave de IA para hacer análisis reales; sin clave solo tienes la demo simulada.",
+    yourAiKeyTitle: "Tu clave de IA",
+    yourAiKeyIntro: "Este sitio público no pone la IA. Trae tu propia clave de un proveedor que tenga nivel gratuito.",
+    keyPrivacyTitle: "Cómo se trata tu clave",
+    keyPrivacy1: "Se queda solo en esta pestaña del navegador y desaparece al cerrarla.",
+    keyPrivacy2: "Viaja por HTTPS con cada petición de IA y solo se usa para esa petición; el servidor no la guarda ni la registra.",
+    keyPrivacy3: "Usa una clave con límite de gasto y bórrala del proveedor cuando termines.",
+    getFreeGeminiKey: "Consigue una clave gratuita de Gemini (sin tarjeta)",
+    useThisKey: "Usa esta clave en esta pestaña",
+    forgetKey: "Olvidar la clave",
+    keyActive: "Usando tu clave",
+    keyMissing: "Aún no hay clave",
+    keySaved: "Clave guardada para esta pestaña.",
+    needKeyTitle: "Añade tu clave de IA para hacer un análisis real",
+    needKeyDesc: "Abre Configuración, pega una clave y vuelve. La demo con datos de ejemplo sigue funcionando sin clave.",
+    needKeyButton: "Añadir mi clave",
+    trialLeft: "Prueba gratuita disponible: quedan unas {n} llamadas de IA hoy. Añade tu clave para usarlo sin límite.",
+    trialBadge: "Prueba gratuita",
+    yourKeyBadge: "Tu clave",
+    deleteWorkspaceTitle: "Tus datos",
+    deleteWorkspaceDesc: "Todo lo que crees aquí es privado de este navegador y se borra solo a las 24 horas. Puedes borrarlo ahora.",
+    deleteWorkspaceButton: "Borrar mis datos ahora",
+    deleteWorkspaceDone: "Se han borrado tus datos.",
     serverWakingTitle: "El servidor se está despertando…",
     serverWakingDesc: "El servidor gratuito se duerme cuando no se usa, así que la primera visita puede tardar hasta un minuto. Esta página se cargará sola.",
     sidebarHosted: "Demo pública · Datos de ejemplo",

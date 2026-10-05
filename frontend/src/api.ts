@@ -1,3 +1,5 @@
+import { identityHeaders } from "./ai";
+
 export async function request<T>(
   path: string,
   body?: unknown,
@@ -5,7 +7,7 @@ export async function request<T>(
 ): Promise<T> {
   const r = await fetch("/api/v1" + path, {
     method,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...identityHeaders(path, method, body) },
     body: body ? JSON.stringify(body) : undefined,
   });
   // A sleeping or restarting host answers with an HTML error page, not JSON.

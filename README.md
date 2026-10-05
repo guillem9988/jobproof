@@ -116,6 +116,11 @@ Access the single-container app at `http://localhost:8000`.
 | `ALLOWED_ORIGINS` | Comma-separated CORS origins | Localhost defaults |
 | `HOSTED_MODE` | `true` runs a locked-down public demo (see below) | `false` |
 | `HOSTED_WRITE_LIMIT_PER_MIN` | Write requests allowed per client per minute in hosted mode | `60` |
+| `HOSTED_BYOK` | With hosted mode: private per-visitor workspaces and bring-your-own AI key | `false` |
+| `WORKSPACE_TTL_HOURS` | Hours before a visitor workspace is deleted | `24` |
+| `WORKSPACE_MAX_PROJECTS` / `_JOBS` / `_ANALYSES` | Per-visitor quotas | `3` / `5` / `5` |
+| `TRIAL_DAILY_CALLS` | AI calls per day visitors without a key may use on the server's Gemini key (`0` disables) | `0` |
+| `TRIAL_WORKSPACE_CALLS` / `TRIAL_UNTIL` | Per-visitor trial calls per day / expiry date (`YYYY-MM-DD`) | `40` / none |
 
 *Note: All API keys and settings can be conveniently managed directly from the in-app **Settings** screen.*
 
@@ -131,6 +136,8 @@ JobProof is a single-user tool: it has no accounts, so a normal deployment must 
 - Write requests are rate limited per client (`HOSTED_WRITE_LIMIT_PER_MIN`).
 - Set `ALLOWED_ORIGINS` to your frontend's origin (not `*`) and use a fresh database.
 
+Optionally add `HOSTED_BYOK=true` so visitors get a private workspace (deleted after 24 h) and can run real analyses with **their own** AI key, which stays in their browser tab and is never stored. See [`docs/security.md`](docs/security.md) for how the isolation works and its limits.
+
 To use JobProof with your own repositories, job postings and API keys, run it locally. See [`docs/security.md`](docs/security.md).
 
 ---
@@ -140,7 +147,7 @@ To use JobProof with your own repositories, job postings and API keys, run it lo
 JobProof is continuously tested with high-coverage unit, contract, and browser test suites:
 
 ```bash
-# 1. Backend tests & linters (115 tests)
+# 1. Backend tests & linters (138 tests)
 .venv/bin/pytest backend/tests
 .venv/bin/ruff check backend
 .venv/bin/ruff format --check backend
