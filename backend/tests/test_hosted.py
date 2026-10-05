@@ -151,13 +151,15 @@ def test_hosted_health_and_settings_reveal_nothing(client, monkeypatch):
     assert view["gemini_api_key_configured"] is False and view["github_token_configured"] is False
 
 
-def test_hosted_never_uses_a_real_provider(monkeypatch):
+def test_hosted_never_uses_the_servers_keys(monkeypatch):
     monkeypatch.setattr(core.settings, "hosted_mode", True)
     monkeypatch.setattr(core.settings, "gemini_api_key", "AIzaServerSecretKey123456789012345678")
     monkeypatch.setattr(core.settings, "llm_provider", "gemini")
     from app.providers import DemoProvider, provider
 
-    assert isinstance(provider("real"), DemoProvider)
+    assert isinstance(provider("demo"), DemoProvider)
+    with pytest.raises(ValueError):  # real mode is refused rather than silently using the server key
+        provider("real")
 
 
 def test_hosted_rejects_real_analyses(client):

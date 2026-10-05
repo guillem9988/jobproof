@@ -3,14 +3,14 @@ import { Folder, FolderGit2, Plus } from "lucide-react";
 import { one } from "../api";
 import { useApp } from "../app-context";
 import { EmptyState } from "../components/EmptyState";
-import { HostedNotice } from "../components/HostedNotice";
+import { ByokNotice, HostedNotice } from "../components/HostedNotice";
 import { Skeleton } from "../components/Skeleton";
 import { SnapshotFiles } from "../components/SnapshotFiles";
 import { useAppSettings, useProjects, useSnapshots } from "../hooks/queries";
 import type { Project, Task } from "../types";
 
 export function ProjectsPage() {
-  const { t, busy, hosted, act, track } = useApp();
+  const { t, busy, hosted, locked, act, go, track } = useApp();
   const [source, setSource] = useState<"github" | "local">("github");
   const projects = useProjects();
   const snapshots = useSnapshots();
@@ -43,8 +43,9 @@ export function ProjectsPage() {
       <div className="eyebrow">{t.projectsEyebrow}</div>
       <h1>{t.yourProjects}</h1>
       <p className="intro">{t.projectsIntro}</p>
-      {hosted && <HostedNotice />}
-      {!hosted && (
+      {locked && <HostedNotice />}
+      {hosted && !locked && <ByokNotice onSettings={() => go("settings")} />}
+      {!locked && (
         <form
           className="card form"
           onSubmit={(e) => {
@@ -62,15 +63,17 @@ export function ProjectsPage() {
               <FolderGit2 size={18} />
               {t.sourceTypeGithub}
             </button>
-            <button
-              type="button"
-              aria-pressed={source === "local"}
-              className={`source-option ${source === "local" ? "active" : ""}`}
-              onClick={() => setSource("local")}
-            >
-              <Folder size={18} />
-              {t.sourceTypeLocal}
-            </button>
+            {!hosted && (
+              <button
+                type="button"
+                aria-pressed={source === "local"}
+                className={`source-option ${source === "local" ? "active" : ""}`}
+                onClick={() => setSource("local")}
+              >
+                <Folder size={18} />
+                {t.sourceTypeLocal}
+              </button>
+            )}
           </div>
           {source === "github" ? (
             <>
@@ -114,7 +117,7 @@ export function ProjectsPage() {
         </form>
       )}
       {projects.isLoading && <Skeleton label={t.loadingLabel} />}
-      {projects.data?.length === 0 && !hosted && (
+      {projects.data?.length === 0 && !locked && (
         <EmptyState icon={<FolderGit2 />} title={t.emptyProjectsTitle} description={t.emptyProjectsDesc} />
       )}
       {projects.data?.map((p) => (
@@ -150,7 +153,7 @@ export function ProjectsPage() {
                 <SnapshotFiles id={s.id} />
               </details>
             ))}
-          {!p.demo && !hosted && (
+          {!p.demo && !locked && (
             <button
               disabled={busy}
               onClick={() =>

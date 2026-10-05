@@ -1,3 +1,4 @@
+import contextvars
 from concurrent.futures import ThreadPoolExecutor
 from threading import RLock
 
@@ -88,7 +89,8 @@ def submit(kind, key, work, analysis_id=None):
                 "error": None,
             },
         )
-        executor.submit(run, t["id"], work)
+        # The worker inherits the request context so the records it creates belong to the same workspace.
+        executor.submit(contextvars.copy_context().run, run, t["id"], work)
         return t
 
 

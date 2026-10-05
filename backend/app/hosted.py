@@ -19,24 +19,41 @@ from urllib.parse import urljoin, urlparse
 
 import httpx
 
-# (method, path pattern) pairs that are unavailable in hosted mode.
-BLOCKED_ROUTES = [
+# (method, path pattern) pairs that are never available in hosted mode.
+ALWAYS_BLOCKED = [
+    ("POST", re.compile(r"^/api/v1/job-postings/fetch-url$")),
+    ("POST", re.compile(r"^/api/v1/settings$")),
+]
+
+# Blocked in the plain public demo; available to a visitor workspace when bring-your-own-key is on.
+WORKSPACE_ROUTES = [
     ("POST", re.compile(r"^/api/v1/projects$")),
     ("POST", re.compile(r"^/api/v1/projects/[^/]+/imports$")),
     ("POST", re.compile(r"^/api/v1/job-postings$")),
-    ("POST", re.compile(r"^/api/v1/job-postings/fetch-url$")),
     ("POST", re.compile(r"^/api/v1/job-postings/[^/]+/extract-requirements$")),
-    ("POST", re.compile(r"^/api/v1/settings(/test)?$")),
+    ("POST", re.compile(r"^/api/v1/settings/test$")),
     ("POST", re.compile(r"^/api/v1/assessments/[^/]+/reviews$")),
     ("POST", re.compile(r"^/api/v1/tasks/[^/]+/cancel$")),
     ("POST", re.compile(r"^/api/v1/analyses/[^/]+/cancel$")),
+    ("POST", re.compile(r"^/api/v1/workspace/delete$")),
 ]
 
 HOSTED_MESSAGE = "This is a public demo: this action is only available when you run JobProof yourself."
 
 
-def is_blocked(method: str, path: str) -> bool:
-    return any(method == m and pattern.match(path) for m, pattern in BLOCKED_ROUTES)
+def _matches(rules, method: str, path: str) -> bool:
+    return any(method == m and pattern.match(path) for m, pattern in rules)
+
+
+def is_blocked(method: str, path: str, workspaces: bool = False) -> bool:
+    """True when the request must be refused in hosted mode; `workspaces` is bring-your-own-key being on."""
+    if _matches(ALWAYS_BLOCKED, method, path):
+        return True
+    return not workspaces and _matches(WORKSPACE_ROUTES, method, path)
+
+
+def needs_workspace(method: str, path: str) -> bool:
+    return _matches(WORKSPACE_ROUTES, method, path)
 
 
 def is_public_ip(value: str) -> bool:

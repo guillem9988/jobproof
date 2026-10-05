@@ -12,6 +12,7 @@ import {
   Sun,
   X,
 } from "lucide-react";
+import { useAi } from "./ai";
 import { one, request } from "./api";
 import { AppContext, emptyJobDraft, type AppContextValue } from "./app-context";
 import { useHealth, useHistory, useProjects, useTask } from "./hooks/queries";
@@ -69,6 +70,11 @@ export function App() {
   const history = useHistory();
   const task = useTask(taskId);
   const hosted = !!health.data?.hosted;
+  const byok = hosted && !!health.data?.byok;
+  const locked = hosted && !byok;
+  const ai = useAi();
+  const trialRemaining = byok && health.data?.trial?.available ? (health.data.trial.remaining ?? 0) : 0;
+  const canUseAi = !hosted || (byok && (!!ai || trialRemaining > 0));
   // No answer yet: either the request is slow or it already failed and is being retried.
   const slow = useSlow(health.isPending);
   const waking = !health.data && !health.isError && (slow || health.failureCount > 0);
@@ -216,6 +222,10 @@ export function App() {
     lang,
     busy,
     hosted,
+    byok,
+    locked,
+    canUseAi,
+    trialRemaining,
     setError,
     act,
     go,
@@ -238,7 +248,7 @@ export function App() {
     ["history", t.navHistory, History, history.data?.length],
     ["settings", t.navSettings, Settings],
   ];
-  const nav = navAll.filter(([id]) => !(hosted && id === "settings"));
+  const nav = navAll.filter(([id]) => !(locked && id === "settings"));
   const provider = health.data?.active_provider;
 
   return (
@@ -338,6 +348,17 @@ export function App() {
                   <span className="dim">·</span>
                   <span className="mono">{health.data.model}</span>
                 </span>
+              ) : byok && ai ? (
+                <span className="pill supported provider-pill" title={t.keyPrivacy1}>
+                  <span className="pulse-dot" />
+                  <span>{t.yourKeyBadge}</span>
+                  <span className="dim">·</span>
+                  <span>
+                    {ai.provider === "gemini" ? "Gemini" : ai.provider === "openai" ? "OpenAI" : "Claude"}
+                  </span>
+                </span>
+              ) : byok && trialRemaining > 0 ? (
+                <span className="pill">{t.trialBadge}</span>
               ) : (
                 <span className="pill">{hosted ? t.hostedBadge : t.badgePrivateLocal}</span>
               )}
