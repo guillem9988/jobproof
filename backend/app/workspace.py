@@ -6,6 +6,7 @@ deletes everything after a retention window. AI keys arrive per request (`X-AI-*
 duration of the request or background task, and are never stored or logged.
 """
 
+import contextlib
 import contextvars
 import hashlib
 import re
@@ -98,6 +99,16 @@ def can_write(kind: str, row: dict) -> bool:
         return False
     workspace = current_workspace.get()
     return bool(enabled() and workspace and row.get("_ws") == workspace)
+
+
+@contextlib.contextmanager
+def shared_scope():
+    """Records created inside belong to nobody, so deleting or expiring a visitor never removes shared fixtures."""
+    token = current_workspace.set(None)
+    try:
+        yield
+    finally:
+        current_workspace.reset(token)
 
 
 def owned(kind: str) -> list[dict]:

@@ -55,7 +55,7 @@ from .hosted import (
     HOSTED_MESSAGE,
     SECURITY_HEADERS,
     RateLimiter,
-    client_key,
+    client_keys,
     is_blocked,
     needs_workspace,
     safe_get,
@@ -129,6 +129,8 @@ app.add_middleware(
 write_limiter = RateLimiter(settings.hosted_write_limit_per_min)
 # Checking a key is the one request an attacker could use to test stolen keys in bulk, so it gets its own tight limit.
 key_test_limiter = RateLimiter(settings.key_test_limit, window=600)
+# Visitors behind the same proxy hop (e.g. Vercel) share this looser aggregate limit.
+aggregate_limiter = RateLimiter(settings.hosted_write_limit_per_min * 10)
 if settings.hosted_mode and "*" in configured_origins:
     logging.getLogger("jobproof").warning(
         "HOSTED_MODE with ALLOWED_ORIGINS=* accepts writes from any website; set it to your frontend origin."
@@ -154,11 +156,13 @@ async def protect(request: Request, call_next):
             return JSONResponse(
                 {"error": {"code": "workspace_required", "message": "Missing or invalid workspace."}}, 403
             )
-        key = client_key(
+        direct, visitor = client_keys(
             request.headers.get("x-forwarded-for"), request.client.host if request.client else None
         )
-        if not write_limiter.allow(key) or (
-            request.url.path == "/api/v1/settings/test" and not key_test_limiter.allow(key)
+        if (
+            not write_limiter.allow(visitor)
+            or not aggregate_limiter.allow(direct)
+            or (request.url.path == "/api/v1/settings/test" and not key_test_limiter.allow(visitor))
         ):
             return JSONResponse(
                 {"error": {"code": "rate_limited", "message": "Too many requests. Try again in a minute."}},
@@ -1040,6 +1044,14 @@ def analyze(a, p, check):
 
 @app.post("/api/v1/analyses", response_model=Document)
 def analysis_create(body: AnalysisInput):
+    if settings.hosted_mode and body.mode == "demo":
+        # The fixture analysis is shared by everyone, so it must not be stamped with whoever asked first.
+        with ws.shared_scope():
+            return _create_analysis(body)
+    return _create_analysis(body)
+
+
+def _create_analysis(body: AnalysisInput):
     hosted_demo = settings.hosted_mode and body.mode == "demo"
     hosted_real = settings.hosted_mode and body.mode != "demo"
     if hosted_real and not (ws.enabled() and current_workspace.get()):
