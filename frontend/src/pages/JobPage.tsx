@@ -2,7 +2,7 @@ import { ArrowRight, Globe, Play, Plus, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { one, request } from "../api";
 import { useApp } from "../app-context";
-import { HostedNotice } from "../components/HostedNotice";
+import { ByokNotice, HostedNotice, NeedKeyNotice } from "../components/HostedNotice";
 import { useJobs, useSnapshots, useProjects } from "../hooks/queries";
 import type { Job, JobUrlFetchResponse, Requirement, Task } from "../types";
 
@@ -11,6 +11,8 @@ export function JobPage() {
     t,
     busy,
     hosted,
+    locked,
+    canUseAi,
     act,
     go,
     setError,
@@ -106,13 +108,17 @@ export function JobPage() {
     );
   }
 
+  const readOnly = hosted && !!job?.demo;
+  const needsKey = hosted && !!job && !job.demo && !canUseAi;
+
   return (
     <>
       <div className="eyebrow">{t.applicationWorkspace}</div>
       <h1>{job ? t.jobReviewTitle : t.jobStartTitle}</h1>
       <p className="intro">{job ? t.jobReviewIntro : t.jobStartIntro}</p>
-      {hosted && <HostedNotice />}
-      {!job && hosted ? (
+      {locked && <HostedNotice />}
+      {hosted && !locked && !needsKey && <ByokNotice onSettings={() => go("settings")} />}
+      {!job && locked ? (
         <div className="quick-start">
           <span>{t.homeCardSetupRunDesc}</span>
           <button type="button" className="primary button-sm" onClick={setupAndRun} disabled={busy}>
@@ -128,23 +134,27 @@ export function JobPage() {
             </button>
           </div>
           <div className="card fetch-card">
-            <div className="inline-row">
-              <Globe size={18} />
-              <h2>{t.fetchJobFromUrl}</h2>
-            </div>
-            <div className="inline-row wrap">
-              <input
-                type="url"
-                aria-label={t.fetchJobFromUrl}
-                placeholder={t.fetchJobUrlPlaceholder}
-                value={draft.fetchUrl}
-                onChange={(e) => patch({ fetchUrl: e.target.value })}
-                className="grow"
-              />
-              <button type="button" disabled={fetching || !draft.fetchUrl.trim()} onClick={fetchFromUrl}>
-                {fetching ? t.fetchingJobUrl : t.fetchJobButton}
-              </button>
-            </div>
+            {!hosted && (
+              <>
+                <div className="inline-row">
+                  <Globe size={18} />
+                  <h2>{t.fetchJobFromUrl}</h2>
+                </div>
+                <div className="inline-row wrap">
+                  <input
+                    type="url"
+                    aria-label={t.fetchJobFromUrl}
+                    placeholder={t.fetchJobUrlPlaceholder}
+                    value={draft.fetchUrl}
+                    onChange={(e) => patch({ fetchUrl: e.target.value })}
+                    className="grow"
+                  />
+                  <button type="button" disabled={fetching || !draft.fetchUrl.trim()} onClick={fetchFromUrl}>
+                    {fetching ? t.fetchingJobUrl : t.fetchJobButton}
+                  </button>
+                </div>
+              </>
+            )}
             <div className="fetch-divider inline-row between wrap">
               <label className="file-picker">
                 <Upload size={16} />
@@ -242,14 +252,17 @@ export function JobPage() {
         </>
       ) : (
         <>
-          <div className="notice">{job.demo ? t.fixtureDemoNotice : t.realAnalysisNotice}</div>
+          <div className="notice">
+            {job.demo ? t.fixtureDemoNotice : hosted ? t.realAnalysisNoticeHosted : t.realAnalysisNotice}
+          </div>
+          {needsKey && <NeedKeyNotice onSettings={() => go("settings")} />}
           <details className="card">
             <summary>
               {job.title} · {t.originalPostingSummary}
             </summary>
             <pre className="posting">{job.canonical_text}</pre>
           </details>
-          {!hosted && (
+          {!readOnly && (
             <button
               disabled={busy}
               onClick={() =>
@@ -267,7 +280,7 @@ export function JobPage() {
               {job.requirements.length ? ` (${t.extractAgain})` : ""}
             </button>
           )}
-          {hosted && <p className="quiet">{t.hostedReadOnlyRequirements}</p>}
+          {readOnly && <p className="quiet">{t.hostedReadOnlyRequirements}</p>}
           <div className="requirements">
             {job.requirements.map((r, i) => (
               <section className="card requirement-edit" key={r.id}>
@@ -277,7 +290,7 @@ export function JobPage() {
                     <input
                       type="checkbox"
                       checked={r.selected ?? true}
-                      disabled={hosted}
+                      disabled={readOnly}
                       onChange={(e) => changeReq(r.id, { selected: e.target.checked })}
                     />
                     {t.includeInAnalysis}
@@ -286,7 +299,7 @@ export function JobPage() {
                     {t.requirementLabel}
                     <input
                       value={r.text}
-                      readOnly={hosted}
+                      readOnly={readOnly}
                       onChange={(e) => changeReq(r.id, { text: e.target.value })}
                     />
                   </label>
@@ -295,7 +308,7 @@ export function JobPage() {
                       {t.priorityLabel}
                       <select
                         value={r.priority}
-                        disabled={hosted}
+                        disabled={readOnly}
                         onChange={(e) =>
                           changeReq(r.id, { priority: e.target.value as Requirement["priority"] })
                         }
@@ -309,7 +322,7 @@ export function JobPage() {
                       {t.verifiableFromCode}
                       <select
                         value={r.verifiability}
-                        disabled={hosted}
+                        disabled={readOnly}
                         onChange={(e) =>
                           changeReq(r.id, {
                             verifiability: e.target.value as Requirement["verifiability"],
@@ -328,7 +341,7 @@ export function JobPage() {
                       : `${t.postingExcerptPrefix} “${r.quote}” · ${t.characterPrefix} ${r.offset}`}
                   </small>
                 </div>
-                {!hosted && (
+                {!readOnly && (
                   <button
                     className="icon-button"
                     aria-label={`Remove ${r.text}`}
@@ -342,7 +355,7 @@ export function JobPage() {
               </section>
             ))}
           </div>
-          {!hosted && (
+          {!readOnly && (
             <button
               onClick={() =>
                 setJob({
@@ -394,7 +407,7 @@ export function JobPage() {
               ))}
             {!snapshots.data?.length && <button onClick={() => go("projects")}>{t.yourProjects}</button>}
           </section>
-          {!hosted && (
+          {!readOnly && (
             <button
               disabled={busy}
               onClick={() =>

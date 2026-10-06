@@ -57,3 +57,46 @@ describe("i18n translations", () => {
   });
 });
 
+
+import { identityHeaders, newToken, usesAi } from "../src/ai";
+
+describe("visitor identity and AI key", () => {
+  const ai = { provider: "gemini" as const, model: "gemini-3.8-flash", key: "AIzaSyExampleKey123456789" };
+
+  it("creates url-safe workspace tokens the server accepts", () => {
+    const a = newToken();
+    expect(a).toMatch(/^[A-Za-z0-9_-]{32,64}$/);
+    expect(newToken()).not.toBe(a);
+  });
+
+  it("sends the key only with requests that call a model", () => {
+    expect(usesAi("/analyses", "POST")).toBe(true);
+    expect(usesAi("/analyses/abc/cover-letter", "POST")).toBe(true);
+    expect(usesAi("/analyses/abc/interview/chat", "POST")).toBe(true);
+    expect(usesAi("/job-postings/abc/extract-requirements", "POST")).toBe(true);
+    for (const [path, method] of [
+      ["/analyses", "GET"],
+      ["/analyses/abc/assessments", "GET"],
+      ["/projects", "POST"],
+      ["/settings", "POST"],
+      ["/health", "GET"],
+      ["/workspace/delete", "POST"],
+    ]) {
+      expect(usesAi(path, method)).toBe(false);
+      expect(identityHeaders(path, method, undefined, ai)["X-AI-Key"]).toBeUndefined();
+    }
+    const withKey = identityHeaders("/analyses", "POST", undefined, ai);
+    expect(withKey["X-AI-Key"]).toBe(ai.key);
+    expect(withKey["X-AI-Provider"]).toBe("gemini");
+    expect(withKey["X-Workspace"]).toMatch(/^[A-Za-z0-9_-]{32,64}$/);
+  });
+
+  it("keeps the key out of fixture-demo requests", () => {
+    expect(identityHeaders("/analyses", "POST", { mode: "demo" }, ai)["X-AI-Key"]).toBeUndefined();
+    expect(identityHeaders("/analyses", "POST", { mode: "real" }, ai)["X-AI-Key"]).toBe(ai.key);
+  });
+
+  it("never sends a key the visitor has not entered", () => {
+    expect(identityHeaders("/analyses", "POST", undefined, null)["X-AI-Key"]).toBeUndefined();
+  });
+});

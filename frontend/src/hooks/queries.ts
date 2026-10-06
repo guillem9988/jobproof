@@ -14,6 +14,8 @@ export const useHealth = () =>
         model: string;
         active_provider?: string;
         hosted?: boolean;
+        byok?: boolean;
+        trial?: { available?: boolean; remaining?: number };
       }>(
         "/health",
       ),
