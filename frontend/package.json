@@ -17,7 +17,7 @@
     "lucide-react": "0.541.0",
     "react": "19.1.1",
     "react-dom": "19.1.1",
-    "tailwindcss": "4.1.12"
+    "tailwindcss": "4.3.3"
   },
   "devDependencies": {
     "@playwright/test": "1.56.1",
