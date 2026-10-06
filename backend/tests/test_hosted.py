@@ -151,13 +151,15 @@ def test_hosted_health_and_settings_reveal_nothing(client, monkeypatch):
     assert view["gemini_api_key_configured"] is False and view["github_token_configured"] is False
 
 
-def test_hosted_never_uses_a_real_provider(monkeypatch):
+def test_hosted_never_uses_the_servers_keys(monkeypatch):
     monkeypatch.setattr(core.settings, "hosted_mode", True)
     monkeypatch.setattr(core.settings, "gemini_api_key", "AIzaServerSecretKey123456789012345678")
     monkeypatch.setattr(core.settings, "llm_provider", "gemini")
     from app.providers import DemoProvider, provider
 
-    assert isinstance(provider("real"), DemoProvider)
+    assert isinstance(provider("demo"), DemoProvider)
+    with pytest.raises(ValueError):  # real mode is refused rather than silently using the server key
+        provider("real")
 
 
 def test_hosted_rejects_real_analyses(client):
@@ -244,3 +246,37 @@ def test_local_mode_is_unchanged(monkeypatch):
         )
         assert r.status_code == 200
         assert len(c.get("/api/v1/job-postings").json()) == 1
+
+
+def test_security_headers_on_every_response(client):
+    for path in ("/api/v1/health", "/api/v1/projects", "/api/v1/nope"):
+        r = client.get(path)
+        assert r.headers["x-content-type-options"] == "nosniff"
+        assert r.headers["x-frame-options"] == "DENY"
+        assert "frame-ancestors 'none'" in r.headers["content-security-policy"]
+        assert "script-src 'self'" in r.headers["content-security-policy"]
+        assert r.headers["referrer-policy"] == "strict-origin-when-cross-origin"
+        assert "max-age" in r.headers["strict-transport-security"]
+        assert r.headers["cache-control"] == "no-store"
+
+
+def test_blocked_requests_also_carry_security_headers(client):
+    r = client.post("/api/v1/settings", json={"gemini_api_key": "x"})
+    assert r.status_code == 403
+    assert r.headers["x-content-type-options"] == "nosniff"
+
+
+def test_csp_forbids_inline_and_remote_scripts():
+    csp = hosted.CSP
+    script_src = next(d for d in csp.split("; ") if d.startswith("script-src"))
+    assert script_src == "script-src 'self'"
+    assert "default-src 'self'" in csp and "object-src 'none'" in csp
+
+
+def test_vercel_headers_match_backend_headers():
+    import json
+    from pathlib import Path
+
+    config = json.loads((Path(__file__).parents[2] / "frontend" / "vercel.json").read_text())
+    declared = {h["key"]: h["value"] for rule in config["headers"] for h in rule["headers"]}
+    assert declared == hosted.SECURITY_HEADERS

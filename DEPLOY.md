@@ -83,3 +83,15 @@ Per publicar una demo pública (Render + Vercel):
 3. Comprova-ho: `GET /api/v1/health` ha de retornar `"hosted": true`, i `POST /api/v1/settings` ha de respondre 403.
 
 Per fer servir JobProof amb els teus repositoris, ofertes i claus d'IA, executa'l en local.
+
+### Servidor real: cada visitant posa la seva clau (`HOSTED_BYOK`)
+
+Si vols que els visitants puguin provar-ho amb els seus repositoris i ofertes, afegeix a Render `HOSTED_BYOK` = `true`. Cada visitant té un espai privat (s'esborra als 24 h) i posa la **seva** clau d'IA a *Configuració*; la clau només viu a la seva pestanya i el servidor no la desa. La guia per als visitants ja és a la pantalla de Configuració (inclou l'enllaç per aconseguir una clau gratuïta de Gemini).
+
+**Prova gratuïta amb la teva clau (opcional).** Per deixar provar-ho sense clau:
+1. Crea una clau de Gemini en un projecte de Google Cloud **sense facturació activada**: així no et poden cobrar res, passi el que passi.
+2. A Render afegeix `GEMINI_API_KEY` amb aquesta clau, `TRIAL_DAILY_CALLS` (p. ex. `100`, crides al dia en total), `TRIAL_WORKSPACE_CALLS` (p. ex. `30` per visitant) i `TRIAL_UNTIL` (p. ex. `2026-11-30`, data de caducitat).
+3. Quan s'esgoti o caduqui, l'app demana als visitants la seva clau. Per aturar-ho de cop, esborra `TRIAL_DAILY_CALLS`.
+
+Si la clau del servidor té facturació, posa també un límit de despesa a la consola del proveïdor: els límits de l'app redueixen l'ús, però només el proveïdor pot garantir que no cobra.
+

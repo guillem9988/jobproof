@@ -19,24 +19,41 @@ from urllib.parse import urljoin, urlparse
 
 import httpx
 
-# (method, path pattern) pairs that are unavailable in hosted mode.
-BLOCKED_ROUTES = [
+# (method, path pattern) pairs that are never available in hosted mode.
+ALWAYS_BLOCKED = [
+    ("POST", re.compile(r"^/api/v1/job-postings/fetch-url$")),
+    ("POST", re.compile(r"^/api/v1/settings$")),
+]
+
+# Blocked in the plain public demo; available to a visitor workspace when bring-your-own-key is on.
+WORKSPACE_ROUTES = [
     ("POST", re.compile(r"^/api/v1/projects$")),
     ("POST", re.compile(r"^/api/v1/projects/[^/]+/imports$")),
     ("POST", re.compile(r"^/api/v1/job-postings$")),
-    ("POST", re.compile(r"^/api/v1/job-postings/fetch-url$")),
     ("POST", re.compile(r"^/api/v1/job-postings/[^/]+/extract-requirements$")),
-    ("POST", re.compile(r"^/api/v1/settings(/test)?$")),
+    ("POST", re.compile(r"^/api/v1/settings/test$")),
     ("POST", re.compile(r"^/api/v1/assessments/[^/]+/reviews$")),
     ("POST", re.compile(r"^/api/v1/tasks/[^/]+/cancel$")),
     ("POST", re.compile(r"^/api/v1/analyses/[^/]+/cancel$")),
+    ("POST", re.compile(r"^/api/v1/workspace/delete$")),
 ]
 
 HOSTED_MESSAGE = "This is a public demo: this action is only available when you run JobProof yourself."
 
 
-def is_blocked(method: str, path: str) -> bool:
-    return any(method == m and pattern.match(path) for m, pattern in BLOCKED_ROUTES)
+def _matches(rules, method: str, path: str) -> bool:
+    return any(method == m and pattern.match(path) for m, pattern in rules)
+
+
+def is_blocked(method: str, path: str, workspaces: bool = False) -> bool:
+    """True when the request must be refused in hosted mode; `workspaces` is bring-your-own-key being on."""
+    if _matches(ALWAYS_BLOCKED, method, path):
+        return True
+    return not workspaces and _matches(WORKSPACE_ROUTES, method, path)
+
+
+def needs_workspace(method: str, path: str) -> bool:
+    return _matches(WORKSPACE_ROUTES, method, path)
 
 
 def is_public_ip(value: str) -> bool:
@@ -122,7 +139,44 @@ def client_key(forwarded_for: str | None, peer: str | None) -> str:
     return peer or "unknown"
 
 
+def client_keys(forwarded_for: str | None, peer: str | None) -> tuple[str, str]:
+    """(direct, user): the address our own proxy saw, and the visitor behind it when a trusted proxy reported one.
+
+    Behind Vercel the last hop is Vercel's egress address, shared by every visitor, so rate limits are applied to
+    the hop before it (the visitor) and, more loosely, to the last hop (which a client cannot spoof)."""
+    hops = [h.strip() for h in (forwarded_for or "").split(",") if h.strip()]
+    direct = hops[-1] if hops else (peer or "unknown")
+    user = hops[-2] if len(hops) >= 2 else direct
+    return direct, user
+
+
 def is_demo_record(kind: str, row: dict) -> bool:
     if kind == "analysis":
         return row.get("mode") == "demo"
     return bool(row.get("demo"))
+
+
+# Served on every response. The app is a static SPA that only talks to its own origin, so the policy can be strict.
+CSP = (
+    "default-src 'self'; "
+    "script-src 'self'; "
+    "style-src 'self'; "
+    "style-src-attr 'unsafe-inline'; "  # React sets inline style attributes
+    "img-src 'self' data:; "
+    "font-src 'self'; "
+    "connect-src 'self'; "
+    "object-src 'none'; "
+    "base-uri 'self'; "
+    "form-action 'self'; "
+    "frame-ancestors 'none'"
+)
+
+SECURITY_HEADERS = {
+    "Content-Security-Policy": CSP,
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Strict-Transport-Security": "max-age=63072000; includeSubDomains",
+}

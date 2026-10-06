@@ -1,14 +1,14 @@
 import { ArrowRight, FileText, FolderGit2, Play } from "lucide-react";
 import { useApp } from "../app-context";
 import { HistoryList } from "../components/HistoryList";
-import { HostedNotice } from "../components/HostedNotice";
+import { ByokNotice, HostedNotice } from "../components/HostedNotice";
 import { useHealth, useHistory, useProjects } from "../hooks/queries";
 
 const providerName = (p?: string) =>
   p ? (p === "gemini" ? "Gemini" : p === "openai" ? "OpenAI" : "Claude") : "IA";
 
 export function HomePage({ onNewAnalysis }: { onNewAnalysis: () => void }) {
-  const { t, busy, hosted, go, act, openReport, loadDemo, setupAndRun } = useApp();
+  const { t, busy, hosted, locked, go, act, openReport, loadDemo, setupAndRun } = useApp();
   const health = useHealth();
   const projects = useProjects();
   const history = useHistory();
@@ -18,9 +18,10 @@ export function HomePage({ onNewAnalysis }: { onNewAnalysis: () => void }) {
       <div className="eyebrow">{t.yourWorkYourEvidence}</div>
       <h1>{t.tagline}</h1>
       <p className="intro">{t.subtitle}</p>
-      {hosted && <HostedNotice />}
+      {locked && <HostedNotice />}
+      {hosted && !locked && <ByokNotice onSettings={() => go("settings")} />}
       <div className="home-grid">
-        {!hosted && (
+        {!locked && (
           <section className="card start">
             <span className="icon-box">
               <FileText />
@@ -49,7 +50,7 @@ export function HomePage({ onNewAnalysis }: { onNewAnalysis: () => void }) {
             </div>
           </section>
         )}
-        {!hosted && (
+        {!locked && (
           <section className="card">
             <span className="icon-box">
               <FolderGit2 />
@@ -73,7 +74,7 @@ export function HomePage({ onNewAnalysis }: { onNewAnalysis: () => void }) {
             />
           </section>
         )}
-        {hosted && (
+        {locked && (
           <button
             data-testid="test-load-demo"
             className="test-hook"

@@ -3,6 +3,7 @@ import { Check, X } from "lucide-react";
 import { one } from "../api";
 import { useApp } from "../app-context";
 import { ApiKeyField } from "../components/ApiKeyField";
+import { ByokSettings } from "../components/ByokSettings";
 import { HostedNotice } from "../components/HostedNotice";
 import { useAppSettings } from "../hooks/queries";
 import { PROVIDER_MODELS, getDefaultModelForProvider, getModelTagBadge, type Provider } from "../models";
@@ -13,7 +14,7 @@ type KeyName = "gemini" | "anthropic" | "openai" | "github";
 const emptyKeys: Record<KeyName, string> = { gemini: "", anthropic: "", openai: "", github: "" };
 
 export function SettingsPage() {
-  const { t, lang, busy, hosted, act } = useApp();
+  const { t, lang, busy, hosted, locked, act } = useApp();
   const appSettings = useAppSettings();
   const s = appSettings.data;
   const providerId = useId();
@@ -110,7 +111,9 @@ export function SettingsPage() {
     !s?.github_token_configured;
   const result = testStatus.result;
 
-  if (hosted) {
+  if (hosted && !locked) return <ByokSettings />;
+
+  if (locked) {
     return (
       <>
         <div className="eyebrow">{t.settingsEyebrow}</div>

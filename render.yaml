@@ -14,6 +14,9 @@ services:
         value: "true"
       - key: DATABASE_URL
         value: sqlite:////tmp/jobproof-hosted.db
+      # "true" lets visitors use their own AI key in a private, expiring workspace (see docs/security.md).
+      - key: HOSTED_BYOK
+        value: "false"
       # Set to your frontend origin, e.g. https://jobproof-web.vercel.app (not "*").
       - key: ALLOWED_ORIGINS
         sync: false

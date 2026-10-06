@@ -19,6 +19,7 @@ export function AssessmentCard({
   snapshotIds,
   open,
   onToggle,
+  readOnly = false,
 }: {
   snapshotIds: string[];
   a: Assessment;
@@ -26,8 +27,10 @@ export function AssessmentCard({
   review: (s: Status, r: string, remove: string[], add: string[]) => void;
   open: boolean;
   onToggle: () => void;
+  /** Shared fixture reports cannot be reviewed on a public deployment. */
+  readOnly?: boolean;
 }) {
-  const { t, busy, hosted } = useApp();
+  const { t, busy } = useApp();
   const bodyId = useId();
   const [editing, setEditing] = useState(false);
   const statusLabels = getStatusLabels(t);
@@ -108,7 +111,7 @@ export function AssessmentCard({
             {t.humanReviewed} {statusLabels[a.original.status] || a.original.status}
           </p>
         )}
-        {!hosted && (
+        {!readOnly && (
           <details onToggle={(e) => setEditing(e.currentTarget.open)}>
             <summary>{t.reviewConclusion}</summary>
             <form
