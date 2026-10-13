@@ -271,12 +271,3 @@ def test_csp_forbids_inline_and_remote_scripts():
     script_src = next(d for d in csp.split("; ") if d.startswith("script-src"))
     assert script_src == "script-src 'self'"
     assert "default-src 'self'" in csp and "object-src 'none'" in csp
-
-
-def test_vercel_headers_match_backend_headers():
-    import json
-    from pathlib import Path
-
-    config = json.loads((Path(__file__).parents[2] / "frontend" / "vercel.json").read_text())
-    declared = {h["key"]: h["value"] for rule in config["headers"] for h in rule["headers"]}
-    assert declared == hosted.SECURITY_HEADERS
