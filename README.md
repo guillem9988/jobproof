@@ -126,17 +126,11 @@ Access the single-container app at `http://localhost:8000`.
 
 ---
 
-## Public Deployment (Hosted Mode)
+## Running it
 
-JobProof is a single-user tool: it has no accounts, so a normal deployment must never be exposed to the internet. To publish a **public demo**, set `HOSTED_MODE=true` on the backend. In that mode:
+JobProof is a single-user tool that you run on your own computer; there is no public live demo. It has no accounts, so do not expose a normal instance to the internet.
 
-- Only the fictional fixture posting and sample projects are available. Importing GitHub repositories or local folders, adding job postings, fetching URLs, editing requirements, reviewing conclusions and the Settings screen are disabled (HTTP 403).
-- The real AI providers are never used, whatever keys the server holds; answers come from the deterministic demo provider.
-- Visitors cannot modify shared data: the demo analysis is shared, cover letters and interview chats are not saved, and records that are not fixtures are hidden.
-- Write requests are rate limited per client (`HOSTED_WRITE_LIMIT_PER_MIN`).
-- Set `ALLOWED_ORIGINS` to your frontend's origin (not `*`) and use a fresh database.
-
-Optionally add `HOSTED_BYOK=true` so visitors get a private workspace (deleted after 24 h) and can run real analyses with **their own** AI key, which stays in their browser tab and is never stored. See [`docs/security.md`](docs/security.md) for how the isolation works and its limits.
+If you ever do publish an instance, set `HOSTED_MODE=true` first. It locks the backend down to the fictional fixtures (no imports, no settings, no real AI, rate limited, strict `ALLOWED_ORIGINS`), and `HOSTED_BYOK=true` adds private per-visitor workspaces with bring-your-own AI keys. What this does and does not protect against is in [`docs/security.md`](docs/security.md).
 
 To use JobProof with your own repositories, job postings and API keys, run it locally. See [`docs/security.md`](docs/security.md).
 

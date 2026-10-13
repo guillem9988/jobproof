@@ -6,7 +6,7 @@ Please report security problems privately through GitHub: **Security → Report 
 
 ## What is in scope
 
-JobProof is a single-user tool that you run yourself. The only supported way to expose it to the internet is **hosted mode** (`HOSTED_MODE=true`), a read-mostly public demo. See [`docs/security.md`](docs/security.md) for exactly what it blocks and what it does not guarantee.
+JobProof is a single-user tool that you run yourself. Do not expose it to the internet; if you must, the only supported way is **hosted mode** (`HOSTED_MODE=true`), a read-mostly public demo. See [`docs/security.md`](docs/security.md) for exactly what it blocks and what it does not guarantee.
 
 In scope:
 
