@@ -55,7 +55,7 @@ Instead of generating superficial "ATS match percentages" or hallucinated hiring
 ## Quickstart
 
 ### Prerequisites
-- **Python 3.12+** (tested on 3.12, 3.13, 3.14)
+- **Python 3.12+** (CI runs 3.12)
 - **Node.js 22+** and **pnpm**
 
 ### Quick Start (One Command)
@@ -91,11 +91,13 @@ JobProof includes a production-ready, multi-stage `Dockerfile`:
 docker build -t jobproof .
 
 # Run the container
-docker run -p 8000:8000 \
+docker run -p 127.0.0.1:8000:8000 \
   -e GEMINI_API_KEY="your-gemini-key" \
-  -v $(pwd)/jobproof.db:/app/jobproof.db \
+  -v jobproof-data:/data \
   jobproof
 ```
+
+Keep the port bound to `127.0.0.1`: a normal (non-hosted) instance has no authentication and must not be reachable from other machines. The database lives in the `jobproof-data` volume (`/data/jobproof.db`) and the container runs as a non-root user.
 
 Access the single-container app at `http://localhost:8000`.
 
@@ -141,7 +143,7 @@ To use JobProof with your own repositories, job postings and API keys, run it lo
 JobProof is continuously tested with high-coverage unit, contract, and browser test suites:
 
 ```bash
-# 1. Backend tests & linters (144 tests)
+# 1. Backend tests & linters 
 .venv/bin/pytest backend/tests
 .venv/bin/ruff check backend
 .venv/bin/ruff format --check backend
