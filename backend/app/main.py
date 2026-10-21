@@ -104,8 +104,8 @@ async def purge_loop():
 async def lifespan(app):
     try:
         Base.metadata.create_all(engine)
-    except Exception:  # noqa: BLE001, S110 - tables may already exist or the DB may be read-only
-        pass
+    except Exception:  # tables may already exist or the DB may be read-only
+        logging.getLogger("jobproof").warning("Could not create database tables", exc_info=True)
     init_settings()
     tasks.recover()
     purger = asyncio.create_task(purge_loop()) if ws.enabled() else None
