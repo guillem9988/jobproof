@@ -156,6 +156,8 @@ pnpm --dir frontend build
 pnpm --dir frontend e2e
 ```
 
+CI runs steps 1 and 2 plus a dependency audit on every push and pull request. The Playwright tests (step 3) are run locally.
+
 ---
 
 ## Architecture
